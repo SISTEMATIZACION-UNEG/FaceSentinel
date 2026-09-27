@@ -1481,7 +1481,7 @@ def sync_devices_for_gateway():
     result = []
     for d in devices:
         dev_id = d["device_id"].upper()
-        token = existing_tokens.get(dev_id) or KNOWN_TOKENS.get(dev_id) or f"hw_{dev_id.lower()}_token"
+        token = d.get("token") or existing_tokens.get(dev_id) or KNOWN_TOKENS.get(dev_id) or f"hw_{dev_id.lower()}_token"
         result.append({
             "device_id": d["device_id"],
             "name": d["device_name"],
@@ -1494,9 +1494,9 @@ def sync_devices_for_gateway():
         })
 
     # Guardar automáticamente en disco para sincronización física instantánea
-    for path in ["/app/data/cameras.json", "data/cameras.json"]:
+    for path in ["data/cameras.json", "cameras.json", "/app/data/cameras.json"]:
         try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=4)
         except Exception as e:

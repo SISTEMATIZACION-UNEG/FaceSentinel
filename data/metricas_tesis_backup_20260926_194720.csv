@@ -1,0 +1,1 @@
+timestamp,test_type,environmental_condition,user_id,granted,rejection_reason,t_ear_edge_ms,t_edge_total_ms,t_network_rtt_ms,t_lbp_ms,t_fft_ms,t_arcface_ms,t_chroma_ms,t_sqlite_ms,t_backend_total_ms,t_total_end2end_ms,ear_open,ear_blink,lbp_entropy,lbp_threshold,lbp_variance,liveness_score,cosine_distance,match_threshold,bc_tx_hash,bc_gas_used,bc_block_number,bc_seal_time_ms

@@ -122,6 +122,7 @@ class IoTDevice(Base):
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     client_secret_hash: Mapped[str] = mapped_column(String, nullable=False)  # Client_Secret físico cifrado
     token_lookup_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    token_plain: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # Token en texto plano para aprovisionamiento Zero-Config
     # Umbral dinámico LBP configurable por sensor (en BD existentes requiere: ALTER TABLE iot_devices ADD COLUMN lbp_threshold FLOAT DEFAULT 3.2;)
     lbp_threshold: Mapped[float] = mapped_column(Float, default=3.2)
     # URL del stream RTSP o HTTP para cámaras de vigilancia
@@ -183,12 +184,16 @@ def init_sqlite():
 
             # Auto-migración de columnas para bases de datos existentes
             from sqlalchemy import text
-            # 1. Verificar columna antispoofing_enabled en iot_devices
+            # 1. Verificar columnas en iot_devices
             cols_iot = [row[1] for row in db.execute(text("PRAGMA table_info(iot_devices)")).fetchall()]
             if cols_iot and "antispoofing_enabled" not in cols_iot:
                 db.execute(text("ALTER TABLE iot_devices ADD COLUMN antispoofing_enabled BOOLEAN DEFAULT 1;"))
                 db.commit()
                 logger.info("🛠️ Columna 'antispoofing_enabled' migrada en iot_devices.")
+            if cols_iot and "token_plain" not in cols_iot:
+                db.execute(text("ALTER TABLE iot_devices ADD COLUMN token_plain VARCHAR;"))
+                db.commit()
+                logger.info("🛠️ Columna 'token_plain' migrada en iot_devices.")
 
             # 2. Verificar columna liveness_policy en oauth_clients
             cols_oauth = [row[1] for row in db.execute(text("PRAGMA table_info(oauth_clients)")).fetchall()]
@@ -609,6 +614,8 @@ def save_iot_device(
                     device.stream_url = stream_url
                 if lookup_hash is not None:
                     device.token_lookup_hash = lookup_hash
+                if token_plain is not None:
+                    device.token_plain = token_plain
                 device.is_active = is_active
                 device.updated_at = datetime.utcnow()
             else:
@@ -619,6 +626,7 @@ def save_iot_device(
                     location=location,
                     client_secret_hash=client_secret_hash,
                     token_lookup_hash=lookup_hash,
+                    token_plain=token_plain,
                     lbp_threshold=lbp_threshold,
                     stream_url=stream_url,
                     antispoofing_enabled=antispoofing_enabled,
@@ -845,6 +853,7 @@ def get_all_devices() -> list[dict]:
                 "location": d.location,
                 "lbp_threshold": getattr(d, "lbp_threshold", 3.2),
                 "stream_url": getattr(d, "stream_url", None),
+                "token": getattr(d, "token_plain", None),
                 "antispoofing_enabled": bool(getattr(d, "antispoofing_enabled", True) if getattr(d, "antispoofing_enabled", True) is not None else True),
                 "is_active": d.is_active,
                 "created_at": d.created_at

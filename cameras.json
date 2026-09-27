@@ -1,43 +1,23 @@
 [
     {
-        "device_id": "IPHONE6",
-        "name": "Iphone6",
-        "token": "hw_iphone6_token",
-        "source": "http://192.168.80.173:4747/video",
-        "location": "Punto de Acceso",
-        "enabled": false,
-        "antispoofing_enabled": true,
-        "lbp_threshold": 3.595
-    },
-    {
-        "device_id": "TLFHECTOR",
-        "name": "Smart 20 Hector",
-        "token": "hw_tlfhector_secret_key_8832a74ayV8",
-        "source": "http://192.168.80.89:4747/video",
+        "device_id": "2",
+        "name": "IPHONE6",
+        "token": "hw_76P4vOuKeHuDe2U5sG8pwKQyMXs3T0gIemBfv3NnB5o",
+        "source": "http://192.168.0.102:4747/video",
         "location": "Punto de Acceso",
         "enabled": true,
         "antispoofing_enabled": true,
-        "lbp_threshold": 3.530
+        "lbp_threshold": 3.69
     },
     {
         "device_id": "PASILLO62",
-        "name": "pasillo 6-2",
+        "name": "Pasillo 6-2",
         "token": "hw_zaEy9rg43tK6QZa0e9O_oDE_spala6yRm71hA74ayV8",
         "source": "rtsp://admin1:password@192.168.70.10:554/Streaming/Channels/201",
         "location": "Patio B",
         "enabled": false,
         "antispoofing_enabled": true,
-        "lbp_threshold": 3.58
-    },
-    {
-        "device_id": "DOOR_01",
-        "name": "Torniquete Principal",
-        "token": "hw_door_01_token_aqui",
-        "source": "0",
-        "location": "Entrada Principal",
-        "enabled": false,
-        "antispoofing_enabled": true,
-        "lbp_threshold": 3.2
+        "lbp_threshold": 3.5
     },
     {
         "device_id": "GATEWAY_TEST_01",
@@ -50,9 +30,9 @@
         "lbp_threshold": 3.2
     },
     {
-        "device_id": "doo2",
-        "name": "Puerta secundaria",
-        "token": "hw_doo2_token_aqui",
+        "device_id": "door2",
+        "name": "Puerta Trasera",
+        "token": "hw_door2_token",
         "source": "0",
         "location": "Edificio administrativo",
         "enabled": false,
@@ -61,7 +41,7 @@
     },
     {
         "device_id": "door1",
-        "name": "Puerta Principal",
+        "name": "Puerta principal",
         "token": "hw_door1_token_aqui",
         "source": "0",
         "location": "Edificio administrativo",
