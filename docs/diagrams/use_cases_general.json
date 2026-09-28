@@ -1,0 +1,456 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FaceSentinel — Diagrama General de Casos de Uso y Frontera del Sistema",
+    "output": "docs/diagrams/use_cases_general.v1.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1390,
+      764
+    ]
+  },
+  "components": [
+    {
+      "id": "actor_unegia",
+      "type": "external",
+      "label": "App Cliente UNEGIA",
+      "sublabel": "OAuth2 · Sistema Web Tercero",
+      "pos": [
+        30,
+        128
+      ],
+      "size": [
+        200,
+        52
+      ]
+    },
+    {
+      "id": "actor_usuario",
+      "type": "external",
+      "label": "Usuario / Comunidad UNEG",
+      "sublabel": "Estudiante · Docente · Personal",
+      "pos": [
+        30,
+        208
+      ],
+      "size": [
+        200,
+        52
+      ]
+    },
+    {
+      "id": "actor_edge",
+      "type": "external",
+      "label": "Nodo Edge Gateway",
+      "sublabel": "Cámara CCTV RTSP · Cliente M2M",
+      "pos": [
+        30,
+        288
+      ],
+      "size": [
+        200,
+        52
+      ]
+    },
+    {
+      "id": "actor_admin",
+      "type": "external",
+      "label": "Administrador DSAI",
+      "sublabel": "Seguridad e Infraestructura",
+      "pos": [
+        30,
+        688
+      ],
+      "size": [
+        200,
+        52
+      ]
+    },
+    {
+      "id": "cu03",
+      "type": "backend",
+      "tag": "CU-03",
+      "label": "Emitir Token JWT",
+      "sublabel": "Firma HS256 simétrica (HMAC-SHA256)",
+      "pos": [
+        560,
+        48
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu01",
+      "type": "backend",
+      "tag": "CU-01",
+      "label": "Iniciar Sesión Federada",
+      "sublabel": "SSO por redirección OAuth2",
+      "pos": [
+        560,
+        128
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu02",
+      "type": "backend",
+      "tag": "CU-02",
+      "label": "Superar Liveness Activo",
+      "sublabel": "WSS · Retos EAR, LBP, Yaw y MAR",
+      "pos": [
+        560,
+        208
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu04",
+      "type": "backend",
+      "tag": "CU-04",
+      "label": "Validación Física M2M",
+      "sublabel": "Frame Base64 + Token de acceso",
+      "pos": [
+        560,
+        288
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu05",
+      "type": "backend",
+      "tag": "CU-05",
+      "label": "Inferencia ArcFace 512D",
+      "sublabel": "Distancia coseno d_cosine < 0.68",
+      "pos": [
+        560,
+        368
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu06",
+      "type": "backend",
+      "tag": "CU-06",
+      "label": "Validar Permisos ACL",
+      "sublabel": "RBAC · Índice O(1)",
+      "pos": [
+        560,
+        448
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu08",
+      "type": "backend",
+      "tag": "CU-08",
+      "label": "Calibrar Cámaras IoT",
+      "sublabel": "Umbral lbp_threshold por dispositivo",
+      "pos": [
+        560,
+        528
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu09",
+      "type": "backend",
+      "tag": "CU-09",
+      "label": "Auditar Bitácoras",
+      "sublabel": "Registro de auditoría en cadena",
+      "pos": [
+        560,
+        608
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "cu07",
+      "type": "backend",
+      "tag": "CU-07",
+      "label": "Enrolar Usuarios",
+      "sublabel": "Embeddings faciales 512D",
+      "pos": [
+        560,
+        688
+      ],
+      "size": [
+        335,
+        52
+      ]
+    },
+    {
+      "id": "actor_chain",
+      "type": "cloud",
+      "label": "Red Blockchain Ganache",
+      "sublabel": "AccessRegistry.sol · Hash SHA-256",
+      "pos": [
+        1140,
+        404
+      ],
+      "size": [
+        210,
+        140
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Frontera del Sistema · FaceSentinel IdP Ciberfísico",
+      "wraps": [
+        "cu01",
+        "cu02",
+        "cu03",
+        "cu04",
+        "cu05",
+        "cu06",
+        "cu07",
+        "cu08",
+        "cu09"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "A · Identidad Federada (SSO)",
+      "wraps": [
+        "cu03",
+        "cu01",
+        "cu02"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "B · Acceso Físico Perimetral (M2M)",
+      "wraps": [
+        "cu04",
+        "cu05",
+        "cu06"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "C · Administración y Auditoría Soberana",
+      "wraps": [
+        "cu08",
+        "cu09",
+        "cu07"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c_unegia_cu01",
+      "from": "actor_unegia",
+      "to": "cu01",
+      "label": "Redirección OAuth2",
+      "labelAt": [
+        320,
+        154
+      ],
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_cu03_unegia",
+      "from": "cu03",
+      "to": "actor_unegia",
+      "label": "JWT HS256",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          250,
+          74
+        ],
+        [
+          250,
+          100
+        ],
+        [
+          130,
+          100
+        ]
+      ],
+      "labelAt": [
+        190,
+        100
+      ],
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_usuario_cu01",
+      "from": "actor_usuario",
+      "to": "cu01",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_usuario_cu02",
+      "from": "actor_usuario",
+      "to": "cu02",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_edge_cu04",
+      "from": "actor_edge",
+      "to": "cu04",
+      "label": "Autenticación M2M",
+      "labelAt": [
+        440,
+        314
+      ],
+      "variant": "security"
+    },
+    {
+      "id": "c_admin_cu08",
+      "from": "actor_admin",
+      "to": "cu08",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_admin_cu09",
+      "from": "actor_admin",
+      "to": "cu09",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_admin_cu07",
+      "from": "actor_admin",
+      "to": "cu07",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c_cu01_cu03",
+      "from": "cu01",
+      "to": "cu03",
+      "label": "<<include>>",
+      "labelAt": [
+        728,
+        114
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "c_cu01_cu02",
+      "from": "cu01",
+      "to": "cu02",
+      "label": "<<include>>",
+      "labelAt": [
+        728,
+        194
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "c_cu01_cu05",
+      "from": "cu01",
+      "to": "cu05",
+      "label": "<<include>>",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          990,
+          154
+        ],
+        [
+          990,
+          394
+        ]
+      ],
+      "variant": "dashed",
+      "labelAt": [
+        990,
+        274
+      ]
+    },
+    {
+      "id": "c_cu04_cu05",
+      "from": "cu04",
+      "to": "cu05",
+      "label": "<<include>>",
+      "labelAt": [
+        728,
+        354
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "c_cu04_cu06",
+      "from": "cu04",
+      "to": "cu06",
+      "label": "<<include>>",
+      "labelAt": [
+        510,
+        410
+      ],
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          510,
+          314
+        ],
+        [
+          510,
+          474
+        ]
+      ]
+    },
+    {
+      "id": "c_cu03_chain",
+      "from": "cu03",
+      "to": "actor_chain",
+      "label": "Notarización Asíncrona SHA-256",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1245,
+          74
+        ]
+      ],
+      "labelAt": [
+        1070,
+        74
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "c_cu06_chain",
+      "from": "cu06",
+      "to": "actor_chain",
+      "label": "Notarización Asíncrona SHA-256",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        1017,
+        474
+      ],
+      "variant": "dashed"
+    }
+  ]
+}
