@@ -85,6 +85,52 @@ def crop_face(frame_bgr, face_landmarks, margin_pct: float = 0.45):
 
 
 # =========================================================================
+#            FUNCIONES DE RENDERIZADO UI MINIMALISTA (Clean NVR)
+# =========================================================================
+
+def draw_glass_rect(img, x1, y1, x2, y2, color, alpha=0.65):
+    """Dibuja un panel translúcido ligero sin bordes toscos."""
+    h, w = img.shape[:2]
+    x1, y1 = max(0, int(x1)), max(0, int(y1))
+    x2, y2 = min(w, int(x2)), min(h, int(y2))
+    if x2 <= x1 or y2 <= y1:
+        return
+    sub_img = img[y1:y2, x1:x2]
+    overlay = np.full(sub_img.shape, color, dtype=np.uint8)
+    img[y1:y2, x1:x2] = cv2.addWeighted(overlay, alpha, sub_img, 1.0 - alpha, 0)
+
+def draw_hud_corners(img, x1, y1, x2, y2, color, length=12, thickness=1):
+    """Dibuja esquinas delgadas y sutiles de encuadre facial."""
+    h, w = img.shape[:2]
+    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+    l = min(length, (x2 - x1) // 4, (y2 - y1) // 4)
+    if l <= 0:
+        return
+
+    # Top-Left
+    cv2.line(img, (x1, y1), (x1 + l, y1), color, thickness, cv2.LINE_AA)
+    cv2.line(img, (x1, y1), (x1, y1 + l), color, thickness, cv2.LINE_AA)
+    # Top-Right
+    cv2.line(img, (x2, y1), (x2 - l, y1), color, thickness, cv2.LINE_AA)
+    cv2.line(img, (x2, y1), (x2, y1 + l), color, thickness, cv2.LINE_AA)
+    # Bottom-Left
+    cv2.line(img, (x1, y2), (x1 + l, y2), color, thickness, cv2.LINE_AA)
+    cv2.line(img, (x1, y2), (x1, y2 - l), color, thickness, cv2.LINE_AA)
+    # Bottom-Right
+    cv2.line(img, (x2, y2), (x2 - l, y2), color, thickness, cv2.LINE_AA)
+    cv2.line(img, (x2, y2), (x2, y2 - l), color, thickness, cv2.LINE_AA)
+
+def draw_pill_badge(img, text, x, y, bg_color, text_color=(255, 255, 255), scale=0.36, pad_x=6, pad_y=2):
+    """Micro badge limpio con anti-aliasing."""
+    (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)
+    bx1, by1 = x, y
+    bx2, by2 = x + tw + pad_x * 2, y + th + pad_y * 2
+    draw_glass_rect(img, bx1, by1, bx2, by2, bg_color, alpha=0.75)
+    cv2.putText(img, text, (bx1 + pad_x, by1 + th + pad_y - 1), cv2.FONT_HERSHEY_SIMPLEX, scale, text_color, 1, cv2.LINE_AA)
+    return bx2
+
+
+# =========================================================================
 #            CAPTURA DESACOPLADA DE VIDEO (Evita lag en RTSP)
 # =========================================================================
 
@@ -243,11 +289,28 @@ class CameraWorker(threading.Thread):
         while self.running:
             connected, frame = self.reader.read()
             if not connected or frame is None:
-                # Generar imagen de sin señal
-                h, w = 360, 480
+                # Generar pantalla de conexión con estética Cyber-NVR
+                h, w = 480, 640
                 no_sig = np.zeros((h, w, 3), dtype=np.uint8)
-                cv2.putText(no_sig, f"CONECTANDO: {self.name}", (20, h//2 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 165, 255), 1)
-                cv2.putText(no_sig, f"[{self.device_id}] {self.source}", (20, h//2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (120, 120, 120), 1)
+                no_sig[:] = (18, 15, 12)  # Fondo oscuro pizarra
+
+                # Cuadrícula sutil de fondo
+                for gx in range(0, w, 40):
+                    cv2.line(no_sig, (gx, 0), (gx, h), (26, 22, 18), 1, cv2.LINE_AA)
+                for gy in range(0, h, 40):
+                    cv2.line(no_sig, (0, gy), (w, gy), (26, 22, 18), 1, cv2.LINE_AA)
+
+                # Círculo radar central
+                cx, cy = w // 2, h // 2 - 20
+                cv2.circle(no_sig, (cx, cy), 50, (45, 38, 30), 1, cv2.LINE_AA)
+                cv2.circle(no_sig, (cx, cy), 28, (65, 55, 45), 1, cv2.LINE_AA)
+                cv2.circle(no_sig, (cx, cy), 6, (0, 165, 255), -1, cv2.LINE_AA)
+
+                # Mensaje de estado
+                draw_pill_badge(no_sig, f" {self.device_id} ", cx - 60, cy + 65, (40, 30, 20), (0, 200, 255), scale=0.42, pad_x=6, pad_y=3)
+                cv2.putText(no_sig, f"CONECTANDO AL FLUJO RTSP / IP...", (cx - 150, cy + 105), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (220, 220, 220), 1, cv2.LINE_AA)
+                cv2.putText(no_sig, f"Fuente: {str(self.source)[:36]}", (cx - 130, cy + 128), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 120), 1, cv2.LINE_AA)
+
                 with self.lock:
                     self.display_frame = no_sig
                 time.sleep(0.1)
@@ -319,38 +382,43 @@ class CameraWorker(threading.Thread):
                             self.trigger_auth(auth_img, t_ear_ms)
                         fsm_state = "OPEN"
                         closed_count = 0
+            else:
+                eff_threshold = 0.20
 
             # Limpiar estado si expiró el banner de concedido/denegado
             if self.status in ["GRANTED", "DENIED"] and (time.time() - self.last_auth_time) > self.cooldown:
                 self.status = "MONITORING"
                 self.status_msg = "MONITOREANDO"
 
-            # Renderizar anotaciones en el frame
+            # Renderizar anotaciones en el frame de forma limpia y moderna
             display = frame.copy()
+
+            # 1. Retícula de encuadre facial fina y elegante
             if box and face_detected:
                 x1, y1, x2, y2 = box
-                color = (0, 255, 0) if self.status == "GRANTED" else ((0, 0, 255) if self.status == "DENIED" else (255, 200, 0))
-                cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
+                if self.status == "GRANTED":
+                    hud_color = (60, 220, 100)      # Verde esmeralda suave
+                elif self.status == "DENIED":
+                    hud_color = (60, 60, 230)       # Rojo carmesí suave
+                elif self.status == "PROCESSING":
+                    hud_color = (0, 200, 240)       # Cyan suave
+                else:
+                    hud_color = (180, 185, 195)     # Gris sutil
 
-            # Barra superior de la cámara
-            banner_bg = (20, 20, 20)
+                draw_hud_corners(display, x1, y1, x2, y2, hud_color, length=14, thickness=1)
+                # Pequeña indicación de EAR sutil sobre el rostro
+                cv2.putText(display, f"EAR {ear_val:.2f}", (x1, max(18, y1 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (210, 210, 210), 1, cv2.LINE_AA)
+
+            # 2. Etiqueta discreta de cámara (Esquina superior izquierda)
+            draw_pill_badge(display, f"{self.name}", 10, 10, (15, 18, 24), (220, 225, 230), scale=0.38, pad_x=6, pad_y=2)
+
+            # 3. Notificación flotante inferior (SOLO cuando hay un evento activo)
             if self.status == "GRANTED":
-                banner_bg = (0, 140, 0)
+                draw_pill_badge(display, f"  ACCESO CONCEDIDO: {self.user_name.upper()} ({self.user_role})  ", 12, h - 34, (20, 110, 40), (255, 255, 255), scale=0.42, pad_x=10, pad_y=4)
             elif self.status == "DENIED":
-                banner_bg = (0, 0, 160)
+                draw_pill_badge(display, f"  DENEGADO: {self.status_msg.upper()}  ", 12, h - 34, (20, 20, 140), (255, 255, 255), scale=0.42, pad_x=10, pad_y=4)
             elif self.status == "PROCESSING":
-                banner_bg = (0, 120, 180)
-
-            cv2.rectangle(display, (0, 0), (w, 55), banner_bg, -1)
-            cv2.putText(display, f"[{self.device_id}] {self.name}", (10, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
-            
-            sub_text = f"EAR: {ear_val:.3f} | {self.status_msg}"
-            if self.status == "GRANTED":
-                sub_text = f"✅ ACCESO: {self.user_name} ({self.user_role})"
-            elif self.status == "DENIED":
-                sub_text = f"🚫 DENEGADO: {self.status_msg}"
-
-            cv2.putText(display, sub_text, (10, 44), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (220, 220, 220), 1)
+                draw_pill_badge(display, "  Verificando Biometria & Liveness...  ", 12, h - 34, (120, 80, 15), (255, 255, 255), scale=0.40, pad_x=8, pad_y=3)
 
             with self.lock:
                 self.display_frame = display
@@ -553,55 +621,93 @@ def main():
         while True:
             # Ensamblar frames de todas las cámaras activas
             frames = []
-            for w in workers:
+            for idx, w in enumerate(workers):
                 with w.lock:
                     if w.display_frame is not None:
-                        frames.append(cv2.resize(w.display_frame, (640, 480)))
+                        f_tile = cv2.resize(w.display_frame, (640, 480))
                     else:
-                        blank = np.zeros((480, 640, 3), dtype=np.uint8)
-                        cv2.putText(blank, f"Iniciando {w.name}...", (30, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 150), 1)
-                        frames.append(blank)
+                        f_tile = np.zeros((480, 640, 3), dtype=np.uint8)
+                        f_tile[:] = (18, 15, 12)
+                        # Cuadrícula sutil
+                        for gx in range(0, 640, 40):
+                            cv2.line(f_tile, (gx, 0), (gx, 480), (26, 22, 18), 1)
+                        for gy in range(0, 480, 40):
+                            cv2.line(f_tile, (0, gy), (640, gy), (26, 22, 18), 1)
+                        cv2.putText(f_tile, f"INICIALIZANDO CANAL {idx+1}...", (200, 235), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 200, 255), 1, cv2.LINE_AA)
+                        cv2.putText(f_tile, f"{w.name}", (200, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 150, 150), 1, cv2.LINE_AA)
 
-            # Crear mosaico visual
+                    # Etiqueta de canal en esquina superior derecha de cada tile
+                    draw_pill_badge(f_tile, f"CH {idx+1:02d}", 570, 8, (25, 20, 15), (140, 180, 255), scale=0.34, pad_x=4, pad_y=2)
+                    frames.append(f_tile)
+
+            # Crear mosaico visual con bordes limpios
             if len(frames) == 1:
                 mosaic = frames[0]
             elif len(frames) == 2:
-                mosaic = np.hstack((frames[0], frames[1]))
+                # Separador vertical de 2px
+                sep_v = np.full((480, 2, 3), (35, 45, 60), dtype=np.uint8)
+                mosaic = np.hstack((frames[0], sep_v, frames[1]))
             elif len(frames) <= 4:
                 while len(frames) < 4:
-                    frames.append(np.zeros((480, 640, 3), dtype=np.uint8))
-                row1 = np.hstack((frames[0], frames[1]))
-                row2 = np.hstack((frames[2], frames[3]))
-                mosaic = np.vstack((row1, row2))
+                    blank = np.zeros((480, 640, 3), dtype=np.uint8)
+                    blank[:] = (18, 15, 12)
+                    frames.append(blank)
+                sep_v = np.full((480, 2, 3), (35, 45, 60), dtype=np.uint8)
+                row1 = np.hstack((frames[0], sep_v, frames[1]))
+                row2 = np.hstack((frames[2], sep_v, frames[3]))
+                sep_h = np.full((2, row1.shape[1], 3), (35, 45, 60), dtype=np.uint8)
+                mosaic = np.vstack((row1, sep_h, row2))
             else:
                 # Cuadrícula genérica
-                row1 = np.hstack(frames[:len(frames)//2])
-                row2 = np.hstack(frames[len(frames)//2:])
+                half = len(frames) // 2
+                row1 = np.hstack(frames[:half])
+                row2 = np.hstack(frames[half:])
                 mosaic = np.vstack((row1, row2))
 
-            # Banner superior de telemetría y control experimental (HUD)
-            banner_h = 50
-            banner = np.zeros((banner_h, mosaic.shape[1], 3), dtype=np.uint8)
-            cv2.rectangle(banner, (0, 0), (mosaic.shape[1], banner_h), (25, 25, 25), -1)
+            total_w = mosaic.shape[1]
 
-            # Color dinámico según tipo de prueba
+            # =========================================================================
+            #            HEADER SLIM (28px) - Telemetría y Estado
+            # =========================================================================
+            header_h = 28
+            header = np.zeros((header_h, total_w, 3), dtype=np.uint8)
+            header[:] = (16, 18, 22)
+            cv2.line(header, (0, header_h - 1), (total_w, header_h - 1), (35, 42, 52), 1, cv2.LINE_AA)
+
+            # Título (Izquierda)
+            cv2.putText(header, "FACESENTINEL NVR", (10, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (240, 240, 240), 1, cv2.LINE_AA)
+
+            # Modo, Entorno y Reloj (Derecha)
             cur_mode = CameraWorker.active_test_type
             if cur_mode == "LIVE_USER":
-                mode_color = (0, 230, 0)      # Verde brillante
+                mode_color = (80, 220, 100)
             elif cur_mode == "IMPOSTOR_LIVE":
-                mode_color = (0, 160, 255)    # Naranja
+                mode_color = (0, 180, 255)
             elif "PHOTO" in cur_mode:
-                mode_color = (0, 0, 240)      # Rojo
+                mode_color = (80, 80, 240)
             else:
-                mode_color = (220, 0, 220)    # Magenta para Video Replay
+                mode_color = (220, 100, 220)
 
-            # Texto de cabecera
-            cv2.putText(banner, f"MODO TEST: {cur_mode}", (15, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.58, mode_color, 2)
-            cv2.putText(banner, f"ILUMINACION: {CameraWorker.active_env_condition}", (420, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 220, 0), 2)
-            cv2.putText(banner, "[T]: Cambiar Modo  |  [C]: Cambiar Luz  |  [ESPACIO]: Forzar Auth  |  [B]: Limpiar CSV  |  [R]: Rotar  |  [Q]: Salir", 
-                        (15, 42), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (200, 200, 200), 1)
+            clock_str = datetime.now().strftime("%H:%M:%S")
+            right_info = f"Modo: {cur_mode}   |   Luz: {CameraWorker.active_env_condition}   |   {clock_str}"
+            (iw, _), _ = cv2.getTextSize(right_info, cv2.FONT_HERSHEY_SIMPLEX, 0.36, 1)
+            cv2.putText(header, right_info, (max(160, total_w - iw - 10), 19), cv2.FONT_HERSHEY_SIMPLEX, 0.36, mode_color, 1, cv2.LINE_AA)
 
-            full_display = np.vstack((banner, mosaic))
+            # =========================================================================
+            #            FOOTER SLIM (22px) - Comandos de Teclado
+            # =========================================================================
+            footer_h = 22
+            footer = np.zeros((footer_h, total_w, 3), dtype=np.uint8)
+            footer[:] = (14, 16, 19)
+            cv2.line(footer, (0, 0), (total_w, 0), (32, 38, 48), 1, cv2.LINE_AA)
+
+            controls_str = "[T] Modo   •   [C] Luz   •   [ESPACIO] Auth   •   [B] CSV   •   [R] Rotar   •   [Q] Salir"
+            (cw, _), _ = cv2.getTextSize(controls_str, cv2.FONT_HERSHEY_SIMPLEX, 0.33, 1)
+            foot_x = max(8, (total_w - cw) // 2)
+            cv2.putText(footer, controls_str, (foot_x, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (160, 165, 175), 1, cv2.LINE_AA)
+
+            # Ensamblar Display
+            full_display = np.vstack((header, mosaic, footer))
             cv2.imshow("FaceSentinel — Multi-Camera NVR Grid", full_display)
             key = cv2.waitKey(20) & 0xFF
 

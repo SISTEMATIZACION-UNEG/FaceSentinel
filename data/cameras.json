@@ -1,32 +1,46 @@
 [
     {
-        "device_id": "2",
-        "name": "IPHONE6",
-        "token": "hw_76P4vOuKeHuDe2U5sG8pwKQyMXs3T0gIemBfv3NnB5o",
+        "device_id": "SMART20",
+        "name": "SMART20",
+        "token": "hw_4XR9EYdenrlK-oxBQ-9MFQMvKL23xcSqOOFSOTfSozo",
         "source": "http://192.168.0.102:4747/video",
         "location": "Punto de Acceso",
         "enabled": true,
         "antispoofing_enabled": true,
-        "lbp_threshold": 3.69
+        "liveness_policy": "passive_fft",
+        "lbp_threshold": 3.716
+    },
+    {
+        "device_id": "2",
+        "name": "IPHONE6",
+        "token": "hw_76P4vOuKeHuDe2U5sG8pwKQyMXs3T0gIemBfv3NnB5o",
+        "source": "http://192.168.0.101:4747/video",
+        "location": "Punto de Acceso",
+        "enabled": false,
+        "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
+        "lbp_threshold": 2.265
     },
     {
         "device_id": "PASILLO62",
         "name": "Pasillo 6-2",
         "token": "hw_zaEy9rg43tK6QZa0e9O_oDE_spala6yRm71hA74ayV8",
-        "source": "rtsp://admin1:password@192.168.70.10:554/Streaming/Channels/201",
+        "source": "rtsp://admin1:@192.168.70.10:554/Streaming/Channels/201",
         "location": "Patio B",
         "enabled": false,
         "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
         "lbp_threshold": 3.5
     },
     {
         "device_id": "GATEWAY_TEST_01",
         "name": "Torniquete Principal Test",
-        "token": "hw_gateway_test_01_token_aqui",
+        "token": "hw_test_token_secret_12345",
         "source": "0",
         "location": "Entrada Biblioteca",
         "enabled": false,
         "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
         "lbp_threshold": 3.2
     },
     {
@@ -37,6 +51,7 @@
         "location": "Edificio administrativo",
         "enabled": false,
         "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
         "lbp_threshold": 3.2
     },
     {
@@ -47,6 +62,7 @@
         "location": "Edificio administrativo",
         "enabled": false,
         "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
         "lbp_threshold": 3.2
     }
 ]

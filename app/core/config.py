@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     
     # IA
     AI_MODEL_NAME: str = "ArcFace"
-    FACE_MATCH_THRESHOLD: float = float(os.getenv("FACE_MATCH_THRESHOLD", "0.68"))
+    FACE_MATCH_THRESHOLD: float = float(os.getenv("FACE_MATCH_THRESHOLD", "0.60"))
     
     # Web3
     BLOCKCHAIN_RPC_URL: str = "http://127.0.0.1:7545"
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Seguridad — JWT
     JWT_SECRET_KEY: str = "facesentinel-super-secret-key-change-in-production"
-    JWT_EXPIRATION_MINUTES: int = 60
+    JWT_EXPIRATION_MINUTES: int = 1440
 
     # Seguridad — Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 30

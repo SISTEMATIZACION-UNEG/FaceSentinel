@@ -46,6 +46,8 @@ from app.services.storage import (
     save_acl_rule,
     delete_acl_rule,
     get_all_devices,
+    get_system_setting,
+    set_system_setting,
 )
 
 logger = logging.getLogger(__name__)
@@ -434,8 +436,44 @@ from app.services.liveness import (
     analyze_texture, 
     analyze_frequency, 
     comprehensive_liveness_check,
-    estimate_head_pose
+    estimate_head_pose,
+    LBP_MAX_ENTROPY_THRESHOLD,
+    FFT_MIN_RATIO,
+    FFT_MAX_RATIO,
 )
+
+@router.get("/system/policy", tags=["Configuración Global del Sistema"])
+def get_system_security_policy():
+    """Retorna la política de liveness activa para el portal central de FaceSentinel y parámetros biométricos."""
+    portal_policy = get_system_setting("portal_liveness_policy", "active")
+    return {
+        "portal_liveness_policy": portal_policy,
+        "match_threshold": settings.FACE_MATCH_THRESHOLD,
+        "available_policies": ["none", "passive_lbp", "passive_fft", "active"]
+    }
+
+@router.patch("/system/policy", tags=["Configuración Global del Sistema"])
+def update_system_security_policy(policy_data: dict, current_user: dict = Depends(require_admin)):
+    """Actualiza la política de liveness exigida para acceder al portal central de FaceSentinel."""
+    new_policy = policy_data.get("portal_liveness_policy")
+    if new_policy not in ["none", "passive_lbp", "passive_fft", "active"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Política no válida. Debe ser 'none', 'passive_lbp', 'passive_fft' o 'active'."
+        )
+    success = set_system_setting(
+        "portal_liveness_policy", 
+        new_policy, 
+        description="Nivel de liveness exigido para autenticación en el portal central FaceSentinel"
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Error al guardar la política en la base de datos.")
+    logger.info(f"🛡️ Política de liveness del Portal FaceSentinel actualizada a: '{new_policy}' por admin {current_user.get('sub')}")
+    return {
+        "success": True,
+        "portal_liveness_policy": new_policy,
+        "message": f"Nivel de seguridad del portal actualizado a '{new_policy}'."
+    }
 
 @router.websocket("/ws/liveness")
 async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None), action: str = Query("authentication")):
@@ -448,12 +486,16 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
     await websocket.accept()
     
     # REGLA DE SEGURIDAD (Anti-Downgrade):
-    # Si no se envía client_id o el client_id no existe, aplica por defecto "active".
-    liveness_policy = "active"
+    # Si se envía client_id, usa la política del cliente registrado.
+    # Si no se envía client_id (acceso directo al portal FaceSentinel), usa la política global del portal.
     if client_id:
         client_info = get_oauth_client(client_id)
         if client_info:
             liveness_policy = client_info.get("liveness_policy", "active") or "active"
+        else:
+            liveness_policy = "active"
+    else:
+        liveness_policy = get_system_setting("portal_liveness_policy", "active")
 
     logger.info(f"🌐 WebSocket Liveness conectado. Client ID: '{client_id}' | Política activa: '{liveness_policy}'")
     
@@ -476,6 +518,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
     
     try:
         frame_count = 0
+        none_policy_attempts = 0
         while True:
             # Esperar el frame del frontend
             data = await websocket.receive_text()
@@ -517,8 +560,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                 # POLÍTICA 1: "none" (1-Shot Instantáneo sin anti-spoofing)
                 # -------------------------------------------------------------
                 if liveness_policy == "none":
-                    print("⚡ Política 'none' (1-Shot Instantáneo): Ejecutando ArcFace en primer frame con rostro...")
-                    auth_res = verify_face(img_bgr, custom_threshold=0.70)
+                    auth_res = verify_face(img_bgr)
                     metrics_payload = {
                         "blink": {"value": round(ear, 3), "threshold": "N/A (1-Shot)", "weight": "Deshabilitado", "passed": True},
                         "texture": {"value": 0.0, "threshold": "N/A (1-Shot)", "weight": "Deshabilitado", "passed": True},
@@ -560,26 +602,38 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "tx_hash": tx_hash,
                             "metrics": metrics_payload
                         })
+                        break
                     else:
                         distance = auth_res.get("distance", 0.0)
-                        loop = asyncio.get_event_loop()
-                        await loop.run_in_executor(
-                            None,
-                            lambda: log_authentication(
-                                user_id="UNKNOWN",
-                                client_id=effective_client_id,
-                                embedding=None,
-                                access_granted=False,
-                                match_score=distance
+                        none_policy_attempts += 1
+                        if none_policy_attempts < 15:
+                            # Dar ventana de ~1.5 segundos para que la cámara estabilice el enfoque y ángulo
+                            await websocket.send_json({
+                                "status": "tracking",
+                                "message": f"Identificando rostro en base de datos... ({none_policy_attempts}/15)",
+                                "match_score": distance,
+                                "metrics": metrics_payload
+                            })
+                            continue
+                        else:
+                            loop = asyncio.get_event_loop()
+                            await loop.run_in_executor(
+                                None,
+                                lambda: log_authentication(
+                                    user_id="UNKNOWN",
+                                    client_id=effective_client_id,
+                                    embedding=None,
+                                    access_granted=False,
+                                    match_score=distance
+                                )
                             )
-                        )
-                        await websocket.send_json({
-                            "status": "failed",
-                            "message": auth_res.get("message", "Acceso denegado. Rostro desconocido."),
-                            "match_score": distance,
-                            "metrics": metrics_payload
-                        })
-                    break
+                            await websocket.send_json({
+                                "status": "failed",
+                                "message": auth_res.get("message", "Acceso denegado. Rostro no registrado o distancia superior al umbral."),
+                                "match_score": distance,
+                                "metrics": metrics_payload
+                            })
+                            break
                 
                 if phase == "blink":
                     # Actualizar el rastreador de parpadeo con el EAR actual
@@ -616,11 +670,32 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             })
                             continue
                         
+                        # Para niveles multimodales (passive_fft, passive, active): validar también FFT y cota superior LBP
+                        if liveness_policy in ["passive", "passive_fft", "active"]:
+                            is_print_or_screen_spoof = bool(
+                                (not freq_res.get("is_real", True)) or
+                                (texture_res.get("entropy", 0.0) > LBP_MAX_ENTROPY_THRESHOLD)
+                            )
+                            if is_print_or_screen_spoof:
+                                print(f"🚨 Spoofing detectado por FFT o cota superior LBP. Ratio: {freq_res.get('freq_ratio')}, Entropy: {texture_res.get('entropy')}")
+                                tracker.reset()
+                                await websocket.send_json({
+                                    "status": "spoof_detected",
+                                    "message": "Ataque detectado (Foto impresa / Anomalía espectral FFT). Usa un rostro real.",
+                                    "metrics": {
+                                        "blink": {"value": round(ear, 3), "threshold": "< 0.16", "weight": "Filtro Base (Obligatorio)", "passed": True},
+                                        "texture": {"value": texture_res.get("entropy"), "threshold": f"[{sso_lbp_threshold:.2f}, {LBP_MAX_ENTROPY_THRESHOLD:.3f}]", "weight": "Textura LBP", "passed": texture_res.get("entropy", 0.0) <= LBP_MAX_ENTROPY_THRESHOLD},
+                                        "frequency": {"value": freq_res.get("freq_ratio"), "threshold": f"[{FFT_MIN_RATIO:.3f}, {FFT_MAX_RATIO:.3f}]", "weight": "Espectro FFT", "passed": freq_res.get("is_real", True)}
+                                    }
+                                })
+                                continue
+
                         # -------------------------------------------------------------
-                        # POLÍTICA 2: "passive" (Parpadeo + LBP sin desafíos de pose)
+                        # POLÍTICA 2 & 3: "passive_lbp" (Nivel 2) o "passive_fft" / "passive" (Nivel 3)
                         # -------------------------------------------------------------
-                        if liveness_policy == "passive":
-                            print("⚡ Política 'passive' (Parpadeo + LBP): Ejecutando ArcFace tras validación de vida pasiva...")
+                        if liveness_policy in ["passive", "passive_fft", "passive_lbp"]:
+                            mode_label = "Pasivo LBP (Nivel 2)" if liveness_policy == "passive_lbp" else "Pasivo Multimodal (Nivel 3)"
+                            print(f"⚡ Política '{liveness_policy}' ({mode_label}): Ejecutando ArcFace tras validación pasiva...")
                             metrics_payload = {
                                 "blink": {
                                     "value": round(ear, 3),
@@ -642,11 +717,11 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                 },
                                 "frequency": {
                                     "value": freq_res.get("freq_ratio"),
-                                    "threshold": "N/A",
-                                    "weight": "Bypass (OLED)"
+                                    "threshold": f"[{FFT_MIN_RATIO:.3f}, {FFT_MAX_RATIO:.3f}]" if liveness_policy != "passive_lbp" else "N/A (Bypass CCTV)",
+                                    "weight": "Espectro FFT" if liveness_policy != "passive_lbp" else "Bypass (CCTV)"
                                 }
                             }
-                            auth_res = verify_face(img_bgr, custom_threshold=0.70)
+                            auth_res = verify_face(img_bgr)
                             if auth_res.get("success"):
                                 user_id = auth_res["user_id"]
                                 user_name = auth_res["name"]
@@ -673,7 +748,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                 tx_hash = log_res.get("tx_hash")
                                 await websocket.send_json({
                                     "status": "passed",
-                                    "message": f"¡Identidad verificada (Pasivo)! Bienvenido, {user_name}",
+                                    "message": f"¡Identidad verificada ({mode_label})! Bienvenido, {user_name}",
                                     "user_id": user_id,
                                     "user_name": user_name,
                                     "role": role,
@@ -704,7 +779,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             break
 
                         # -------------------------------------------------------------
-                        # POLÍTICA 3: "active" (Parpadeo + LBP + Desafío Activo de Pose)
+                        # POLÍTICA 4: "active" (Parpadeo + LBP + FFT + Desafío Activo de Pose)
                         # -------------------------------------------------------------
                         # ¡Fase 1 superada! Guardamos el fotograma FRONTAL limpio para ArcFace
                         frontal_frame = img_bgr.copy()
@@ -903,7 +978,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                     
                     # Ejecutar ArcFace usando el frontal_frame limpio guardado en Fase 1
                     print("🧠 Ejecutando ArcFace con el fotograma FRONTAL limpio guardado en Fase 1...")
-                    auth_res = verify_face(frontal_frame, custom_threshold=0.70)
+                    auth_res = verify_face(frontal_frame)
                     
                     if auth_res.get("success"):
                         user_id = auth_res["user_id"]
@@ -1090,6 +1165,11 @@ def physical_access_authenticate(
     antispoofing_enabled = device.get("antispoofing_enabled", True) if isinstance(device, dict) else getattr(device, "antispoofing_enabled", True)
     if antispoofing_enabled is None:
         antispoofing_enabled = True
+    device_policy = device.get("liveness_policy", "passive_fft") if isinstance(device, dict) else getattr(device, "liveness_policy", "passive_fft")
+    if not antispoofing_enabled:
+        device_policy = "none"
+    elif not device_policy:
+        device_policy = "passive_fft"
 
     # 2. Decodificar imagen base64
     try:
@@ -1101,9 +1181,9 @@ def physical_access_authenticate(
         )
 
     # 3. Validación de Liveness (Anti-Spoofing) según política del dispositivo
-    if not antispoofing_enabled:
+    if device_policy == "none":
         # Modo Bypass Ultra-Rápido (< 200 ms): omite validación LBP y ejecuta directamente ArcFace
-        logger.info(f"⚡ Bypass anti-spoofing activado para dispositivo '{device_id}' (antispoofing_enabled=False). Match directo.")
+        logger.info(f"⚡ Bypass anti-spoofing activado para dispositivo '{device_id}' (policy='none'). Match directo.")
         liveness_res = {
             "is_live": True,
             "t_lbp_ms": 0.0,
@@ -1115,7 +1195,11 @@ def physical_access_authenticate(
         }
     else:
         try:
-            liveness_res = comprehensive_liveness_check(img_bgr, custom_lbp_threshold=device_lbp_threshold)
+            liveness_res = comprehensive_liveness_check(
+                img_bgr,
+                custom_lbp_threshold=device_lbp_threshold,
+                security_level=device_policy
+            )
             if not liveness_res.get("is_live"):
                 # Si el fotograma viene corrupto por red o micro-glitches HEVC (entropía o nitidez ~0.0),
                 # descartar el frame y solicitar reintento inmediato en lugar de registrarlo como ataque de spoofing.
@@ -1422,6 +1506,7 @@ def register_device(device_data: IoTDeviceCreate, current_user: dict = Depends(r
     # Hashear el token para almacenamiento en base de datos
     secret_hash = hash_client_secret(client_secret)
     
+    policy = device_data.liveness_policy or ("passive_fft" if device_data.antispoofing_enabled else "none")
     success = save_iot_device(
         device_id=device_data.device_id,
         device_name=device_data.device_name,
@@ -1432,6 +1517,7 @@ def register_device(device_data: IoTDeviceCreate, current_user: dict = Depends(r
         lbp_threshold=device_data.lbp_threshold,
         stream_url=device_data.stream_url,
         antispoofing_enabled=device_data.antispoofing_enabled,
+        liveness_policy=policy,
         is_active=True
     )
     
@@ -1449,6 +1535,7 @@ def register_device(device_data: IoTDeviceCreate, current_user: dict = Depends(r
         "stream_url": device_data.stream_url,
         "lbp_threshold": device_data.lbp_threshold,
         "antispoofing_enabled": device_data.antispoofing_enabled,
+        "liveness_policy": policy,
         "client_secret": client_secret  # Se retorna una sola vez en texto plano
     }
 
@@ -1490,6 +1577,7 @@ def sync_devices_for_gateway():
             "location": d.get("location") or "Punto de Acceso",
             "enabled": bool(d.get("is_active", True) and d.get("stream_url")),
             "antispoofing_enabled": d.get("antispoofing_enabled", True),
+            "liveness_policy": d.get("liveness_policy", "passive_fft"),
             "lbp_threshold": d.get("lbp_threshold", 3.670)
         })
 
@@ -1528,6 +1616,7 @@ def update_device(
         stream_url=update_data.stream_url,
         lbp_threshold=update_data.lbp_threshold,
         antispoofing_enabled=update_data.antispoofing_enabled,
+        liveness_policy=update_data.liveness_policy,
         is_active=update_data.is_active
     )
     if not success:
@@ -1558,6 +1647,8 @@ def update_device(
                             c["location"] = update_data.location
                         if update_data.antispoofing_enabled is not None:
                             c["antispoofing_enabled"] = update_data.antispoofing_enabled
+                        if update_data.liveness_policy is not None:
+                            c["liveness_policy"] = update_data.liveness_policy
                 if not matched and update_data.stream_url:
                     configs.append({
                         "device_id": device_id,
@@ -1567,6 +1658,7 @@ def update_device(
                         "location": update_data.location or "Punto de Acceso",
                         "enabled": bool(update_data.is_active) if update_data.is_active is not None else True,
                         "antispoofing_enabled": update_data.antispoofing_enabled if update_data.antispoofing_enabled is not None else True,
+                        "liveness_policy": update_data.liveness_policy or "passive_fft",
                         "lbp_threshold": update_data.lbp_threshold or 3.670
                     })
                 with open(path, "w", encoding="utf-8") as f:

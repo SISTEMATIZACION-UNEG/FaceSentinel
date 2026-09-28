@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 
-async def test_ws():
+async def run_ws_check():
     url = "ws://127.0.0.1:8000/api/v1/ws/liveness?client_id=APP_PRUEBA_123"
     try:
         async with websockets.connect(url) as ws:
@@ -12,4 +12,5 @@ async def test_ws():
     except Exception as e:
         print("Failed to connect:", e)
 
-asyncio.run(test_ws())
+if __name__ == "__main__":
+    asyncio.run(run_ws_check())

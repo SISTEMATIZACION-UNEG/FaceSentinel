@@ -267,7 +267,7 @@ def send_auth_request(base64_img: str, telemetry: dict, callbacks: dict):
         if liveness_data:
             print(f" 🛡️  Liveness Score: {liveness_data.get('score', 0.0):.4f} | Entropía LBP: {liveness_data.get('entropy', 0.0):.4f} (Umbral: {liveness_data.get('lbp_threshold', 3.2):.2f})")
         if bio_data:
-            print(f" 🧬 Distancia Coseno: {bio_data.get('distance', 0.0):.4f} (Umbral Match: {bio_data.get('threshold', 0.68):.2f})")
+            print(f" 🧬 Distancia Coseno: {bio_data.get('distance', 0.0):.4f} (Umbral Match: {bio_data.get('threshold', 0.60):.2f})")
 
         if response.status_code == 200 and data.get("authorization") == "GRANTED":
             user  = data.get("user", {})

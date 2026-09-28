@@ -128,6 +128,7 @@ class IoTDevice(Base):
     # URL del stream RTSP o HTTP para cámaras de vigilancia
     stream_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     antispoofing_enabled: Mapped[bool] = mapped_column(Boolean, default=True)  # True: LBP activo; False: Bypass ultra-rápido (<200ms)
+    liveness_policy: Mapped[str] = mapped_column(String, default="passive_fft")  # 'none', 'passive_lbp', 'passive_fft'
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -151,6 +152,15 @@ class AccessControlList(Base):
     # Relaciones de clave foránea
     user: Mapped[Optional[User]] = relationship("User", back_populates="acl_rules")
     device: Mapped[IoTDevice] = relationship("IoTDevice", back_populates="acl_rules")
+
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+    
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 def init_sqlite():
@@ -194,6 +204,10 @@ def init_sqlite():
                 db.execute(text("ALTER TABLE iot_devices ADD COLUMN token_plain VARCHAR;"))
                 db.commit()
                 logger.info("🛠️ Columna 'token_plain' migrada en iot_devices.")
+            if cols_iot and "liveness_policy" not in cols_iot:
+                db.execute(text("ALTER TABLE iot_devices ADD COLUMN liveness_policy VARCHAR DEFAULT 'passive_fft';"))
+                db.commit()
+                logger.info("🛠️ Columna 'liveness_policy' migrada en iot_devices.")
 
             # 2. Verificar columna liveness_policy en oauth_clients
             cols_oauth = [row[1] for row in db.execute(text("PRAGMA table_info(oauth_clients)")).fetchall()]
@@ -595,11 +609,17 @@ def save_iot_device(
     lbp_threshold: float = 3.2,
     stream_url: Optional[str] = None,
     antispoofing_enabled: bool = True,
+    liveness_policy: str = "passive_fft",
     is_active: bool = True
 ) -> bool:
     """Guarda o actualiza un dispositivo IoT en la base de datos."""
     import hashlib
     lookup_hash = hashlib.sha256(token_plain.encode()).hexdigest() if token_plain else None
+    if liveness_policy == "none":
+        antispoofing_enabled = False
+    elif not antispoofing_enabled and liveness_policy == "passive_fft":
+        liveness_policy = "none"
+
     with SessionLocal() as session:
         try:
             device = session.get(IoTDevice, device_id)
@@ -610,6 +630,7 @@ def save_iot_device(
                 device.client_secret_hash = client_secret_hash
                 device.lbp_threshold = lbp_threshold
                 device.antispoofing_enabled = antispoofing_enabled
+                device.liveness_policy = liveness_policy
                 if stream_url is not None:
                     device.stream_url = stream_url
                 if lookup_hash is not None:
@@ -630,11 +651,12 @@ def save_iot_device(
                     lbp_threshold=lbp_threshold,
                     stream_url=stream_url,
                     antispoofing_enabled=antispoofing_enabled,
+                    liveness_policy=liveness_policy,
                     is_active=is_active
                 )
                 session.add(device)
             session.commit()
-            logger.info(f"⚙️ Dispositivo IoT '{device_name}' (ID: {device_id}, Antispoofing: {antispoofing_enabled}) guardado con éxito.")
+            logger.info(f"⚙️ Dispositivo IoT '{device_name}' (ID: {device_id}, Política: {liveness_policy}, Antispoofing: {antispoofing_enabled}) guardado con éxito.")
             return True
         except Exception as e:
             session.rollback()
@@ -649,6 +671,7 @@ def update_iot_device(
     stream_url: Optional[str] = None,
     lbp_threshold: Optional[float] = None,
     antispoofing_enabled: Optional[bool] = None,
+    liveness_policy: Optional[str] = None,
     is_active: Optional[bool] = None
 ) -> bool:
     """Actualiza campos específicos de un dispositivo IoT existente."""
@@ -665,13 +688,20 @@ def update_iot_device(
                 device.stream_url = stream_url
             if lbp_threshold is not None:
                 device.lbp_threshold = lbp_threshold
-            if antispoofing_enabled is not None:
+            if liveness_policy is not None:
+                device.liveness_policy = liveness_policy
+                device.antispoofing_enabled = (liveness_policy != "none")
+            elif antispoofing_enabled is not None:
                 device.antispoofing_enabled = antispoofing_enabled
+                if not antispoofing_enabled:
+                    device.liveness_policy = "none"
+                elif getattr(device, "liveness_policy", "none") == "none":
+                    device.liveness_policy = "passive_fft"
             if is_active is not None:
                 device.is_active = is_active
             device.updated_at = datetime.utcnow()
             session.commit()
-            logger.info(f"🔄 Dispositivo IoT '{device_id}' actualizado (Antispoofing: {getattr(device, 'antispoofing_enabled', True)}).")
+            logger.info(f"🔄 Dispositivo IoT '{device_id}' actualizado (Política: {getattr(device, 'liveness_policy', 'passive_fft')}).")
             return True
         except Exception as e:
             session.rollback()
@@ -687,6 +717,7 @@ def get_iot_device(device_id: str) -> Optional[dict]:
             anti_enabled = getattr(device, "antispoofing_enabled", True)
             if anti_enabled is None:
                 anti_enabled = True
+            policy = getattr(device, "liveness_policy", None) or ("passive_fft" if anti_enabled else "none")
             return {
                 "device_id": device.device_id,
                 "device_name": device.device_name,
@@ -696,6 +727,7 @@ def get_iot_device(device_id: str) -> Optional[dict]:
                 "lbp_threshold": getattr(device, "lbp_threshold", 3.2),
                 "stream_url": getattr(device, "stream_url", None),
                 "antispoofing_enabled": bool(anti_enabled),
+                "liveness_policy": policy,
                 "is_active": device.is_active,
                 "created_at": device.created_at,
                 "updated_at": device.updated_at
@@ -784,6 +816,7 @@ def get_device_by_token(token: str) -> Optional[dict]:
         if device and verify_client_secret(token, device.client_secret_hash):
             anti = getattr(device, "antispoofing_enabled", True)
             if anti is None: anti = True
+            policy = getattr(device, "liveness_policy", None) or ("passive_fft" if anti else "none")
             return {
                 "device_id": device.device_id,
                 "device_name": device.device_name,
@@ -792,6 +825,7 @@ def get_device_by_token(token: str) -> Optional[dict]:
                 "client_secret_hash": device.client_secret_hash,
                 "lbp_threshold": getattr(device, "lbp_threshold", 3.2),
                 "antispoofing_enabled": bool(anti),
+                "liveness_policy": policy,
                 "is_active": device.is_active,
                 "created_at": device.created_at,
                 "updated_at": device.updated_at
@@ -810,6 +844,7 @@ def get_device_by_token(token: str) -> Optional[dict]:
                 session.commit()
                 anti = getattr(leg_device, "antispoofing_enabled", True)
                 if anti is None: anti = True
+                policy = getattr(leg_device, "liveness_policy", None) or ("passive_fft" if anti else "none")
                 return {
                     "device_id": leg_device.device_id,
                     "device_name": leg_device.device_name,
@@ -818,6 +853,7 @@ def get_device_by_token(token: str) -> Optional[dict]:
                     "client_secret_hash": leg_device.client_secret_hash,
                     "lbp_threshold": getattr(leg_device, "lbp_threshold", 3.2),
                     "antispoofing_enabled": bool(anti),
+                    "liveness_policy": policy,
                     "is_active": leg_device.is_active,
                     "created_at": leg_device.created_at,
                     "updated_at": leg_device.updated_at
@@ -855,6 +891,7 @@ def get_all_devices() -> list[dict]:
                 "stream_url": getattr(d, "stream_url", None),
                 "token": getattr(d, "token_plain", None),
                 "antispoofing_enabled": bool(getattr(d, "antispoofing_enabled", True) if getattr(d, "antispoofing_enabled", True) is not None else True),
+                "liveness_policy": getattr(d, "liveness_policy", "passive_fft") or "passive_fft",
                 "is_active": d.is_active,
                 "created_at": d.created_at
             }
@@ -875,6 +912,35 @@ def delete_acl_rule(rule_id: int) -> bool:
                 session.rollback()
                 logger.error(f"❌ Error al eliminar regla ACL: {e}")
                 return False
+def get_system_setting(key: str, default: str = "") -> str:
+    """Obtiene el valor de una configuración global del sistema."""
+    try:
+        with SessionLocal() as db:
+            setting = db.execute(select(SystemSetting).where(SystemSetting.key == key)).scalars().first()
+            if setting:
+                return setting.value
+    except Exception as e:
+        logger.error(f"Error al leer system_setting '{key}': {e}")
+    return default
+
+
+def set_system_setting(key: str, value: str, description: Optional[str] = None) -> bool:
+    """Establece o actualiza una configuración global del sistema."""
+    try:
+        with SessionLocal() as db:
+            setting = db.execute(select(SystemSetting).where(SystemSetting.key == key)).scalars().first()
+            if setting:
+                setting.value = value
+                if description:
+                    setting.description = description
+                setting.updated_at = datetime.utcnow()
+            else:
+                setting = SystemSetting(key=key, value=value, description=description)
+                db.add(setting)
+            db.commit()
+            return True
+    except Exception as e:
+        logger.error(f"Error al guardar system_setting '{key}': {e}")
         return False
 
 

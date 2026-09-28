@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", settings.JWT_SECRET_KEY)
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
+JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", str(settings.JWT_EXPIRATION_MINUTES)))
 
 # Esquemas de seguridad para FastAPI/Swagger
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -92,9 +92,16 @@ def verify_token(token: str) -> dict:
         )
 
 
-def generate_idp_token(user_id: str, client_id: str, role: str = "user", expires_delta_minutes: int = 3, action: str = None, name: str = None) -> str:
+def generate_idp_token(
+    user_id: str,
+    client_id: str,
+    role: str = "user",
+    expires_delta_minutes: Optional[int] = None,
+    action: str = None,
+    name: str = None
+) -> str:
     """
-    Genera un token JWT de federación (IdP) con una expiración muy corta.
+    Genera un token JWT de federación (IdP) o sesión de usuario.
     Incluye al usuario en el claim 'sub', al cliente de terceros en 'aud' y el rol en 'role'.
     """
     payload = {
@@ -107,7 +114,9 @@ def generate_idp_token(user_id: str, client_id: str, role: str = "user", expires
         payload["action"] = action
     if name:
         payload["name"] = name
-    return create_access_token(data=payload, expires_delta=timedelta(minutes=expires_delta_minutes))
+
+    delta = timedelta(minutes=expires_delta_minutes) if expires_delta_minutes is not None else timedelta(minutes=JWT_EXPIRATION_MINUTES)
+    return create_access_token(data=payload, expires_delta=delta)
 
 
 

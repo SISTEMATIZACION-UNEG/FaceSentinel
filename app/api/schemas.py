@@ -81,7 +81,7 @@ class ClientUpdate(BaseModel):
     """Modelo para actualizar una aplicación cliente de terceros."""
     app_name: Optional[str] = None
     redirect_uris: Optional[List[str]] = None
-    liveness_policy: Optional[str] = Field(None, description="Política de liveness: 'none', 'passive', 'active'")
+    liveness_policy: Optional[str] = Field(None, description="Política de liveness: 'none', 'passive_lbp', 'passive', 'passive_fft', 'active'")
 
 
 class ClientResponse(BaseModel):
@@ -134,6 +134,7 @@ class IoTDeviceCreate(BaseModel):
     stream_url: Optional[str] = Field(None, description="URL del stream de video RTSP o HTTP de la cámara")
     lbp_threshold: float = Field(3.670, description="Umbral de entropía LBP configurado para el sensor óptico del dispositivo")
     antispoofing_enabled: bool = Field(True, description="Si es False omite análisis LBP y valida directamente ArcFace (<200ms)")
+    liveness_policy: Optional[str] = Field("passive_fft", description="Nivel de seguridad: 'none' (Nivel 1), 'passive_lbp' (Nivel 2), 'passive_fft' (Nivel 3)")
 
 
 class IoTDeviceUpdate(BaseModel):
@@ -143,6 +144,7 @@ class IoTDeviceUpdate(BaseModel):
     stream_url: Optional[str] = Field(None, description="URL del stream de video RTSP o HTTP")
     lbp_threshold: Optional[float] = Field(None, description="Nuevo umbral de calibración óptica LBP")
     antispoofing_enabled: Optional[bool] = Field(None, description="Activa o desactiva la validación anti-spoofing")
+    liveness_policy: Optional[str] = Field(None, description="Nuevo nivel de seguridad: 'none', 'passive_lbp', 'passive_fft'")
     is_active: Optional[bool] = Field(None, description="Estado de activación del punto de acceso")
 
 

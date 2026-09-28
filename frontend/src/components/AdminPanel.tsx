@@ -13,7 +13,7 @@ interface Client {
     client_id: string
     app_name: string
     redirect_uris: string[]
-    liveness_policy?: "none" | "passive" | "active"
+    liveness_policy?: "none" | "passive_lbp" | "passive" | "passive_fft" | "active"
     created_at: string
 }
 
@@ -57,7 +57,10 @@ export default function AdminPanel() {
     const [devCedula, setDevCedula] = useState("")
     const [devUsername, setDevUsername] = useState("")
     const [devPassword, setDevPassword] = useState("")
-    const [livenessPolicy, setLivenessPolicy] = useState<"none" | "passive" | "active">("active")
+    const [livenessPolicy, setLivenessPolicy] = useState<"none" | "passive_lbp" | "passive_fft" | "active">("active")
+    const [portalPolicy, setPortalPolicy] = useState<"none" | "passive_lbp" | "passive_fft" | "active">("active")
+    const [savingPortalPolicy, setSavingPortalPolicy] = useState(false)
+    const [portalPolicyMsg, setPortalPolicyMsg] = useState("")
     const [registering, setRegistering] = useState(false)
     const [newClientResult, setNewClientResult] = useState<{ client_id: string; client_secret: string } | null>(null)
     const [copiedId, setCopiedId] = useState(false)
@@ -70,6 +73,37 @@ export default function AdminPanel() {
 
     const token = localStorage.getItem("token") || ""
     const baseUrl = API_BASE_URL
+
+    const fetchSystemPolicy = async () => {
+        try {
+            const res = await axios.get(`${baseUrl}/api/v1/system/policy`)
+            if (res.data.portal_liveness_policy) {
+                setPortalPolicy(res.data.portal_liveness_policy)
+            }
+        } catch (e) {
+            console.error("Error al cargar política del sistema", e)
+        }
+    }
+
+    const handleUpdatePortalPolicy = async (newPolicy: "none" | "passive_lbp" | "passive_fft" | "active") => {
+        setSavingPortalPolicy(true)
+        setPortalPolicy(newPolicy)
+        setPortalPolicyMsg("")
+        try {
+            await axios.patch(`${baseUrl}/api/v1/system/policy`, {
+                portal_liveness_policy: newPolicy
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setPortalPolicyMsg("Nivel de seguridad del portal FaceSentinel actualizado correctamente.")
+            setTimeout(() => setPortalPolicyMsg(""), 4000)
+        } catch (err: any) {
+            alert(err.response?.data?.detail || "Error al actualizar la política del portal.")
+            fetchSystemPolicy()
+        } finally {
+            setSavingPortalPolicy(false)
+        }
+    }
 
     const fetchClients = async () => {
         setLoadingClients(true)
@@ -129,7 +163,7 @@ export default function AdminPanel() {
         }
     }
 
-    const handleUpdateClientPolicy = async (clientId: string, newPolicy: "none" | "passive" | "active") => {
+    const handleUpdateClientPolicy = async (clientId: string, newPolicy: "none" | "passive_lbp" | "passive_fft" | "active") => {
         setClients(prev => prev.map(c => c.client_id === clientId ? { ...c, liveness_policy: newPolicy } : c))
         try {
             await axios.patch(`${baseUrl}/api/v1/clients/${clientId}`, {
@@ -300,6 +334,7 @@ export default function AdminPanel() {
     useEffect(() => {
         if (token) {
             fetchClients()
+            fetchSystemPolicy()
         }
     }, [token])
 
@@ -325,7 +360,7 @@ export default function AdminPanel() {
                         Gestiona clientes de SSO, enrolamiento facial y auditoría en Blockchain.
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => { fetchClients(); if (adminSubTab === "users") fetchUsers(); }} disabled={loadingClients || loadingUsers}>
+                <Button variant="outline" size="sm" onClick={() => { fetchClients(); fetchSystemPolicy(); if (adminSubTab === "users") fetchUsers(); }} disabled={loadingClients || loadingUsers}>
                     <RefreshCw className={`h-4 w-4 mr-2 ${loadingClients || loadingUsers ? "animate-spin" : ""}`} /> Actualizar
                 </Button>
             </div>
@@ -378,6 +413,56 @@ export default function AdminPanel() {
                             {error}
                         </div>
                     )}
+
+                    {/* Card de Configuración de Acceso a FaceSentinel (Root Portal) */}
+                    <Card className="border-primary/30 bg-primary/5 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="space-y-1">
+                                    <CardTitle className="text-md flex items-center gap-2">
+                                        <ShieldCheck className="w-5 h-5 text-primary" /> Nivel de Seguridad de Acceso a FaceSentinel (Portal Root)
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Define el nivel de verificación biométrica y anti-spoofing exigido para ingresar directamente a este portal.
+                                    </CardDescription>
+                                </div>
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-bold border self-start sm:self-center ${
+                                    portalPolicy === "active" 
+                                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        : (portalPolicy === "passive_fft" || portalPolicy === "passive")
+                                        ? "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30"
+                                        : portalPolicy === "passive_lbp"
+                                        ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                        : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                }`}>
+                                    {portalPolicy === "active" && "NIVEL 4: ACTIVO (BLINDADO)"}
+                                    {(portalPolicy === "passive_fft" || portalPolicy === "passive") && "NIVEL 3: MULTIMODAL (ESTRICTO)"}
+                                    {portalPolicy === "passive_lbp" && "NIVEL 2: ESTÁNDAR (EAR+LBP)"}
+                                    {portalPolicy === "none" && "NIVEL 1: BÁSICO (1-SHOT)"}
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                <select
+                                    value={portalPolicy}
+                                    onChange={(e) => handleUpdatePortalPolicy(e.target.value as "none" | "passive_lbp" | "passive_fft" | "active")}
+                                    disabled={savingPortalPolicy}
+                                    className="flex h-10 w-full sm:w-[500px] rounded-md border border-input bg-background px-3 py-2 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                                >
+                                    <option value="active">Nivel 4: Liveness Activo + Retos de Movimiento (EAR + LBP + FFT + Pose/MAR)</option>
+                                    <option value="passive_fft">Nivel 3: Liveness Pasivo Multimodal (EAR + LBP + FFT)</option>
+                                    <option value="passive_lbp">Nivel 2: Liveness Pasivo Básico (EAR + LBP)</option>
+                                    <option value="none">Nivel 1: Solo Similitud ArcFace (1-Shot Instantáneo)</option>
+                                </select>
+                                {savingPortalPolicy && <span className="text-xs text-muted-foreground animate-pulse">Guardando...</span>}
+                                {portalPolicyMsg && <span className="text-xs text-green-600 font-medium flex items-center gap-1"><Check className="w-4 h-4" /> {portalPolicyMsg}</span>}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                                Este nivel se aplica de forma obligatoria cuando los usuarios y administradores se autentican biométricamente en el inicio de sesión de FaceSentinel.
+                            </p>
+                        </CardContent>
+                    </Card>
 
                     <div className="grid gap-6 md:grid-cols-3">
                         {/* Registro de Clientes */}
@@ -444,16 +529,17 @@ export default function AdminPanel() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="livenessPolicy">Política de Liveness (Anti-Spoofing)</Label>
+                                        <Label htmlFor="livenessPolicy">Nivel de Seguridad Biométrica (Liveness)</Label>
                                         <select
                                             id="livenessPolicy"
                                             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background"
                                             value={livenessPolicy}
-                                            onChange={e => setLivenessPolicy(e.target.value as "none" | "passive" | "active")}
+                                            onChange={e => setLivenessPolicy(e.target.value as "none" | "passive_lbp" | "passive_fft" | "active")}
                                         >
-                                            <option value="active">🛡️ Active (Blindado: Parpadeo + LBP + Retos de Pose)</option>
-                                            <option value="passive">⚡ Passive (Parpadeo + Filtro LBP sin retos)</option>
-                                            <option value="none">🚀 None (1-Shot Instantáneo sin anti-spoofing)</option>
+                                            <option value="active">Nivel 4: Liveness Activo + Retos de Movimiento (EAR + LBP + FFT + Pose/MAR)</option>
+                                            <option value="passive_fft">Nivel 3: Liveness Pasivo Multimodal (EAR + LBP + FFT)</option>
+                                            <option value="passive_lbp">Nivel 2: Liveness Pasivo Básico (EAR + LBP)</option>
+                                            <option value="none">Nivel 1: Solo Similitud (Sin Liveness)</option>
                                         </select>
                                         <p className="text-[10px] text-muted-foreground">
                                             Nivel de seguridad biométrica exigido a los usuarios de este cliente SSO.
@@ -515,7 +601,7 @@ export default function AdminPanel() {
                                                 <tr>
                                                     <th className="px-3 py-2.5 rounded-tl-md">Aplicación</th>
                                                     <th className="px-3 py-2.5">Client ID</th>
-                                                    <th className="px-3 py-2.5">Política Liveness</th>
+                                                    <th className="px-3 py-2.5">Nivel de Seguridad</th>
                                                     <th className="px-3 py-2.5">Redirect URIs</th>
                                                     <th className="px-3 py-2.5 rounded-tr-md">Fecha Registro</th>
                                                 </tr>
@@ -528,18 +614,21 @@ export default function AdminPanel() {
                                                         <td className="px-3 py-2.5">
                                                             <select
                                                                 value={client.liveness_policy || "active"}
-                                                                onChange={(e) => handleUpdateClientPolicy(client.client_id, e.target.value as "none" | "passive" | "active")}
+                                                                onChange={(e) => handleUpdateClientPolicy(client.client_id, e.target.value as "none" | "passive_lbp" | "passive_fft" | "active")}
                                                                 className={`text-[11px] font-semibold rounded px-2 py-1 border transition-colors cursor-pointer ${
                                                                     (client.liveness_policy || "active") === "active"
                                                                         ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                                                        : (client.liveness_policy === "passive")
+                                                                        : (client.liveness_policy === "passive_fft" || client.liveness_policy === "passive")
+                                                                        ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30"
+                                                                        : client.liveness_policy === "passive_lbp"
                                                                         ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
                                                                         : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
                                                                 }`}
                                                             >
-                                                                <option value="active">🛡️ Active (Blindado)</option>
-                                                                <option value="passive">⚡ Passive (Parpadeo)</option>
-                                                                <option value="none">🚀 None (1-Shot)</option>
+                                                                <option value="active">Nivel 4: Activo (EAR+LBP+FFT+Pose)</option>
+                                                                <option value="passive_fft">Nivel 3: Multimodal (EAR+LBP+FFT)</option>
+                                                                <option value="passive_lbp">Nivel 2: Básico (EAR+LBP)</option>
+                                                                <option value="none">Nivel 1: Sin Liveness (1-Shot)</option>
                                                             </select>
                                                         </td>
                                                         <td className="px-3 py-2.5 truncate max-w-[200px]" title={client.redirect_uris.join(", ")}>

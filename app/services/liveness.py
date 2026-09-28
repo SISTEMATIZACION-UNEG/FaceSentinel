@@ -8,10 +8,11 @@ Combina múltiples técnicas para detectar ataques de presentación:
 5. Score compuesto — Combinación ponderada de todas las señales
 """
 
-from typing import Optional
+import os
 import math
 import time
 import logging
+from typing import Optional
 import numpy as np
 import cv2
 from skimage.feature import local_binary_pattern
@@ -44,6 +45,11 @@ LEFT_MOUTH = 61
 RIGHT_MOUTH = 291
 UPPER_LIP = 13
 LOWER_LIP = 14
+
+# Parámetros y Umbrales Frecuenciales (FFT 2D) y LBP para Detección de Spoofing (ISO/IEC 30107-3)
+FFT_MIN_RATIO = float(os.getenv("FFT_MIN_RATIO", "0.735"))  # Bloquea pantallas de video (que dan 0.61 - 0.718)
+FFT_MAX_RATIO = float(os.getenv("FFT_MAX_RATIO", "0.820"))  # Permite rostro real (que da 0.755 - 0.790)
+LBP_MAX_ENTROPY_THRESHOLD = float(os.getenv("LBP_MAX_ENTROPY_THRESHOLD", "3.815"))  # Bloquea papel impreso (que da 3.771 - 3.86)
 
 
 # =========================================================================
@@ -294,24 +300,36 @@ def analyze_texture(frame_bgr, custom_lbp_threshold: Optional[float] = 3.2, adap
 #    MÓDULO 3: ANÁLISIS DE FRECUENCIA (FFT - Fast Fourier Transform)
 # =========================================================================
 
-def analyze_frequency(frame_bgr) -> dict:
+def analyze_frequency(frame_bgr: np.ndarray) -> dict:
     """
-    Analiza el espectro de frecuencia de la imagen facial.
+    Analiza el espectro de frecuencia 2D de la imagen facial mediante FFT.
     Las pantallas y las impresiones introducen artefactos de alta frecuencia
-    (patrones de moiré, ruido de impresión) que la piel real no tiene.
+    (patrones de moiré, ruido de impresión / halftoning) que la piel real no tiene.
 
     Args:
-        frame_bgr: Frame en formato BGR
+        frame_bgr: Frame en formato BGR (NumPy array)
 
     Returns:
-        dict con score de frecuencia, tiempo y si parece real
+        dict con score de frecuencia, ratio espectral, tiempo y veredicto de liveness
     """
     t0 = time.perf_counter()
     try:
+        if frame_bgr is None or frame_bgr.size == 0:
+            return {
+                "is_real": False,
+                "frequency_score": 0.0,
+                "freq_ratio": 0.0,
+                "low_freq_mean": 0.0,
+                "high_freq_mean": 0.0,
+                "high_freq_std": 0.0,
+                "time_ms": 0.0,
+                "reason": "Fotograma vacío"
+            }
+
         gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray, (128, 128))
 
-        # Aplicar FFT
+        # Aplicar FFT 2D y centrar componente DC
         f = np.fft.fft2(gray.astype(float))
         fshift = np.fft.fftshift(f)
         magnitude = np.log(np.abs(fshift) + 1)
@@ -320,13 +338,13 @@ def analyze_frequency(frame_bgr) -> dict:
         h, w = magnitude.shape
         center_y, center_x = h // 2, w // 2
 
-        # Región de baja frecuencia (centro)
+        # Región de baja frecuencia (centro 32x32)
         low_freq = magnitude[
             center_y - h // 8:center_y + h // 8,
             center_x - w // 8:center_x + w // 8
         ]
 
-        # Región de alta frecuencia (bordes)
+        # Región de alta frecuencia (bordes perimetrales excluyendo 64x64 central)
         high_freq_mask = np.ones_like(magnitude, dtype=bool)
         high_freq_mask[
             center_y - h // 4:center_y + h // 4,
@@ -335,21 +353,31 @@ def analyze_frequency(frame_bgr) -> dict:
         high_freq = magnitude[high_freq_mask]
 
         # Ratio entre alta y baja frecuencia
-        low_mean = np.mean(low_freq)
-        high_mean = np.mean(high_freq)
-        freq_ratio = high_mean / (low_mean + 1e-7)
+        low_mean = float(np.mean(low_freq))
+        high_mean = float(np.mean(high_freq))
+        high_std = float(np.std(high_freq))
+        freq_ratio = float(high_mean / (low_mean + 1e-7))
 
-        freq_score = 1.0
-        is_real = True
+        # Evaluación de banda orgánica [FFT_MIN_RATIO, FFT_MAX_RATIO] y energía de baja frecuencia
+        is_real = bool((FFT_MIN_RATIO <= freq_ratio <= FFT_MAX_RATIO) and (low_mean >= 8.70))
+        if is_real:
+            frequency_score = 0.90
+            reason = "Espectro frecuencial orgánico válido"
+        else:
+            frequency_score = 0.20
+            reason = f"Anomalía espectral FFT (Ratio: {freq_ratio:.4f} fuera de [{FFT_MIN_RATIO}, {FFT_MAX_RATIO}] o Low: {low_mean:.2f} < 8.70)"
+
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
         return {
             "is_real": is_real,
-            "frequency_score": round(freq_score, 4),
+            "frequency_score": frequency_score,
             "freq_ratio": round(freq_ratio, 4),
             "low_freq_mean": round(low_mean, 4),
             "high_freq_mean": round(high_mean, 4),
+            "high_freq_std": round(high_std, 4),
             "time_ms": round(elapsed_ms, 2),
+            "reason": reason
         }
 
     except Exception as e:
@@ -358,8 +386,12 @@ def analyze_frequency(frame_bgr) -> dict:
         return {
             "is_real": True,
             "frequency_score": 0.5,
+            "freq_ratio": 0.0,
+            "low_freq_mean": 0.0,
+            "high_freq_mean": 0.0,
+            "high_freq_std": 0.0,
             "time_ms": round(elapsed_ms, 2),
-            "reason": "Error en análisis"
+            "reason": f"Error en análisis: {e}"
         }
 
 
@@ -429,24 +461,46 @@ def estimate_head_pose(frame_rgb) -> dict:
 #           MÓDULO 5: SCORE COMPUESTO DE LIVENESS
 # =========================================================================
 
-def comprehensive_liveness_check(frame_bgr, custom_lbp_threshold: float = 3.2) -> dict:
+def comprehensive_liveness_check(
+    frame_bgr,
+    custom_lbp_threshold: float = 3.2,
+    security_level: str = "passive_fft"
+) -> dict:
     """
-    Ejecuta TODAS las verificaciones de liveness y retorna un score compuesto.
-    Esta es la función principal que combina todas las técnicas anti-spoofing.
-
-    Ponderaciones:
-    - Textura (LBP): 40% — El más fiable para detectar pantallas
-    - Frecuencia (FFT): 30% — Bueno para detectar impresiones
-    - Presencia facial: 30% — Requisito básico
+    Ejecuta verificaciones de liveness según el nivel de seguridad configurado.
+    
+    Niveles de Seguridad:
+    - 'none' (Nivel 1 - Solo Similitud): Puentea LBP y FFT, retorna is_live=True directamente.
+    - 'passive_lbp' (Nivel 2 - Estándar CCTV/RTSP): EAR + LBP inferior (lbp_entropy >= threshold). Puentea FFT y cota superior LBP.
+    - 'passive_fft' / 'passive' (Nivel 3 - Estricto HD/USB): EAR + LBP completo + FFT espectral 2D.
+    - 'active' (Nivel 4 - Crítico SSO): EAR + LBP completo + FFT espectral 2D (más retos de movimiento en WebSocket).
 
     Args:
         frame_bgr: Frame en formato BGR (OpenCV)
         custom_lbp_threshold: Umbral de entropía LBP dinámico por dispositivo (default: 3.2)
+        security_level: Nivel de seguridad ('none', 'passive_lbp', 'passive_fft', 'active')
 
     Returns:
         dict con liveness_score (0-1), is_live, y desglose de scores y tiempos
     """
     t0_check = time.perf_counter()
+
+    # Nivel 1: Bypass completo (Solo Similitud)
+    if security_level == "none":
+        elapsed_total = (time.perf_counter() - t0_check) * 1000.0
+        return {
+            "is_live": True,
+            "is_corrupted": False,
+            "liveness_score": 1.0,
+            "entropy": 0.0,
+            "lbp_threshold": round(custom_lbp_threshold, 4),
+            "lbp_variance": 0.0,
+            "t_lbp_ms": 0.0,
+            "t_fft_ms": 0.0,
+            "t_liveness_total_ms": round(elapsed_total, 2),
+            "reason": "Bypass Nivel 1: Solo Similitud (Liveness desactivado)",
+            "details": {"security_level": "none"}
+        }
 
     # 1. Verificar presencia facial
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -463,39 +517,77 @@ def comprehensive_liveness_check(frame_bgr, custom_lbp_threshold: float = 3.2) -
             "t_liveness_total_ms": round(elapsed_total, 2),
             "entropy": 0.0,
             "lbp_threshold": round(custom_lbp_threshold, 4),
+            "lbp_variance": 0.0,
             "reason": "No se detectó rostro en la imagen o fotograma dañado",
-            "details": {}
+            "details": {"security_level": security_level}
         }
 
     # 2. Análisis de textura (con umbral dinámico de hardware)
     texture_result = analyze_texture(frame_bgr, custom_lbp_threshold=custom_lbp_threshold)
 
-    # 3. Análisis de frecuencia
-    freq_result = analyze_frequency(frame_bgr)
+    # 3. Análisis de frecuencia (solo si el nivel requiere FFT)
+    if security_level == "passive_lbp":
+        freq_result = {
+            "is_real": True,
+            "frequency_score": 1.0,
+            "freq_ratio": 0.0,
+            "low_freq_mean": 0.0,
+            "high_freq_mean": 0.0,
+            "high_freq_std": 0.0,
+            "time_ms": 0.0,
+            "reason": "Bypass Nivel 2: FFT omitido para CCTV/RTSP"
+        }
+    else:
+        freq_result = analyze_frequency(frame_bgr)
 
     # 4. Pose de la cabeza
     pose = estimate_head_pose(frame_rgb)
 
-    # 5. Calcular score compuesto ponderado
+    # 5. Calcular score compuesto ponderado y veredicto según nivel
     texture_score = texture_result.get("texture_score", 0.0)
     freq_score = freq_result.get("frequency_score", 0.5)
     presence_score = 1.0 if has_face else 0.0
     texture_is_real = texture_result.get("is_real", False)
+    fft_is_real = freq_result.get("is_real", True)
+    lbp_entropy = texture_result.get("entropy", 0.0)
+    lbp_variance = texture_result.get("variance", 0.0)
     is_corrupted = bool(texture_result.get("is_corrupted", False) or texture_result.get("entropy", 0.0) <= 0.05)
 
-    liveness_score = (
-        texture_score * 0.50 +
-        freq_score * 0.25 +
-        presence_score * 0.25
-    )
+    if security_level == "passive_lbp":
+        # Nivel 2: Solo evalúa textura inferior LBP (ignora FFT e ignora cota superior LBP para compresión H.264/H.265)
+        liveness_score = texture_score * 0.70 + presence_score * 0.30
+        is_print_spoof = False
+        is_live = bool((not is_corrupted) and texture_is_real and (liveness_score >= 0.40))
+    else:
+        # Nivel 3 (passive_fft / passive) o Nivel 4 (active): Validación multimodal completa
+        liveness_score = (
+            texture_score * 0.50 +
+            freq_score * 0.25 +
+            presence_score * 0.25
+        )
+        is_print_spoof = bool(
+            (not fft_is_real) or
+            (lbp_entropy > LBP_MAX_ENTROPY_THRESHOLD)
+        )
+        is_live = bool((not is_corrupted) and texture_is_real and (not is_print_spoof) and (liveness_score >= 0.50))
 
-    # El filtro de textura (LBP) es determinante: si no supera el umbral de piel real, se rechaza
-    is_live = bool((not is_corrupted) and texture_is_real and (liveness_score >= 0.50))
     elapsed_total = (time.perf_counter() - t0_check) * 1000.0
 
     reason = "Fotograma corrupto o dañado por red" if is_corrupted else (
-        "Prueba de vida aprobada" if is_live else "Posible ataque de presentación detectado"
+        "Prueba de vida aprobada" if is_live else (
+            "Posible ataque de presentación detectado (Foto impresa / FFT fuera de banda)" if is_print_spoof else "Posible ataque de presentación detectado"
+        )
     )
+
+    # Telemetría detallada en tiempo real para calibración inmediata de tesis
+    telemetry_msg = (
+        f"[LIVENESS TELEMETRY - Level:{security_level}] LBP_Entropy={lbp_entropy:.4f} (Var={lbp_variance:.4f}) | "
+        f"FFT_Ratio={freq_result.get('freq_ratio', 0.0):.4f} "
+        f"(Low={freq_result.get('low_freq_mean', 0.0):.2f}, High={freq_result.get('high_freq_mean', 0.0):.2f}, "
+        f"FFT_Real={fft_is_real}) | Score={liveness_score:.4f} | Live={is_live}"
+    )
+    logger.info(telemetry_msg)
+    print(telemetry_msg)
 
     result = {
         "is_live": is_live,
@@ -513,13 +605,14 @@ def comprehensive_liveness_check(frame_bgr, custom_lbp_threshold: float = 3.2) -
             "frequency": freq_result,
             "ear": round(ear, 4),
             "head_pose": pose,
+            "security_level": security_level,
         }
     }
 
     if is_live:
         logger.info(f"✅ Liveness OK — Score: {liveness_score:.4f} (LBP: {result['t_lbp_ms']}ms, FFT: {result['t_fft_ms']}ms)")
     else:
-        logger.warning(f"🚨 Liveness FALLIDO — Score: {liveness_score:.4f} (Entropía: {result['entropy']})")
+        logger.warning(f"🚨 Liveness FALLIDO — Score: {liveness_score:.4f} (Entropía: {result['entropy']}, FFT_Ratio: {freq_result.get('freq_ratio', 0.0):.4f})")
 
     return result
 

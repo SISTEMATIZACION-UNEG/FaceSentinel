@@ -15,6 +15,7 @@ interface IoTDevice {
     stream_url?: string | null
     lbp_threshold?: number
     antispoofing_enabled?: boolean
+    liveness_policy?: "none" | "passive_lbp" | "passive_fft" | string
     is_active: boolean
     created_at: string
 }
@@ -32,6 +33,7 @@ export default function IoTDevicesView() {
     const [streamUrl, setStreamUrl] = useState("")
     const [lbpThreshold, setLbpThreshold] = useState("3.670")
     const [antispoofingEnabled, setAntispoofingEnabled] = useState(true)
+    const [livenessPolicy, setLivenessPolicy] = useState<"none" | "passive_lbp" | "passive_fft">("passive_fft")
     const [registering, setRegistering] = useState(false)
 
     // Modal de edición / calibración
@@ -40,6 +42,7 @@ export default function IoTDevicesView() {
     const [editStreamUrl, setEditStreamUrl] = useState("")
     const [editLocation, setEditLocation] = useState("")
     const [editAntispoofing, setEditAntispoofing] = useState(true)
+    const [editLivenessPolicy, setEditLivenessPolicy] = useState<"none" | "passive_lbp" | "passive_fft">("passive_fft")
     const [editActive, setEditActive] = useState(true)
     const [savingEdit, setSavingEdit] = useState(false)
     const [syncing, setSyncing] = useState(false)
@@ -72,7 +75,8 @@ export default function IoTDevicesView() {
             source: d.stream_url || "0",
             location: d.location || "Punto de Acceso",
             enabled: Boolean(d.stream_url && d.stream_url.trim() !== "" && d.is_active),
-            antispoofing_enabled: d.antispoofing_enabled !== false,
+            antispoofing_enabled: (d.liveness_policy || "passive_fft") !== "none",
+            liveness_policy: d.liveness_policy || "passive_fft",
             lbp_threshold: d.lbp_threshold ?? 3.670
         }))
     }
@@ -125,7 +129,8 @@ export default function IoTDevicesView() {
                 location: location.trim() || null,
                 stream_url: streamUrl.trim() || null,
                 lbp_threshold: parseFloat(lbpThreshold) || 3.670,
-                antispoofing_enabled: antispoofingEnabled
+                antispoofing_enabled: livenessPolicy !== "none",
+                liveness_policy: livenessPolicy
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
@@ -137,6 +142,7 @@ export default function IoTDevicesView() {
             setLocation("")
             setStreamUrl("")
             setLbpThreshold("3.670")
+            setLivenessPolicy("passive_fft")
             setAntispoofingEnabled(true)
             fetchDevices()
         } catch (err: any) {
@@ -151,7 +157,9 @@ export default function IoTDevicesView() {
         setEditThreshold(String(device.lbp_threshold || 3.670))
         setEditStreamUrl(device.stream_url || "")
         setEditLocation(device.location || "")
-        setEditAntispoofing(device.antispoofing_enabled !== false)
+        const pol = (device.liveness_policy as any) || (device.antispoofing_enabled === false ? "none" : "passive_fft")
+        setEditLivenessPolicy(pol)
+        setEditAntispoofing(pol !== "none")
         setEditActive(device.is_active)
         setCalibResult(null)
         setCalibError("")
@@ -173,18 +181,19 @@ export default function IoTDevicesView() {
         }
     }
 
-    const handleToggleAntispoofing = async (device: IoTDevice) => {
-        const newAntispoofingState = device.antispoofing_enabled === false ? true : false
-        setDevices(prev => prev.map(d => d.device_id === device.device_id ? { ...d, antispoofing_enabled: newAntispoofingState } : d))
+    const handleUpdateDevicePolicy = async (device: IoTDevice, newPolicy: "none" | "passive_lbp" | "passive_fft") => {
+        const isAnti = newPolicy !== "none"
+        setDevices(prev => prev.map(d => d.device_id === device.device_id ? { ...d, liveness_policy: newPolicy, antispoofing_enabled: isAnti } : d))
         try {
             await axios.patch(`${baseUrl}/api/v1/devices/${device.device_id}`, {
-                antispoofing_enabled: newAntispoofingState
+                liveness_policy: newPolicy,
+                antispoofing_enabled: isAnti
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             fetchDevices()
         } catch (err: any) {
-            alert(err.response?.data?.detail || "Error al actualizar política anti-spoofing del dispositivo.")
+            alert(err.response?.data?.detail || "Error al actualizar nivel de seguridad del dispositivo.")
             fetchDevices()
         }
     }
@@ -234,7 +243,8 @@ export default function IoTDevicesView() {
                 lbp_threshold: parseFloat(editThreshold) || 3.670,
                 stream_url: editStreamUrl.trim() || null,
                 location: editLocation.trim() || null,
-                antispoofing_enabled: editAntispoofing,
+                liveness_policy: editLivenessPolicy,
+                antispoofing_enabled: editLivenessPolicy !== "none",
                 is_active: editActive
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -404,22 +414,27 @@ export default function IoTDevicesView() {
                                     onChange={e => setLocation(e.target.value)}
                                 />
                             </div>
-                            <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30">
-                                <div className="space-y-0.5">
-                                    <Label className="text-xs font-semibold cursor-pointer">Seguridad Anti-Spoofing</Label>
-                                    <p className="text-[10px] text-muted-foreground">
-                                        {antispoofingEnabled ? "Validación LBP activa (Seguro)" : "Bypass LBP (Match directo <200ms)"}
-                                    </p>
-                                </div>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={antispoofingEnabled ? "default" : "outline"}
-                                    className={`h-7 px-3 text-xs ${antispoofingEnabled ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-amber-500/50 text-amber-600"}`}
-                                    onClick={() => setAntispoofingEnabled(!antispoofingEnabled)}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="livenessPolicy">Nivel de Seguridad Anti-Spoofing</Label>
+                                <select
+                                    id="livenessPolicy"
+                                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-xs"
+                                    value={livenessPolicy}
+                                    onChange={e => {
+                                        const val = e.target.value as "none" | "passive_lbp" | "passive_fft"
+                                        setLivenessPolicy(val)
+                                        setAntispoofingEnabled(val !== "none")
+                                    }}
                                 >
-                                    {antispoofingEnabled ? "LBP Activo" : "Bypass (<200ms)"}
-                                </Button>
+                                    <option value="none">Nivel 1: Solo Similitud (ArcFace)</option>
+                                    <option value="passive_lbp">Nivel 2: Liveness Estándar (EAR + LBP) — CCTV/RTSP</option>
+                                    <option value="passive_fft">Nivel 3: Liveness Estricto (EAR + LBP + FFT) — HD/USB</option>
+                                </select>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {livenessPolicy === "none" && "Solo reconocimiento facial (bypass LBP/FFT <200ms)."}
+                                    {livenessPolicy === "passive_lbp" && "Ideal para cámaras analógicas CCTV/RTSP (H.264/H.265)."}
+                                    {livenessPolicy === "passive_fft" && "Protección total contra pantallas y fotos impresas."}
+                                </p>
                             </div>
                             <Button type="submit" className="w-full mt-2" disabled={registering}>
                                 {registering ? "Registrando..." : "Registrar Dispositivo"}
@@ -470,7 +485,7 @@ export default function IoTDevicesView() {
                                             <th className="px-3 py-2.5 rounded-tl-md">Punto / ID</th>
                                             <th className="px-3 py-2.5">Stream / Tipo</th>
                                             <th className="px-3 py-2.5">Calibración LBP</th>
-                                            <th className="px-3 py-2.5">Anti-Spoofing</th>
+                                            <th className="px-3 py-2.5">Nivel de Seguridad</th>
                                             <th className="px-3 py-2.5">Ubicación</th>
                                             <th className="px-3 py-2.5">Estado Edge</th>
                                             <th className="px-3 py-2.5 rounded-tr-md text-right">Acciones</th>
@@ -499,20 +514,21 @@ export default function IoTDevicesView() {
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleToggleAntispoofing(device)}
-                                                        className={`h-6 text-[11px] font-semibold px-2 rounded-full border transition-all flex items-center gap-1.5 ${
-                                                            device.antispoofing_enabled !== false
-                                                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                                                                : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                                                    <select
+                                                        value={device.liveness_policy || (device.antispoofing_enabled !== false ? "passive_fft" : "none")}
+                                                        onChange={(e) => handleUpdateDevicePolicy(device, e.target.value as "none" | "passive_lbp" | "passive_fft")}
+                                                        className={`text-[11px] font-semibold rounded px-2 py-1 border transition-colors cursor-pointer ${
+                                                            (device.liveness_policy || "passive_fft") === "passive_fft"
+                                                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                                                : (device.liveness_policy === "passive_lbp")
+                                                                ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                                                : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
                                                         }`}
-                                                        title={device.antispoofing_enabled !== false ? "Anti-spoofing activo. Clic para desactivar y cambiar a match directo <200ms" : "Bypass activo. Clic para reactivar filtro de textura LBP"}
                                                     >
-                                                        <span className={`h-2 w-2 rounded-full ${device.antispoofing_enabled !== false ? "bg-emerald-500" : "bg-amber-500"}`} />
-                                                        {device.antispoofing_enabled !== false ? "LBP Activo" : "Bypass (<200ms)"}
-                                                    </Button>
+                                                        <option value="none">N1: Solo Similitud</option>
+                                                        <option value="passive_lbp">N2: LBP (CCTV/RTSP)</option>
+                                                        <option value="passive_fft">N3: LBP + FFT (HD)</option>
+                                                    </select>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-muted-foreground">
                                                     {device.location ? (
@@ -648,22 +664,27 @@ export default function IoTDevicesView() {
                                 </Button>
                             </div>
 
-                            {/* Toggle de Anti-Spoofing LBP */}
-                            <div className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/40">
-                                <div className="space-y-0.5">
-                                    <Label className="text-xs font-semibold">Validación Anti-Spoofing (LBP)</Label>
-                                    <p className="text-[10px] text-muted-foreground">Si se desactiva, omite la textura LBP para responder en &lt; 200 ms.</p>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant={editAntispoofing ? "default" : "outline"}
-                                    size="sm"
-                                    className={editAntispoofing ? "bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-3" : "text-xs h-7 px-3 border-amber-500/40 text-amber-600"}
-                                    onClick={() => setEditAntispoofing(!editAntispoofing)}
+                            {/* Selector de Nivel de Seguridad */}
+                            <div className="space-y-1.5 p-2.5 rounded-lg border bg-muted/40">
+                                <Label className="text-xs font-semibold">Nivel de Seguridad Anti-Spoofing</Label>
+                                <select
+                                    className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs mt-1"
+                                    value={editLivenessPolicy}
+                                    onChange={e => {
+                                        const val = e.target.value as "none" | "passive_lbp" | "passive_fft"
+                                        setEditLivenessPolicy(val)
+                                        setEditAntispoofing(val !== "none")
+                                    }}
                                 >
-                                    <span className={`h-2 w-2 rounded-full mr-1.5 ${editAntispoofing ? "bg-white" : "bg-amber-500"}`} />
-                                    {editAntispoofing ? "LBP Activo" : "Bypass (<200ms)"}
-                                </Button>
+                                    <option value="none">Nivel 1: Solo Similitud (ArcFace)</option>
+                                    <option value="passive_lbp">Nivel 2: Liveness Estándar (EAR + LBP) — CCTV/RTSP</option>
+                                    <option value="passive_fft">Nivel 3: Liveness Estricto (EAR + LBP + FFT) — HD/USB</option>
+                                </select>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {editLivenessPolicy === "none" && "Bypass total de liveness para match directo ultra-rápido (<200ms)."}
+                                    {editLivenessPolicy === "passive_lbp" && "Evalúa parpadeo EAR y textura LBP; ignora FFT para streams analógicos/RTSP."}
+                                    {editLivenessPolicy === "passive_fft" && "Validación multimodal completa (EAR + LBP + FFT) contra fotos y pantallas."}
+                                </p>
                             </div>
                             {/* Asistente de Auto-Calibración Sensorial en Vivo */}
                             <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5 mt-2">

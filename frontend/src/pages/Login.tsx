@@ -28,12 +28,26 @@ export default function Login() {
     const [idpToken, setIdpToken] = useState<string>("")
     const [usernameInput, setUsernameInput] = useState("")
     const [passwordInput, setPasswordInput] = useState("")
+    const [portalPolicy, setPortalPolicy] = useState<"none" | "passive_lbp" | "passive_fft" | "active">("active")
+    const [scanSession, setScanSession] = useState(0)
 
     const videoRef = useRef<HTMLVideoElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const wsRef = useRef<WebSocket | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const intervalRef = useRef<number | null>(null)
+
+    useEffect(() => {
+        if (!clientId) {
+            axios.get(`${API_BASE_URL}/api/v1/system/policy`)
+                .then(res => {
+                    if (res.data?.portal_liveness_policy) {
+                        setPortalPolicy(res.data.portal_liveness_policy)
+                    }
+                })
+                .catch(() => {})
+        }
+    }, [clientId])
 
     const stopCameraAndSocket = useCallback(() => {
         if (intervalRef.current) {
@@ -60,10 +74,12 @@ export default function Login() {
     }, [stopCameraAndSocket])
 
     const startCamera = useCallback(async () => {
+        stopCameraAndSocket()
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
             streamRef.current = mediaStream
             setStep("camera")
+            setScanSession(s => s + 1)
             setLivenessMetrics(null)
             setAuthDistance(null)
             setError("")
@@ -71,7 +87,7 @@ export default function Login() {
         } catch (err) {
             setError("No se pudo acceder a la cámara. Revisa los permisos.")
         }
-    }, [])
+    }, [stopCameraAndSocket])
 
     useEffect(() => {
         if (clientId) {
@@ -231,8 +247,10 @@ export default function Login() {
 
     // Initialize WebRTC and WebSocket
     useEffect(() => {
-        if (step === "camera" && videoRef.current && streamRef.current) {
-            videoRef.current.srcObject = streamRef.current
+        if (step === "camera" && streamRef.current) {
+            if (videoRef.current) {
+                videoRef.current.srcObject = streamRef.current
+            }
 
             // Connect to WebSocket
             let wsUrl = getWebSocketUrl("/api/v1/ws/liveness")
@@ -247,8 +265,8 @@ export default function Login() {
             wsRef.current = ws
 
             ws.onopen = () => {
-                setLivenessMessage("Analizando... Por favor, mira fijamente y parpadea.")
-                // Send frame 10 times per second
+                setLivenessMessage("Analizando... Por favor, mira fijamente a la cámara.")
+                if (intervalRef.current) clearInterval(intervalRef.current)
                 intervalRef.current = window.setInterval(sendFrame, 100)
             }
 
@@ -315,7 +333,7 @@ export default function Login() {
                     // Resume tracking after 3 seconds
                     setTimeout(() => {
                         setError("")
-                        setLivenessMessage("Analizando... Por favor, mira fijamente y parpadea.")
+                        setLivenessMessage("Analizando... Por favor, mira fijamente a la cámara.")
                         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
                             intervalRef.current = window.setInterval(sendFrame, 100)
                         }
@@ -324,6 +342,9 @@ export default function Login() {
                     setLivenessMessage(data.message)
                     if (data.metrics) {
                         setLivenessMetrics(data.metrics)
+                    }
+                    if (typeof data.match_score === "number") {
+                        setAuthDistance(data.match_score)
                     }
                 } else if (data.status === "error") {
                     setError("Error del servidor: " + data.message)
@@ -336,8 +357,15 @@ export default function Login() {
                 setLivenessMessage("Error de conexión WS")
                 stopCameraAndSocket()
             }
+
+            ws.onclose = () => {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current)
+                    intervalRef.current = null
+                }
+            }
         }
-    }, [step, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket])
+    }, [step, scanSession, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket])
 
     return (
         <div className="flex h-screen w-full items-center justify-center bg-muted/40 p-4">
@@ -369,6 +397,21 @@ export default function Login() {
                         {step === "camera" && "Prueba de Vida Activa Requerida"}
                         {step === "success" && "¡Identidad verificada!"}
                     </CardDescription>
+
+                    {!clientId && (
+                        <div className="pt-2 flex justify-center">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border">
+                                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                                Nivel de Seguridad Portal:{" "}
+                                <strong className="text-primary uppercase font-bold">
+                                    {portalPolicy === "none" && "Nivel 1 (1-Shot / Sin Liveness)"}
+                                    {portalPolicy === "passive_lbp" && "Nivel 2 (EAR + LBP)"}
+                                    {(portalPolicy === "passive_fft" || portalPolicy === "passive") && "Nivel 3 (EAR + LBP + FFT)"}
+                                    {portalPolicy === "active" && "Nivel 4 (Desafío Activo Completo)"}
+                                </strong>
+                            </span>
+                        </div>
+                    )}
                 </CardHeader>
 
                 <CardContent className={`${step !== "username" ? "md:grid md:grid-cols-2 md:gap-6 items-start" : ""}`}>
@@ -494,15 +537,14 @@ export default function Login() {
                                     >
                                         Cancelar
                                     </Button>
-                                    {error && !intervalRef.current && (
+                                    {(!!error || !intervalRef.current) && (
                                         <Button
-                                            className="w-full"
+                                            className="w-full gap-2 font-medium"
                                             onClick={() => {
-                                                stopCameraAndSocket();
                                                 startCamera();
                                             }}
                                         >
-                                            Reintentar
+                                            <Camera className="h-4 w-4" /> Reintentar Escaneo
                                         </Button>
                                     )}
                                 </div>
@@ -618,7 +660,7 @@ export default function Login() {
                                                 <div className="grid grid-cols-4 gap-2 items-center p-3 rounded-md bg-primary/10 border-l-4 border-primary mt-4 pt-3 shadow-sm transform scale-105 origin-left transition-all">
                                                     <span className="col-span-1 font-bold text-primary">ArcFace</span>
                                                     <span className="col-span-1 text-center font-mono font-bold text-sm tracking-tight text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]">{authDistance.toFixed(4)}</span>
-                                                    <span className="col-span-1 text-center font-mono text-primary/80 font-medium">&lt; 0.70</span>
+                                                    <span className="col-span-1 text-center font-mono text-primary/80 font-medium">&lt; 0.60</span>
                                                     <span className="col-span-1 text-right text-[10px] font-bold text-primary/90 leading-tight">Match<br />Identidad</span>
                                                 </div>
                                             )}
