@@ -52,9 +52,9 @@ def get_device_config(device_id: str, manual_source: str = None) -> tuple:
                 
     # Fallback predeterminado para PASILLO62
     if device_id == "PASILLO62":
-        return "rtsp://admin1:password@192.168.70.10:554/Streaming/Channels/201", "Pasillo 6-2 (Patio B)"
+        return os.environ.get("CAMERA_PASILLO62_URL", "rtsp://admin:password@192.168.1.100:554/Streaming/Channels/201"), "Pasillo 6-2 (Patio B)"
     elif device_id == "TLFHECTOR":
-        return "http://192.168.80.89:4747/video", "Smart 20 Hector"
+        return os.environ.get("CAMERA_TLF_URL", "http://192.168.1.50:4747/video"), "Punto de Acceso Móvil"
         
     return 0, device_id
 

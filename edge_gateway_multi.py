@@ -541,16 +541,16 @@ def load_or_create_config(api_url: str = DEFAULT_API_URL) -> list:
         {
             "device_id": "PASILLO62",
             "name": "Pasillo 6-2 (Patio B)",
-            "token": "hw_zaEy9rg43tK6QZa0e9O_oDE_spala6yRm71hA74ayV8",
-            "source": "rtsp://admin1:password@192.168.70.10:554/Streaming/Channels/201",
+            "token": "hw_sample_token_62",
+            "source": "rtsp://admin:password@192.168.1.100:554/Streaming/Channels/201",
             "location": "Patio B, Pasillo 6-2",
             "enabled": True
         },
         {
             "device_id": "TLFHECTOR",
-            "name": "Smart 20 Hector (DroidCam)",
-            "token": "hw_tlfhector_secret_key_8832a74ayV8",
-            "source": "http://192.168.80.127:4747/video",
+            "name": "Cámara Móvil",
+            "token": "hw_sample_token_mobile",
+            "source": "http://192.168.1.50:4747/video",
             "location": "Punto de Acceso Móvil",
             "enabled": True
         }

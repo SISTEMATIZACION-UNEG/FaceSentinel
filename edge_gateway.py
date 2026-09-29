@@ -38,7 +38,7 @@ if not DEVICE_TOKEN:
         "Ejemplo: set HW_CLIENT_SECRET=hw_xxxxx"
     )
 
-DEFAULT_RTSP_URL = "rtsp://admin1:password@192.168.70.10:554/Streaming/Channels/201"
+DEFAULT_RTSP_URL = os.environ.get("RTSP_CAMERA_URL", "0")
 _raw_src = os.environ.get("FACESENTINEL_VIDEO_SOURCE", os.environ.get("FACESENTINEL_WEBCAM_INDEX", DEFAULT_RTSP_URL))
 try:
     WEBCAM_SOURCE = int(_raw_src)
