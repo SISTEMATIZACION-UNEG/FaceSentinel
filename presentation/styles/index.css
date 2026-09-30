@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --slidev-theme-primary: #0284c7;
+  --slidev-theme-accent: #38bdf8;
+  --color-navy-dark: #0a192f;
+  --color-navy-main: #0f274a;
+  --color-navy-light: #0284c7;
+  --color-sky-light: #38bdf8;
+}
+
+/* Light Background and Typography */
+.slidev-layout {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: radial-gradient(circle at 6% 6%, rgba(224, 242, 254, 0.75) 0%, transparent 40%),
+              radial-gradient(circle at 94% 94%, rgba(186, 230, 253, 0.45) 0%, transparent 45%),
+              #ffffff !important;
+  color: #1e293b !important;
+  padding: 2.2rem 3.2rem !important;
+}
+
+/* Cover Slide layout & overrides */
+.slidev-layout.cover-slide,
+.cover-slide {
+  padding: 0 !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.cover-title {
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+  line-height: 1.4 !important;
+  color: #1b365d !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.01em !important;
+  max-width: 680px !important;
+  margin: 0 auto !important;
+}
+
+/* Hide TOC drawer / slide popover / autocomplete slide dropdown so it never obstructs slides */
+.slidev-drawer,
+.slidev-toc-drawer,
+.slidev-menu-drawer,
+.slidev-drawer-content,
+.autocomplete-list,
+div.autocomplete-list,
+[class*="autocomplete-list"],
+[class*="autocomplete"],
+.v-popper__popper,
+[class*="toc-drawer"],
+[class*="drawer"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 800;
+  color: #0a192f !important;
+}
+
+h2 {
+  font-weight: 700;
+  color: #0284c7 !important;
+}
+
+h3 {
+  font-weight: 700;
+  color: #0f274a !important;
+}
+
+/* Premium Light Cards */
+.card-light {
+  background: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px -4px rgba(2, 132, 199, 0.08),
+              0 3px 6px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-light-hover:hover {
+  border-color: #0284c7;
+  box-shadow: 0 14px 28px -5px rgba(2, 132, 199, 0.16),
+              0 6px 10px -3px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.card-light-featured {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+  border: 1.5px solid #38bdf8;
+  border-radius: 1.25rem;
+  box-shadow: 0 14px 28px -5px rgba(2, 132, 199, 0.12);
+}
+
+/* Badges & Pills */
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.badge-tag-navy {
+  background: #0f274a;
+  color: #ffffff;
+  border-color: #0a192f;
+}
+
+.badge-tag-emerald {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.badge-tag-amber {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.badge-tag-red {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* Icon Containers */
+.icon-box {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 1px solid #7dd3fc;
+  color: #0284c7;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+  flex-shrink: 0;
+}
+
+.icon-box-navy {
+  background: linear-gradient(135deg, #0f274a 0%, #1e3a8a 100%);
+  border-color: #1e3a8a;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(15, 39, 74, 0.2);
+}
+
+.icon-box-emerald {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #6ee7b7;
+  color: #059669;
+}
+
+.icon-box-amber {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #fcd34d;
+  color: #d97706;
+}
+
+.icon-box-red {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* Metric Circles Light */
+.metric-circle-light {
+  width: 9.5rem;
+  height: 9.5rem;
+  border-radius: 9999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #ffffff 0%, #f0f9ff 100%);
+  border: 4px solid #0284c7;
+  box-shadow: 0 10px 25px -4px rgba(2, 132, 199, 0.18),
+              inset 0 0 12px rgba(56, 189, 248, 0.1);
+  transition: transform 0.25s ease;
+}
+
+.metric-circle-light:hover {
+  transform: scale(1.04);
+}
+
+.metric-circle-emerald {
+  border-color: #059669;
+  box-shadow: 0 10px 25px -4px rgba(5, 150, 105, 0.18),
+              inset 0 0 12px rgba(110, 231, 183, 0.1);
+}
+
+.metric-circle-navy {
+  border-color: #0f274a;
+  box-shadow: 0 10px 25px -4px rgba(15, 39, 74, 0.18);
+}
+
+/* Funnel Steps */
+.funnel-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.funnel-step:hover {
+  transform: scale(1.015);
+}
+
+/* Diagram Frame */
+.diagram-frame {
+  background: #ffffff;
+  border: 1.5px solid #bae6fd;
+  border-radius: 0.875rem;
+  padding: 0.5rem;
+  box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.1);
+}
+
+/* Organic Blobs for Cover */
+.blob-top-right {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, #0284c7 0%, #1e3a8a 100%);
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.blob-top-right-soft {
+  position: absolute;
+  top: -30px;
+  right: 80px;
+  width: 140px;
+  height: 140px;
+  background: #7dd3fc;
+  border-radius: 50% 50% 30% 70% / 50% 30% 70% 50%;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.blob-bottom-left {
+  position: absolute;
+  bottom: -60px;
+  left: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, #0284c7 0%, #0f274a 100%);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.blob-bottom-left-soft {
+  position: absolute;
+  bottom: -30px;
+  left: 90px;
+  width: 140px;
+  height: 140px;
+  background: #bae6fd;
+  border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
+  opacity: 0.7;
+  z-index: 0;
+}
+
+/* Slidev Drawer & Nav Polish */
+.slidev-drawer {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  border-right: 1px solid #bae6fd !important;
+  box-shadow: 10px 0 30px rgba(15, 39, 74, 0.15) !important;
+}
+
+.slidev-nav {
+  opacity: 0.2;
+  transition: opacity 0.3s ease;
+}
+
+.slidev-nav:hover {
+  opacity: 1;
+}
+

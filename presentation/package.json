@@ -1,0 +1,21 @@
+{
+  "name": "facesentinel-presentation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "slidev --open",
+    "build": "slidev build",
+    "export": "slidev export --format pdf",
+    "export:pptx": "slidev export --format pptx",
+    "export:png": "slidev export --format png",
+    "postinstall": "node patch-slidev.js"
+  },
+  "devDependencies": {
+    "@iconify-json/carbon": "^1.2.28",
+    "@slidev/cli": "^51.4.0",
+    "@slidev/theme-default": "^0.25.0",
+    "@slidev/theme-seriph": "^0.25.0",
+    "playwright-chromium": "^1.63.0"
+  }
+}
