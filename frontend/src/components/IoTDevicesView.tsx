@@ -202,7 +202,9 @@ export default function IoTDevicesView() {
         setSyncing(true)
         setSyncSuccess("")
         try {
-            const res = await axios.get(`${baseUrl}/api/v1/devices/sync`)
+            const res = await axios.get(`${baseUrl}/api/v1/devices/sync`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
             const activeCount = (res.data || []).filter((c: any) => c.enabled).length
             setSyncSuccess(`¡Sincronización remota exitosa! ${activeCount} cámaras activas listas para aprovisionar Edge Gateways / Raspberry Pi.`)
             setTimeout(() => setSyncSuccess(""), 5000)

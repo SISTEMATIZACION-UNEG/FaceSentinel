@@ -38,13 +38,20 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 #                      FUNCIONES JWT
 # =========================================================================
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    data: dict,
+    expires_delta: Optional[timedelta] = None,
+    issuer: Optional[str] = None,
+    audience: Optional[str] = None
+) -> str:
     """
     Genera un JSON Web Token (JWT) con los datos proporcionados.
 
     Args:
         data: Payload del token (ej. {"sub": "admin", "role": "admin"})
         expires_delta: Tiempo de expiración personalizado
+        issuer: Emisor opcional (default 'facesentinel-api')
+        audience: Audiencia opcional (default 'facesentinel-portal')
 
     Returns:
         Token JWT codificado como string
@@ -58,6 +65,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         "exp": expire,
         "iat": datetime.now(timezone.utc),
     })
+    # Asignar emisor y audiencia si no están presentes
+    to_encode["iss"] = issuer or to_encode.get("iss", "facesentinel-api")
+    to_encode["aud"] = audience or to_encode.get("aud", "facesentinel-portal")
 
     token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     logger.info(f"🔑 Token JWT generado para: {data.get('sub', 'unknown')}")
@@ -223,6 +233,17 @@ async def get_current_user(
     # Opción 1: JWT Bearer Token
     if credentials and credentials.credentials:
         payload = verify_token(credentials.credentials)
+
+        # Protección Anti-Token-Confusion (Validación de Audiencia SSO):
+        # Un token IdP emitido para una app cliente externa no puede utilizarse como sesión de administración interna
+        if payload.get("iss") == "facesentinel-idp":
+            aud = payload.get("aud")
+            if aud and aud not in ["facesentinel-portal", "facesentinel-api"]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Token de delegación IdP emitido para cliente externo. No autorizado para gestionar la API central.",
+                )
+
         return {
             "auth_method": "jwt",
             "sub": payload.get("sub"),
@@ -271,18 +292,20 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
 def init_security():
     """
     Inicializa el módulo de seguridad.
-    Crea una API Key por defecto para desarrollo si no hay ninguna.
+    Crea una API Key por defecto para pruebas si está configurada en .env.
+    En producción, nunca otorga rol admin por defecto.
     """
     if not _authorized_api_keys:
-        # En desarrollo, creamos una key por defecto
-        default_key = os.getenv("DEFAULT_API_KEY", "")
+        default_key = os.getenv("DEFAULT_API_KEY", "").strip()
         if default_key:
+            # En producción, o por defecto, las claves M2M solo tienen rol 'device'
+            default_role = os.getenv("DEFAULT_API_KEY_ROLE", "device").strip()
             key_hash = hash_api_key(default_key)
             _authorized_api_keys[key_hash] = {
                 "name": "default-dev-device",
-                "role": "admin",
+                "role": default_role,
                 "created": datetime.now(timezone.utc).isoformat(),
             }
-            logger.info("🔐 API Key por defecto cargada desde .env")
+            logger.info(f"🔐 API Key por defecto configurada para dispositivo: 'default-dev-device' (Rol: {default_role})")
         else:
-            logger.info("ℹ️  No hay API Keys configuradas. Usa POST /api/v1/admin/generate-key para crear una.")
+            logger.info("ℹ️  No hay API Keys estáticas configuradas. Usa el panel para registrar dispositivos.")

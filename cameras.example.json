@@ -1,0 +1,24 @@
+[
+    {
+        "device_id": "PUERTA_ACCESO_01",
+        "name": "Torniquete Principal",
+        "token": "hw_ejemplo_token_secreto_01",
+        "source": "0",
+        "location": "Entrada Principal",
+        "enabled": true,
+        "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
+        "lbp_threshold": 3.5
+    },
+    {
+        "device_id": "CAMARA_RTSP_02",
+        "name": "Cámara Pasillo Central",
+        "token": "hw_ejemplo_token_secreto_02",
+        "source": "rtsp://usuario:password@192.168.1.50:554/stream1",
+        "location": "Pasillo Central",
+        "enabled": false,
+        "antispoofing_enabled": true,
+        "liveness_policy": "passive_fft",
+        "lbp_threshold": 3.67
+    }
+]

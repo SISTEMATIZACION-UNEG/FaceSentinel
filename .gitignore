@@ -73,6 +73,12 @@ data/temp_images/*
 !data/temp_images/.gitkeep
 data/logs/*
 !data/logs/.gitkeep
+data/calibrations/*
+!data/calibrations/.gitkeep
+
+# Sensitive Camera Configs & Edge Tokens
+cameras.json
+data/cameras.json
 
 *.db
 *.db-shm

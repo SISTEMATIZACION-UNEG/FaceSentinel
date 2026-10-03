@@ -227,6 +227,31 @@ class TestSecurityHardening:
         # Limpieza
         client.delete(f"/api/v1/devices/{device_id}", headers=admin_headers)
 
+    def test_devices_sync_requires_admin(self, client, admin_headers):
+        """Verifica que /devices/sync requiera rol admin y no esté abierto públicamente."""
+        # Sin token -> 401
+        res_no_auth = client.get("/api/v1/devices/sync")
+        assert res_no_auth.status_code == 401
+
+        # Con token admin -> 200
+        res_admin = client.get("/api/v1/devices/sync", headers=admin_headers)
+        assert res_admin.status_code == 200
+        assert isinstance(res_admin.json(), list)
+
+    def test_external_idp_token_rejected_on_admin_api(self, client):
+        """Verifica que tokens emitidos por IdP para clientes externos no sirvan para administrar la API."""
+        from app.core.security import create_access_token
+        # Token emitido por el IdP para un cliente externo
+        external_token = create_access_token(
+            data={"sub": "user_oauth", "role": "admin", "client_id": "external_app"},
+            issuer="facesentinel-idp",
+            audience="external_app"
+        )
+        headers = {"Authorization": f"Bearer {external_token}"}
+        res = client.get("/api/v1/devices/sync", headers=headers)
+        assert res.status_code == 403
+        assert "cliente externo" in res.json()["detail"].lower()
+
 
 # =========================================================================
 #                    EJECUCIÓN
@@ -234,3 +259,4 @@ class TestSecurityHardening:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+

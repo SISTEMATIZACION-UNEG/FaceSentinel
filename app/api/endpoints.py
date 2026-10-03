@@ -1542,54 +1542,27 @@ def register_device(device_data: IoTDeviceCreate, current_user: dict = Depends(r
 
 
 @router.get("/devices/sync", tags=["Acceso Físico"])
-def sync_devices_for_gateway():
+def sync_devices_for_gateway(current_user: dict = Depends(require_admin)):
     """
-    Endpoint de aprovisionamiento Zero-Config para dispositivos de borde (Edge Gateways / Raspberry Pi).
-    Permite que cualquier hardware de borde consulte la configuración activa sin requerir edición manual de archivos.
+    Endpoint de aprovisionamiento de configuración para dispositivos de borde (Edge Gateways / Raspberry Pi).
+    Requiere autenticación de Administrador.
     """
     devices = get_all_devices()
-    KNOWN_TOKENS = {
-        "PASILLO62": "hw_zaEy9rg43tK6QZa0e9O_oDE_spala6yRm71hA74ayV8",
-        "TLFHECTOR": "hw_tlfhector_secret_key_8832a74ayV8",
-        "IPHONE6": "hw_iphone6_token"
-    }
-
-    existing_tokens = {}
-    for path in ["data/cameras.json", "cameras.json", "/app/data/cameras.json"]:
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    configs = json.load(f)
-                for c in configs:
-                    if "device_id" in c and "token" in c:
-                        existing_tokens[c["device_id"].upper()] = c["token"]
-            except Exception:
-                pass
-
     result = []
     for d in devices:
-        dev_id = d["device_id"].upper()
-        token = d.get("token") or existing_tokens.get(dev_id) or KNOWN_TOKENS.get(dev_id) or f"hw_{dev_id.lower()}_token"
+        dev_id = d.get("device_id", "")
+        token = d.get("token") or d.get("token_plain") or f"hw_{dev_id.lower()}_secret"
         result.append({
-            "device_id": d["device_id"],
-            "name": d["device_name"],
+            "device_id": dev_id,
+            "name": d.get("device_name", dev_id),
             "token": token,
-            "source": d["stream_url"] if d.get("stream_url") else "0",
+            "source": d.get("stream_url") or "0",
             "location": d.get("location") or "Punto de Acceso",
             "enabled": bool(d.get("is_active", True) and d.get("stream_url")),
             "antispoofing_enabled": d.get("antispoofing_enabled", True),
             "liveness_policy": d.get("liveness_policy", "passive_fft"),
             "lbp_threshold": d.get("lbp_threshold", 3.670)
         })
-
-    # Guardar automáticamente en disco para sincronización física instantánea
-    for path in ["data/cameras.json", "cameras.json", "/app/data/cameras.json"]:
-        try:
-            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(result, f, indent=4)
-        except Exception as e:
-            logger.warning(f"No se pudo guardar automáticamente {path}: {e}")
 
     return result
 

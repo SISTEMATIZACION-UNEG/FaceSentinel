@@ -180,6 +180,10 @@ def init_sqlite():
 
             admin_user = db.execute(select(User).where(User.username == default_username)).scalars().first()
             if not admin_user:
+                is_prod = os.getenv("ENVIRONMENT", "").lower() == "production"
+                if is_prod and default_password == "admin123":
+                    logger.warning("⚠️ ALERTA DE SEGURIDAD: Usando contraseña por defecto 'admin123' en entorno de producción. Cámbiala inmediatamente vía .env con INITIAL_ADMIN_PASSWORD.")
+
                 new_admin = User(
                     user_id=default_id,
                     username=default_username,
@@ -190,7 +194,7 @@ def init_sqlite():
                 )
                 db.add(new_admin)
                 db.commit()
-                logger.info(f"🔑 Administrador inicial creado exitosamente -> Usuario: '{default_username}' | Contraseña: '{default_password}'")
+                logger.info(f"🔑 Administrador inicial creado exitosamente -> Usuario: '{default_username}' (ID: {default_id})")
 
             # Auto-migración de columnas para bases de datos existentes
             from sqlalchemy import text
