@@ -74,12 +74,12 @@ class TestHealth:
 class TestRegistration:
     """Tests para el endpoint de registro de usuarios."""
 
-    def test_register_unauthenticated_returns_401(self, client):
-        """Verifica que registrar sin credenciales de admin da 401."""
+    def test_register_missing_fields_returns_422(self, client):
+        """Verifica que registrar sin campos obligatorios retorna 422."""
         response = client.post("/api/v1/register", json={})
-        assert response.status_code == 401
+        assert response.status_code == 422
 
-    def test_register_without_image(self, client, admin_headers):
+    def test_register_without_image(self, client):
         """Verifica que registrar sin imagen da error 422."""
         payload = {
             "user_id": "TEST-001",
@@ -87,19 +87,19 @@ class TestRegistration:
             "role": "Tester"
             # Falta image_base64
         }
-        response = client.post("/api/v1/register", json=payload, headers=admin_headers)
+        response = client.post("/api/v1/register", json=payload)
         assert response.status_code == 422  # Validation Error
 
-    def test_register_with_empty_fields(self, client, admin_headers):
-        """Verifica que campos vacíos son procesados."""
+    def test_register_with_empty_fields(self, client):
+        """Verifica que imagen inválida retorna error 400."""
         payload = {
-            "user_id": "",
-            "name": "",
-            "role": "",
+            "user_id": "TEST-001",
+            "name": "Test User",
+            "role": "Tester",
             "image_base64": "invalid"
         }
-        response = client.post("/api/v1/register", json=payload, headers=admin_headers)
-        # Debería fallar en el procesamiento de la imagen
+        response = client.post("/api/v1/register", json=payload)
+        # Falla al decodificar / procesar rostro en la imagen
         assert response.status_code in [400, 500]
 
 

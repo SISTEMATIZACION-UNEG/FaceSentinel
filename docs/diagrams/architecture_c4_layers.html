@@ -5171,7 +5171,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <path data-edge-from="api_gateway" data-edge-to="liveness_server" data-edge-label="Reto / Verificación" data-edge-key="3" data-edge-id="conn_fastapi_liveness" data-composition-points="445,230;445,134" d="M 445 230 L 445 134" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="api_gateway" data-edge-to="arcface_inference" data-edge-label="Extracción 512D" data-edge-key="4" data-edge-id="conn_fastapi_arcface" data-composition-points="445,294;445,390" d="M 445 294 L 445 390" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="api_gateway" data-edge-to="sqlite_persist" data-edge-label="Validación RBAC O(1)" data-edge-key="5" data-edge-id="conn_fastapi_sqlite" data-composition-points="540,262;590,262;590,102;780,102" d="M 540 262 L 582 262 Q 590 262 590 254 L 590 110 Q 590 102 598 102 L 780 102" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="api_gateway" data-edge-to="chroma_vector" data-edge-label="Búsqueda Coseno (d &lt; 0.68)" data-edge-key="6" data-edge-id="conn_fastapi_chroma" data-composition-points="540,262;780,262" d="M 540 262 L 780 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="api_gateway" data-edge-to="chroma_vector" data-edge-label="Búsqueda Coseno (d &lt; 0.60)" data-edge-key="6" data-edge-id="conn_fastapi_chroma" data-composition-points="540,262;780,262" d="M 540 262 L 780 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="api_gateway" data-edge-to="smart_contract" data-edge-label="Web3 Asíncrona (SHA-256)" data-edge-key="7" data-edge-id="conn_fastapi_contract" data-composition-points="540,262;590,262;590,422;780,422" d="M 540 262 L 582 262 Q 590 262 590 270 L 590 414 Q 590 422 598 422 L 780 422" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="smart_contract" data-edge-to="ethereum_poa" data-edge-label="Notarización TX / Clique" data-edge-key="8" data-edge-id="conn_contract_geth" data-composition-points="970,422;1140,422" d="M 970 422 L 1140 422" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
 
@@ -5186,9 +5186,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="130" y="100" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cámara CCTV / Sensor IP</text>
-        <text data-detail="context" x="130" y="116" class="t-muted" font-size="9" text-anchor="middle">Flujo RTSP (H.264 / TCP)</text>
-        <text data-detail="fine" x="130" y="126" class="t-frontend" font-size="7" text-anchor="middle">Sensor Físico</text>
+          <text data-node-label="" data-detail-anchor="" x="130" y="96" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Cámara CCTV / Sensor IP</text>
+        <text data-detail="context" x="130" y="112" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">Flujo RTSP (H.264 / TCP)</text>
+        <text data-detail="fine" x="130" y="126" class="t-frontend" font-size="9" font-weight="600" text-anchor="middle">Sensor Físico</text>
         </g>
 
         <g id="node-edge_gateway" data-node-id="edge_gateway" data-node-label="Nodo Edge Gateway" tabindex="0" role="button" aria-label="Focus Nodo Edge Gateway, OpenCV + MediaPipe EAR, CAPA FÍSICA Y DE BORDE (EDGE)" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="OpenCV + MediaPipe EAR" data-node-tag="Procesamiento Borde" data-node-context="CAPA FÍSICA Y DE BORDE (EDGE)">
@@ -5201,9 +5201,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="130" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Nodo Edge Gateway</text>
-        <text data-detail="context" x="130" y="276" class="t-muted" font-size="9" text-anchor="middle">OpenCV + MediaPipe EAR</text>
-        <text data-detail="fine" x="130" y="286" class="t-frontend" font-size="7" text-anchor="middle">Procesamiento Borde</text>
+          <text data-node-label="" data-detail-anchor="" x="130" y="256" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Nodo Edge Gateway</text>
+        <text data-detail="context" x="130" y="272" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">OpenCV + MediaPipe EAR</text>
+        <text data-detail="fine" x="130" y="286" class="t-frontend" font-size="9" font-weight="600" text-anchor="middle">Procesamiento Borde</text>
         </g>
 
         <g id="node-m2m_payload" data-node-id="m2m_payload" data-node-label="Señalización Lógica M2M" tabindex="0" role="button" aria-label="Focus Señalización Lógica M2M, Payload JSON (Base64), CAPA FÍSICA Y DE BORDE (EDGE)" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Payload JSON (Base64)" data-node-tag="Mensajería" data-node-context="CAPA FÍSICA Y DE BORDE (EDGE)">
@@ -5216,9 +5216,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="130" y="420" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Señalización Lógica M2M</text>
-        <text data-detail="context" x="130" y="436" class="t-muted" font-size="9" text-anchor="middle">Payload JSON (Base64)</text>
-        <text data-detail="fine" x="130" y="446" class="t-frontend" font-size="7" text-anchor="middle">Mensajería</text>
+          <text data-node-label="" data-detail-anchor="" x="130" y="416" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Señalización Lógica M2M</text>
+        <text data-detail="context" x="130" y="432" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">Payload JSON (Base64)</text>
+        <text data-detail="fine" x="130" y="446" class="t-frontend" font-size="9" font-weight="600" text-anchor="middle">Mensajería</text>
         </g>
 
         <g id="node-liveness_server" data-node-id="liveness_server" data-node-label="Filtro Liveness Server" tabindex="0" role="button" aria-label="Focus Filtro Liveness Server, LBP + Desafío MAR/Yaw, CAPA DE APLICACIÓN Y BACKEND" aria-pressed="false" data-node-kind="backend" data-node-sublabel="LBP + Desafío MAR/Yaw" data-node-tag="Anti-Spoofing" data-node-context="CAPA DE APLICACIÓN Y BACKEND">
@@ -5228,9 +5228,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(356 76) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="445" y="100" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Filtro Liveness Server</text>
-        <text data-detail="context" x="445" y="116" class="t-muted" font-size="9" text-anchor="middle">LBP + Desafío MAR/Yaw</text>
-        <text data-detail="fine" x="445" y="126" class="t-backend" font-size="7" text-anchor="middle">Anti-Spoofing</text>
+          <text data-node-label="" data-detail-anchor="" x="445" y="96" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Filtro Liveness Server</text>
+        <text data-detail="context" x="445" y="112" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">LBP + Desafío MAR/Yaw</text>
+        <text data-detail="fine" x="445" y="126" class="t-backend" font-size="9" font-weight="600" text-anchor="middle">Anti-Spoofing</text>
         </g>
 
         <g id="node-api_gateway" data-node-id="api_gateway" data-node-label="API Gateway Orquestador" tabindex="0" role="button" aria-label="Focus API Gateway Orquestador, FastAPI Core Asíncrono, CAPA DE APLICACIÓN Y BACKEND" aria-pressed="false" data-node-kind="backend" data-node-sublabel="FastAPI Core Asíncrono" data-node-tag="Orquestador" data-node-context="CAPA DE APLICACIÓN Y BACKEND">
@@ -5240,9 +5240,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(356 236) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="445" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Gateway Orquestador</text>
-        <text data-detail="context" x="445" y="276" class="t-muted" font-size="9" text-anchor="middle">FastAPI Core Asíncrono</text>
-        <text data-detail="fine" x="445" y="286" class="t-backend" font-size="7" text-anchor="middle">Orquestador</text>
+          <text data-node-label="" data-detail-anchor="" x="445" y="256" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">API Gateway Orquestador</text>
+        <text data-detail="context" x="445" y="272" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">FastAPI Core Asíncrono</text>
+        <text data-detail="fine" x="445" y="286" class="t-backend" font-size="9" font-weight="600" text-anchor="middle">Orquestador</text>
         </g>
 
         <g id="node-arcface_inference" data-node-id="arcface_inference" data-node-label="Motor Inferencia Facial" tabindex="0" role="button" aria-label="Focus Motor Inferencia Facial, ArcFace 512D Embeddings, CAPA DE APLICACIÓN Y BACKEND" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ArcFace 512D Embeddings" data-node-tag="Biometría" data-node-context="CAPA DE APLICACIÓN Y BACKEND">
@@ -5252,9 +5252,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(356 396) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="445" y="420" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Motor Inferencia Facial</text>
-        <text data-detail="context" x="445" y="436" class="t-muted" font-size="9" text-anchor="middle">ArcFace 512D Embeddings</text>
-        <text data-detail="fine" x="445" y="446" class="t-backend" font-size="7" text-anchor="middle">Biometría</text>
+          <text data-node-label="" data-detail-anchor="" x="445" y="416" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Motor Inferencia Facial</text>
+        <text data-detail="context" x="445" y="432" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">ArcFace 512D Embeddings</text>
+        <text data-detail="fine" x="445" y="446" class="t-backend" font-size="9" font-weight="600" text-anchor="middle">Biometría</text>
         </g>
 
         <g id="node-sqlite_persist" data-node-id="sqlite_persist" data-node-label="Persistencia Relacional" tabindex="0" role="button" aria-label="Focus Persistencia Relacional, SQLite: RBAC / ACLs / Logs, CAPA DE ALMACENAMIENTO HÍBRIDO" aria-pressed="false" data-node-kind="database" data-node-sublabel="SQLite: RBAC / ACLs / Logs" data-node-tag="Relacional" data-node-context="CAPA DE ALMACENAMIENTO HÍBRIDO">
@@ -5265,9 +5265,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="100" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Persistencia Relacional</text>
-        <text data-detail="context" x="875" y="116" class="t-muted" font-size="9" text-anchor="middle">SQLite: RBAC / ACLs / Logs</text>
-        <text data-detail="fine" x="875" y="126" class="t-database" font-size="7" text-anchor="middle">Relacional</text>
+          <text data-node-label="" data-detail-anchor="" x="875" y="96" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Persistencia Relacional</text>
+        <text data-detail="context" x="875" y="112" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">SQLite: RBAC / ACLs / Logs</text>
+        <text data-detail="fine" x="875" y="126" class="t-database" font-size="9" font-weight="600" text-anchor="middle">Relacional</text>
         </g>
 
         <g id="node-chroma_vector" data-node-id="chroma_vector" data-node-label="Base Datos Vectorial" tabindex="0" role="button" aria-label="Focus Base Datos Vectorial, ChromaDB: HNSW Cosine, CAPA DE ALMACENAMIENTO HÍBRIDO" aria-pressed="false" data-node-kind="database" data-node-sublabel="ChromaDB: HNSW Cosine" data-node-tag="Vectorial" data-node-context="CAPA DE ALMACENAMIENTO HÍBRIDO">
@@ -5278,9 +5278,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Base Datos Vectorial</text>
-        <text data-detail="context" x="875" y="276" class="t-muted" font-size="9" text-anchor="middle">ChromaDB: HNSW Cosine</text>
-        <text data-detail="fine" x="875" y="286" class="t-database" font-size="7" text-anchor="middle">Vectorial</text>
+          <text data-node-label="" data-detail-anchor="" x="875" y="256" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Base Datos Vectorial</text>
+        <text data-detail="context" x="875" y="272" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">ChromaDB: HNSW Cosine</text>
+        <text data-detail="fine" x="875" y="286" class="t-database" font-size="9" font-weight="600" text-anchor="middle">Vectorial</text>
         </g>
 
         <g id="node-smart_contract" data-node-id="smart_contract" data-node-label="Smart Contract" tabindex="0" role="button" aria-label="Focus Smart Contract, AccessRegistry.sol, CAPA DE AUDITORÍA DESCENTRALIZADA" aria-pressed="false" data-node-kind="security" data-node-sublabel="AccessRegistry.sol" data-node-tag="Web3 Contract" data-node-context="CAPA DE AUDITORÍA DESCENTRALIZADA">
@@ -5291,9 +5291,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="420" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Smart Contract</text>
-        <text data-detail="context" x="875" y="436" class="t-muted" font-size="9" text-anchor="middle">AccessRegistry.sol</text>
-        <text data-detail="fine" x="875" y="446" class="t-security" font-size="7" text-anchor="middle">Web3 Contract</text>
+          <text data-node-label="" data-detail-anchor="" x="875" y="416" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Smart Contract</text>
+        <text data-detail="context" x="875" y="432" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">AccessRegistry.sol</text>
+        <text data-detail="fine" x="875" y="446" class="t-security" font-size="9" font-weight="600" text-anchor="middle">Web3 Contract</text>
         </g>
 
         <g id="node-ethereum_poa" data-node-id="ethereum_poa" data-node-label="Red Privada Ethereum" tabindex="0" role="button" aria-label="Focus Red Privada Ethereum, Geth PoA / Clique, CAPA DE AUDITORÍA DESCENTRALIZADA" aria-pressed="false" data-node-kind="security" data-node-sublabel="Geth PoA / Clique" data-node-tag="Blockchain" data-node-context="CAPA DE AUDITORÍA DESCENTRALIZADA">
@@ -5304,88 +5304,88 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1235" y="420" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Red Privada Ethereum</text>
-        <text data-detail="context" x="1235" y="436" class="t-muted" font-size="9" text-anchor="middle">Geth PoA / Clique</text>
-        <text data-detail="fine" x="1235" y="446" class="t-security" font-size="7" text-anchor="middle">Blockchain</text>
+          <text data-node-label="" data-detail-anchor="" x="1235" y="416" class="t-primary" font-size="12" font-weight="700" text-anchor="middle">Red Privada Ethereum</text>
+        <text data-detail="context" x="1235" y="432" class="t-muted" font-size="10.5" font-weight="500" text-anchor="middle">Geth PoA / Clique</text>
+        <text data-detail="fine" x="1235" y="446" class="t-security" font-size="9" font-weight="600" text-anchor="middle">Blockchain</text>
         </g>
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="cctv_ip" data-edge-to="edge_gateway" data-edge-label="Flujo RTSP" data-edge-key="0" data-edge-id="conn_rtsp_edge">
-          <rect x="101" y="172" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="130" y="182" class="t-muted" font-size="8" text-anchor="middle">Flujo RTSP</text>
+          <rect x="85" y="171" width="90" height="16" rx="3" class="c-mask"/>
+          <text x="130" y="183" class="t-muted" font-size="9.5" font-weight="600" text-anchor="middle">Flujo RTSP</text>
         </g>
         <g data-detail="context" data-edge-from="edge_gateway" data-edge-to="api_gateway" data-edge-label="HTTP POST / JSON (Frame Base64)" data-edge-key="1" data-edge-id="conn_edge_fastapi">
-          <rect x="205.60000000000002" y="208" width="158.79999999999998" height="14" rx="3" class="c-mask"/>
-          <text x="285" y="218" class="t-backend" font-size="8" text-anchor="middle">HTTP POST / JSON (Frame Base64)</text>
+          <rect x="175" y="207" width="220" height="16" rx="3" class="c-mask"/>
+          <text x="285" y="219" class="t-backend" font-size="9.5" font-weight="600" text-anchor="middle">HTTP POST / JSON (Frame Base64)</text>
         </g>
         <g data-detail="context" data-edge-from="api_gateway" data-edge-to="m2m_payload" data-edge-label="HTTP 200 OK (Veredicto JSON: Granted/Denied)" data-edge-key="2" data-edge-id="conn_fastapi_m2m">
-          <rect x="174.4" y="322" width="221.2" height="14" rx="3" class="c-mask"/>
-          <text x="285" y="332" class="t-backend" font-size="8" text-anchor="middle">HTTP 200 OK (Veredicto JSON: Granted/Denied)</text>
+          <rect x="130" y="321" width="310" height="16" rx="3" class="c-mask"/>
+          <text x="285" y="333" class="t-backend" font-size="9.5" font-weight="600" text-anchor="middle">HTTP 200 OK (Veredicto JSON: Granted/Denied)</text>
         </g>
         <g data-detail="context" data-edge-from="api_gateway" data-edge-to="liveness_server" data-edge-label="Reto / Verificación" data-edge-key="3" data-edge-id="conn_fastapi_liveness">
-          <rect x="394.4" y="172" width="101.2" height="14" rx="3" class="c-mask"/>
-          <text x="445" y="182" class="t-security" font-size="8" text-anchor="middle">Reto / Verificación</text>
+          <rect x="370" y="171" width="150" height="16" rx="3" class="c-mask"/>
+          <text x="445" y="183" class="t-security" font-size="9.5" font-weight="600" text-anchor="middle">Reto / Verificación</text>
         </g>
         <g data-detail="context" data-edge-from="api_gateway" data-edge-to="arcface_inference" data-edge-label="Extracción 512D" data-edge-key="4" data-edge-id="conn_fastapi_arcface">
-          <rect x="404" y="332" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="445" y="342" class="t-backend" font-size="8" text-anchor="middle">Extracción 512D</text>
+          <rect x="385" y="331" width="120" height="16" rx="3" class="c-mask"/>
+          <text x="445" y="343" class="t-backend" font-size="9.5" font-weight="600" text-anchor="middle">Extracción 512D</text>
         </g>
         <g data-detail="context" data-edge-from="api_gateway" data-edge-to="sqlite_persist" data-edge-label="Validación RBAC O(1)" data-edge-key="5" data-edge-id="conn_fastapi_sqlite">
-          <rect x="632" y="82" width="106" height="14" rx="3" class="c-mask"/>
-          <text x="685" y="92" class="t-muted" font-size="8" text-anchor="middle">Validación RBAC O(1)</text>
+          <rect x="605" y="81" width="160" height="16" rx="3" class="c-mask"/>
+          <text x="685" y="93" class="t-muted" font-size="9.5" font-weight="600" text-anchor="middle">Validación RBAC O(1)</text>
         </g>
-        <g data-detail="context" data-edge-from="api_gateway" data-edge-to="chroma_vector" data-edge-label="Búsqueda Coseno (d &lt; 0.68)" data-edge-key="6" data-edge-id="conn_fastapi_chroma">
-          <rect x="617.6" y="242" width="134.8" height="14" rx="3" class="c-mask"/>
-          <text x="685" y="252" class="t-backend" font-size="8" text-anchor="middle">Búsqueda Coseno (d &lt; 0.68)</text>
+        <g data-detail="context" data-edge-from="api_gateway" data-edge-to="chroma_vector" data-edge-label="Búsqueda Coseno (d &lt; 0.60)" data-edge-key="6" data-edge-id="conn_fastapi_chroma">
+          <rect x="590" y="241" width="190" height="16" rx="3" class="c-mask"/>
+          <text x="685" y="253" class="t-backend" font-size="9.5" font-weight="600" text-anchor="middle">Búsqueda Coseno (d &lt; 0.60)</text>
         </g>
         <g data-detail="context" data-edge-from="api_gateway" data-edge-to="smart_contract" data-edge-label="Web3 Asíncrona (SHA-256)" data-edge-key="7" data-edge-id="conn_fastapi_contract">
-          <rect x="622.4" y="422" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
-          <text x="685" y="432" class="t-security" font-size="8" text-anchor="middle">Web3 Asíncrona (SHA-256)</text>
+          <rect x="595" y="421" width="180" height="16" rx="3" class="c-mask"/>
+          <text x="685" y="433" class="t-security" font-size="9.5" font-weight="600" text-anchor="middle">Web3 Asíncrona (SHA-256)</text>
         </g>
         <g data-detail="context" data-edge-from="smart_contract" data-edge-to="ethereum_poa" data-edge-label="Notarización TX / Clique" data-edge-key="8" data-edge-id="conn_contract_geth">
-          <rect x="992.4" y="412" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
-          <text x="1055" y="422" class="t-security" font-size="8" text-anchor="middle">Notarización TX / Clique</text>
+          <rect x="965" y="411" width="180" height="16" rx="3" class="c-mask"/>
+          <text x="1055" y="423" class="t-security" font-size="9.5" font-weight="600" text-anchor="middle">Notarización TX / Clique</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
         <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="CAPA FÍSICA Y DE BORDE (EDGE)">
-          <rect data-graph-role="structural-frame-label-mask" x="14" y="50" width="166.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="63" class="t-cloud" font-size="9" font-weight="600">CAPA FÍSICA Y DE BORDE (EDGE)</text>
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="48" width="195" height="18" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="18" y="62" class="t-cloud" font-size="10.5" font-weight="700">CAPA FÍSICA Y DE BORDE (EDGE)</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="CAPA DE APLICACIÓN Y BACKEND">
-          <rect data-graph-role="structural-frame-label-mask" x="324" y="50" width="161.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="328" y="63" class="t-cloud" font-size="9" font-weight="600">CAPA DE APLICACIÓN Y BACKEND</text>
+          <rect data-graph-role="structural-frame-label-mask" x="324" y="48" width="190" height="18" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="328" y="62" class="t-cloud" font-size="10.5" font-weight="700">CAPA DE APLICACIÓN Y BACKEND</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="CAPA DE ALMACENAMIENTO HÍBRIDO">
-          <rect data-graph-role="structural-frame-label-mask" x="754" y="50" width="172" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="758" y="63" class="t-cloud" font-size="9" font-weight="600">CAPA DE ALMACENAMIENTO HÍBRIDO</text>
+          <rect data-graph-role="structural-frame-label-mask" x="754" y="48" width="200" height="18" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="758" y="62" class="t-cloud" font-size="10.5" font-weight="700">CAPA DE ALMACENAMIENTO HÍBRIDO</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="CAPA DE AUDITORÍA DESCENTRALIZADA">
-          <rect data-graph-role="structural-frame-label-mask" x="754" y="370" width="188.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="758" y="383" class="t-cloud" font-size="9" font-weight="600">CAPA DE AUDITORÍA DESCENTRALIZADA</text>
+          <rect data-graph-role="structural-frame-label-mask" x="754" y="368" width="225" height="18" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="758" y="382" class="t-cloud" font-size="10.5" font-weight="700">CAPA DE AUDITORÍA DESCENTRALIZADA</text>
         </g>
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
-          <text x="40" y="504" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <text x="40" y="504" class="t-primary" font-size="13" font-weight="700">Legend</text>
           <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="Frontend" data-legend-x="40" data-legend-baseline="524" data-legend-width="83">
-            <rect x="40" y="515" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1"/>
-            <text x="62" y="524" class="t-muted" font-size="10" font-weight="500">Frontend</text>
+            <rect x="40" y="514" width="16" height="11" rx="2.5" class="c-frontend" stroke-width="1"/>
+            <text x="62" y="524" class="t-muted" font-size="11" font-weight="600">Frontend</text>
           </g>
           <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="145" data-legend-baseline="524" data-legend-width="78">
-            <rect x="145" y="515" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="167" y="524" class="t-muted" font-size="10" font-weight="500">Backend</text>
+            <rect x="145" y="514" width="16" height="11" rx="2.5" class="c-backend" stroke-width="1"/>
+            <text x="167" y="524" class="t-muted" font-size="11" font-weight="600">Backend</text>
           </g>
           <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Database" data-legend-x="245" data-legend-baseline="524" data-legend-width="83">
-            <rect x="245" y="515" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
-            <text x="267" y="524" class="t-muted" font-size="10" font-weight="500">Database</text>
+            <rect x="245" y="514" width="16" height="11" rx="2.5" class="c-database" stroke-width="1"/>
+            <text x="267" y="524" class="t-muted" font-size="11" font-weight="600">Database</text>
           </g>
           <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Security" data-legend-x="350" data-legend-baseline="524" data-legend-width="83">
-            <rect x="350" y="515" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
-            <text x="372" y="524" class="t-muted" font-size="10" font-weight="500">Security</text>
+            <rect x="350" y="514" width="16" height="11" rx="2.5" class="c-security" stroke-width="1"/>
+            <text x="372" y="524" class="t-muted" font-size="11" font-weight="600">Security</text>
           </g>
         </g>
       </svg>

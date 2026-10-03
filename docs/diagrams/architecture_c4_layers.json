@@ -185,7 +185,7 @@
       "id": "conn_fastapi_chroma",
       "from": "api_gateway",
       "to": "chroma_vector",
-      "label": "Búsqueda Coseno (d < 0.68)",
+      "label": "Búsqueda Coseno (d < 0.60)",
       "fromSide": "right",
       "toSide": "left",
       "labelAt": [685, 252],

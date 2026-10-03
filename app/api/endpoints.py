@@ -297,7 +297,8 @@ def get_my_client_app(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/register", tags=["Autenticación y Registro"])
-def register_user(user_data: UserRegister, current_user: dict = Depends(require_admin)):
+@limiter.limit("20/minute")
+def register_user(user_data: UserRegister, request: Request):
     """Recibe los datos y la foto, y los envía a la IA para extraer el vector."""
     success, message = register_face(
         user_id=user_data.user_id,
