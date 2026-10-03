@@ -17,6 +17,7 @@ import numpy as np
 import cv2
 from skimage.feature import local_binary_pattern
 import mediapipe as mp
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,12 @@ face_mesh = mp_face_mesh.FaceMesh(
     min_detection_confidence=0.35,
     min_tracking_confidence=0.35
 )
+_face_mesh_lock = threading.Lock()
+
+def _safe_process_face_mesh(rgb_image):
+    """Ejecuta face_mesh.process con protección de bloqueo para concurrencia multi-hilo."""
+    with _face_mesh_lock:
+        return face_mesh.process(rgb_image)
 
 # Índices exactos de los puntos (landmarks) de los ojos en MediaPipe
 LEFT_EYE = [33, 160, 158, 133, 153, 144]
@@ -82,7 +89,7 @@ def analyze_blink(frame_rgb) -> tuple:
     Analiza un frame y retorna si hay un rostro y su nivel de apertura de ojos.
     Retorna: (bool_hay_rostro, float_ear_promedio)
     """
-    results = face_mesh.process(frame_rgb)
+    results = _safe_process_face_mesh(frame_rgb)
 
     if not results.multi_face_landmarks:
         return False, 0.0
@@ -163,7 +170,7 @@ def analyze_texture(frame_bgr, custom_lbp_threshold: Optional[float] = 3.2, adap
 
         # Detectar el rostro con MediaPipe Face Mesh para aislar el ROI facial
         rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        mesh_results = face_mesh.process(rgb)
+        mesh_results = _safe_process_face_mesh(rgb)
 
         if mesh_results.multi_face_landmarks:
             h, w = gray.shape[:2]
@@ -410,7 +417,7 @@ def estimate_head_pose(frame_rgb) -> dict:
     Returns:
         dict con ángulos de la cabeza y si se detectó un rostro
     """
-    results = face_mesh.process(frame_rgb)
+    results = _safe_process_face_mesh(frame_rgb)
 
     if not results.multi_face_landmarks:
         return {"detected": False, "yaw": 0, "pitch": 0, "roll": 0, "mar": 0.0}
@@ -653,7 +660,7 @@ def calibrate_camera_stream(stream_url: str, target_samples: int = 25) -> dict:
             total_frames_read += 1
             h, w = frame.shape[:2]
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = face_mesh.process(rgb)
+            results = _safe_process_face_mesh(rgb)
 
             if not results.multi_face_landmarks:
                 time.sleep(0.02)

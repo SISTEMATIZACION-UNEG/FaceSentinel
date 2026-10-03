@@ -6,20 +6,23 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: facesentinel-backend
-    network_mode: "host"   # Permite conectar directamente a 127.0.0.1:5600 del Geth local
+    network_mode: "host"   # Permite conectar directamente a 127.0.0.1:5600 del Geth local en Debian
     restart: always
     env_file:
       - .env
     volumes:
       - ./data:/app/data
+      - deepface_models:/root/.deepface
 
   facesentinel-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: facesentinel-frontend
+    network_mode: "host"   # Expone el puerto 8088 configurado en nginx.conf directamente en el host
     restart: always
-    ports:
-      - "8088:80"          # Portal Web accesible en el puerto 8088
     depends_on:
       - facesentinel-backend
+
+volumes:
+  deepface_models:

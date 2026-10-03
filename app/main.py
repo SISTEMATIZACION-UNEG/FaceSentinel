@@ -62,13 +62,32 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # =========================================================================
 
 # CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+raw_cors = os.getenv("CORS_ORIGINS", "").strip()
+if raw_cors and raw_cors != "*":
+    cors_origins = [orig.strip() for orig in raw_cors.split(",") if orig.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:8088",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:8088",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:3000",
+        ],
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 # =========================================================================

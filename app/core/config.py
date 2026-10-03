@@ -5,28 +5,29 @@ class Settings(BaseSettings):
     # API
     PROJECT_NAME: str = "FaceSentinel"
     API_V1_STR: str = "/api/v1"
+    PORT: int = int(os.getenv("PORT", "8000"))
     
     # Rutas
-    SQLITE_DB_PATH: str = "./data/sql/database.db"
-    CHROMA_DB_PATH: str = "./data/chromadb"
-    TEMP_IMAGES_PATH: str = "./data/temp_images"
+    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "./data/sql/database.db")
+    CHROMA_DB_PATH: str = os.getenv("CHROMA_DB_PATH", "./data/chromadb")
+    TEMP_IMAGES_PATH: str = os.getenv("TEMP_IMAGES_PATH", "./data/temp_images")
     
     # IA
-    AI_MODEL_NAME: str = "ArcFace"
+    AI_MODEL_NAME: str = os.getenv("AI_MODEL_NAME", "ArcFace")
     FACE_MATCH_THRESHOLD: float = float(os.getenv("FACE_MATCH_THRESHOLD", "0.60"))
     
     # Web3
-    BLOCKCHAIN_RPC_URL: str = "http://127.0.0.1:7545"
-    CHAIN_ID: int = 1337
-    SMART_CONTRACT_ADDRESS: str = ""
-    DEVICE_PRIVATE_KEY: str = ""
-    # Cuenta administradora de la blockchain (leída directamente del .env)
-    ADMIN_ADDRESS: str = ""
-    ADMIN_PRIVATE_KEY: str = ""
+    BLOCKCHAIN_RPC_URL: str = os.getenv("BLOCKCHAIN_RPC_URL", os.getenv("WEB3_PROVIDER_URI", "http://127.0.0.1:5600"))
+    CHAIN_ID: int = int(os.getenv("BLOCKCHAIN_CHAIN_ID") or os.getenv("CHAIN_ID", "963741852"))
+    SMART_CONTRACT_ADDRESS: str = os.getenv("SMART_CONTRACT_ADDRESS", "")
+    DEVICE_PRIVATE_KEY: str = os.getenv("DEVICE_PRIVATE_KEY", "")
+    # Cuenta administradora de la blockchain
+    ADMIN_ADDRESS: str = os.getenv("BLOCKCHAIN_ACCOUNT") or os.getenv("ADMIN_ADDRESS", "")
+    ADMIN_PRIVATE_KEY: str = os.getenv("BLOCKCHAIN_PRIVATE_KEY") or os.getenv("ADMIN_PRIVATE_KEY", "")
 
     # Seguridad — JWT
-    JWT_SECRET_KEY: str = "facesentinel-super-secret-key-change-in-production"
-    JWT_EXPIRATION_MINUTES: int = 1440
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "facesentinel-super-secret-key-change-in-production")
+    JWT_EXPIRATION_MINUTES: int = int(os.getenv("JWT_EXPIRATION_MINUTES", "1440"))
 
     # Seguridad — Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 30

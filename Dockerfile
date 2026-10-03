@@ -29,11 +29,11 @@ COPY . .
 # Asegurar directorios de persistencia
 RUN mkdir -p /app/data/sql /app/data/chromadb /app/data/temp_images /app/data/logs /root/.deepface
 
-EXPOSE 8000
+EXPOSE 8000 8001
 
 # Comprobación de salud (Healthcheck)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=35s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/ || exit 1
 
 # Comando de inicio del servidor ASGI
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
