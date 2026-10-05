@@ -421,7 +421,6 @@ export default function IoTDevicesView() {
                                     onChange={e => {
                                         const val = e.target.value as "none" | "passive_lbp" | "passive_fft"
                                         setLivenessPolicy(val)
-                                        setAntispoofingEnabled(val !== "none")
                                     }}
                                 >
                                     <option value="none">Nivel 1: Solo Similitud (ArcFace)</option>
@@ -671,7 +670,6 @@ export default function IoTDevicesView() {
                                     onChange={e => {
                                         const val = e.target.value as "none" | "passive_lbp" | "passive_fft"
                                         setEditLivenessPolicy(val)
-                                        setEditAntispoofing(val !== "none")
                                     }}
                                 >
                                     <option value="none">Nivel 1: Solo Similitud (ArcFace)</option>

@@ -4,7 +4,7 @@
 
 # --- 1. PyTorch & Computación Acelerada ---
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.14.0+cpu
+torch==2.4.0+cpu
 torchvision==0.19.0+cpu
 
 # --- 2. Núcleo de IA, Deep Learning y Visión Artificial ---

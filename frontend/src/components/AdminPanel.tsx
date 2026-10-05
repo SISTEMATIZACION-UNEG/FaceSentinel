@@ -13,7 +13,7 @@ interface Client {
     client_id: string
     app_name: string
     redirect_uris: string[]
-    liveness_policy?: "none" | "passive_lbp" | "passive" | "passive_fft" | "active"
+    liveness_policy?: "none" | "passive_lbp" | "passive_fft" | "active"
     created_at: string
 }
 

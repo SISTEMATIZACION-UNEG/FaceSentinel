@@ -12,14 +12,16 @@ class Settings(BaseSettings):
     CHROMA_DB_PATH: str = os.getenv("CHROMA_DB_PATH", "./data/chromadb")
     TEMP_IMAGES_PATH: str = os.getenv("TEMP_IMAGES_PATH", "./data/temp_images")
     
-    # IA
+    # IA & Biometría
     AI_MODEL_NAME: str = os.getenv("AI_MODEL_NAME", "ArcFace")
     FACE_MATCH_THRESHOLD: float = float(os.getenv("FACE_MATCH_THRESHOLD", "0.60"))
+    LIVENESS_POLICY: str = os.getenv("LIVENESS_POLICY", "passive_lbp")
     
-    # Web3
+    # Web3 & Red
+    NETWORK_MODE: str = os.getenv("NETWORK_MODE", "host")
     BLOCKCHAIN_RPC_URL: str = os.getenv("BLOCKCHAIN_RPC_URL", os.getenv("WEB3_PROVIDER_URI", "http://127.0.0.1:5600"))
     CHAIN_ID: int = int(os.getenv("BLOCKCHAIN_CHAIN_ID") or os.getenv("CHAIN_ID", "963741852"))
-    SMART_CONTRACT_ADDRESS: str = os.getenv("SMART_CONTRACT_ADDRESS", "")
+    SMART_CONTRACT_ADDRESS: str = os.getenv("SMART_CONTRACT_ADDRESS") or os.getenv("CONTRACT_ADDRESS", "")
     DEVICE_PRIVATE_KEY: str = os.getenv("DEVICE_PRIVATE_KEY", "")
     # Cuenta administradora de la blockchain
     ADMIN_ADDRESS: str = os.getenv("BLOCKCHAIN_ACCOUNT") or os.getenv("ADMIN_ADDRESS", "")

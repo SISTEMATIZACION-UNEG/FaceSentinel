@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Instalar dependencias de Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --timeout 60 --retries 5 --no-cache-dir -r requirements.txt
 
 # Pre-descargar pesos del modelo de IA (ArcFace) para asegurar funcionamiento offline e instantáneo
 RUN python -c "from deepface import DeepFace; DeepFace.build_model('ArcFace')" || true
