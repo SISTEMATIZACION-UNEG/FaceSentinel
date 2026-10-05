@@ -110,9 +110,11 @@ class BlinkTracker:
     """
     Rastrea el historial de EAR (Eye Aspect Ratio) a través de múltiples frames
     para detectar un parpadeo completo (cerrar y abrir los ojos).
+    Calibrado para alta reactividad y baja latencia en entornos CPU.
     """
-    def __init__(self, ear_threshold=0.20, consecutive_frames=2):
+    def __init__(self, ear_threshold=0.24, open_threshold=0.27, consecutive_frames=1):
         self.ear_threshold = ear_threshold
+        self.open_threshold = open_threshold
         self.consecutive_frames = consecutive_frames
         self.frame_counter = 0
         self.blink_detected = False
@@ -126,11 +128,11 @@ class BlinkTracker:
         if len(self.history) > 10:
             self.history.pop(0)
 
-        # Lógica de detección: si el EAR cae por debajo del umbral por N frames
+        # Lógica de detección: si el EAR cae por debajo del umbral de cerrado
         if ear < self.ear_threshold:
             self.frame_counter += 1
-        else:
-            # Si el ojo volvió a abrirse y había estado cerrado lo suficiente, es un parpadeo
+        elif ear >= self.open_threshold:
+            # Si el ojo volvió a abrirse y se registró al menos N frames cerrados
             if self.frame_counter >= self.consecutive_frames:
                 self.blink_detected = True
             self.frame_counter = 0

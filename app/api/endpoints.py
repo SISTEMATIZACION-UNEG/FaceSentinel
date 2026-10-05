@@ -529,9 +529,9 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
 
     logger.info(f"🌐 WebSocket Liveness conectado. Client ID: '{client_id}' | Política activa: '{liveness_policy}'")
     
-    # Tolerancia: ear_threshold=0.16 para asegurar que el usuario cerró intencionalmente 
-    # los ojos, y no un falso positivo por párpados naturalmente caídos o inicialización.
-    tracker = BlinkTracker(ear_threshold=0.16, consecutive_frames=1)
+    # Calibración optimizada para CPU: ear_threshold=0.24 (cerrado) y open_threshold=0.27 (abierto)
+    # con 1 solo frame requerido para capturar parpadeos naturales instantáneamente (<0.5s).
+    tracker = BlinkTracker(ear_threshold=0.24, open_threshold=0.27, consecutive_frames=1)
     
     # Máquina de estados para Liveness Blindado (Challenge-Response Secuencial):
     # Fase 1: "blink" (Detección de parpadeo frontal + validación LBP >= 3.20 + captura frontal_frame)
@@ -552,6 +552,15 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
         while True:
             # Esperar el frame del frontend
             data = await websocket.receive_text()
+            
+            # Drenar frames obsoletos acumulados en el buffer del socket mientras el CPU procesaba
+            # para analizar siempre el fotograma en tiempo real más reciente y eliminar latencia acumulada
+            while True:
+                try:
+                    data = await asyncio.wait_for(websocket.receive_text(), timeout=0.001)
+                except (asyncio.TimeoutError, TimeoutError):
+                    break
+
             frame_count += 1
             if frame_count == 1:
                 print("Primer frame de WebSocket recibido en el backend.")
@@ -684,7 +693,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                 "status": "spoof_detected",
                                 "message": "Ataque detectado (Pantalla/Foto). Usa un rostro real.",
                                 "metrics": {
-                                    "blink": {"value": round(ear, 3), "threshold": "< 0.16", "weight": "Filtro Base (Obligatorio)", "passed": True},
+                                    "blink": {"value": round(ear, 3), "threshold": "< 0.24", "weight": "Filtro Base (Obligatorio)", "passed": True},
                                     "texture": {"value": texture_res.get("entropy"), "threshold": f">= {sso_lbp_threshold:.2f}", "weight": "Determinante (Alto)", "passed": False},
                                     "frequency": {"value": freq_res.get("freq_ratio"), "threshold": "N/A", "weight": "Bypass (OLED)"}
                                 }
@@ -704,7 +713,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                     "status": "spoof_detected",
                                     "message": "Ataque detectado (Foto impresa / Anomalía espectral FFT). Usa un rostro real.",
                                     "metrics": {
-                                        "blink": {"value": round(ear, 3), "threshold": "< 0.16", "weight": "Filtro Base (Obligatorio)", "passed": True},
+                                        "blink": {"value": round(ear, 3), "threshold": "< 0.24", "weight": "Filtro Base (Obligatorio)", "passed": True},
                                         "texture": {"value": texture_res.get("entropy"), "threshold": f"[{sso_lbp_threshold:.2f}, {LBP_MAX_ENTROPY_THRESHOLD:.3f}]", "weight": "Textura LBP", "passed": texture_res.get("entropy", 0.0) <= LBP_MAX_ENTROPY_THRESHOLD},
                                         "frequency": {"value": freq_res.get("freq_ratio"), "threshold": f"[{FFT_MIN_RATIO:.3f}, {FFT_MAX_RATIO:.3f}]", "weight": "Espectro FFT", "passed": freq_res.get("is_real", True)}
                                     }
@@ -720,7 +729,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             metrics_payload = {
                                 "blink": {
                                     "value": round(ear, 3),
-                                    "threshold": "< 0.16",
+                                    "threshold": "< 0.24",
                                     "weight": "Filtro Base (Obligatorio)",
                                     "passed": True
                                 },
@@ -822,7 +831,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "message": f"¡Parpadeo detectado! Reto 1/2: {c_text}",
                             "ear": round(ear, 3),
                             "metrics": {
-                                "blink": {"value": round(ear, 3), "threshold": "< 0.16", "weight": "Filtro Base", "passed": True},
+                                "blink": {"value": round(ear, 3), "threshold": "< 0.24", "weight": "Filtro Base", "passed": True},
                                 "texture": {"value": texture_res.get("entropy"), "threshold": f">= {sso_lbp_threshold:.2f}", "weight": "Determinante", "passed": True},
                                 "pose": {"value": 0.0, "threshold": f"Reto 1/2: {curr_c.upper()}", "weight": "Anti-Replay Dinámico", "passed": False},
                                 "frequency": {"value": freq_res.get("freq_ratio"), "threshold": "N/A", "weight": "Bypass (OLED)"}
@@ -922,7 +931,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "mar": round(mar, 2),
                             "message": desc,
                             "metrics": {
-                                "blink": {"value": round(saved_ear, 3), "threshold": "< 0.16", "weight": "Filtro Base", "passed": True},
+                                "blink": {"value": round(saved_ear, 3), "threshold": "< 0.24", "weight": "Filtro Base", "passed": True},
                                 "texture": {"value": saved_texture_res.get("entropy"), "threshold": f">= {sso_lbp_threshold:.2f}", "weight": "Determinante", "passed": True},
                                 "pose": {"value": val_display, "threshold": f"Reto {challenge_step+1}/2: {curr_c.upper()}", "weight": "Anti-Replay Dinámico", "passed": False},
                                 "frequency": {"value": saved_freq_res.get("freq_ratio"), "threshold": "N/A", "weight": "Bypass (OLED)"}
@@ -950,7 +959,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "step": 2,
                             "message": next_desc,
                             "metrics": {
-                                "blink": {"value": round(saved_ear, 3), "threshold": "< 0.16", "weight": "Filtro Base", "passed": True},
+                                "blink": {"value": round(saved_ear, 3), "threshold": "< 0.24", "weight": "Filtro Base", "passed": True},
                                 "texture": {"value": saved_texture_res.get("entropy"), "threshold": f">= {sso_lbp_threshold:.2f}", "weight": "Determinante", "passed": True},
                                 "pose": {"value": 0.0, "threshold": f"Reto 2/2: {next_c.upper()}", "weight": "Anti-Replay Dinámico", "passed": False},
                                 "frequency": {"value": saved_freq_res.get("freq_ratio"), "threshold": "N/A", "weight": "Bypass (OLED)"}
@@ -965,7 +974,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                     metrics_payload = {
                         "blink": {
                             "value": round(saved_ear, 3),
-                            "threshold": "< 0.16",
+                            "threshold": "< 0.24",
                             "weight": "Filtro Base (Obligatorio)",
                             "passed": True
                         },
