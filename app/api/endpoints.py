@@ -75,6 +75,35 @@ from app.core.limiter import limiter
 
 router = APIRouter()
 
+
+def _dispatch_blockchain_log_async(
+    user_id: str,
+    client_id: str,
+    embedding: list = None,
+    access_granted: bool = True,
+    device_id: str = "API-SERVER-01",
+    match_score: float = 0.0
+):
+    """
+    Despacha el registro en Blockchain y SQLite de forma 100% asíncrona / segundo plano
+    sin bloquear la respuesta de autenticación WebSocket o HTTP al usuario.
+    """
+    try:
+        asyncio.create_task(
+            asyncio.to_thread(
+                log_authentication,
+                user_id=user_id,
+                client_id=client_id,
+                embedding=embedding,
+                access_granted=access_granted,
+                device_id=device_id,
+                match_score=match_score
+            )
+        )
+    except Exception as e:
+        logger.error(f"Error al programar tarea de blockchain en background: {e}")
+
+
 @router.post("/clients/register", response_model=ClientResponse, tags=["IdP OAuth / SSO"])
 def register_oauth_client(client_data: ClientCreate, current_user: dict = Depends(require_admin)):
     """
@@ -580,18 +609,13 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             action=action,
                             name=user_name
                         )
-                        loop = asyncio.get_event_loop()
-                        log_res = await loop.run_in_executor(
-                            None,
-                            lambda: log_authentication(
-                                user_id=user_id,
-                                client_id=effective_client_id,
-                                embedding=None,
-                                access_granted=True,
-                                match_score=distance
-                            )
+                        _dispatch_blockchain_log_async(
+                            user_id=user_id,
+                            client_id=effective_client_id,
+                            embedding=None,
+                            access_granted=True,
+                            match_score=distance
                         )
-                        tx_hash = log_res.get("tx_hash")
                         await websocket.send_json({
                             "status": "passed",
                             "message": f"¡Identidad verificada (1-Shot)! Bienvenido, {user_name}",
@@ -600,7 +624,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "role": role,
                             "token": token,
                             "match_score": distance,
-                            "tx_hash": tx_hash,
+                            "tx_hash": None,
                             "metrics": metrics_payload
                         })
                         break
@@ -617,16 +641,12 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             })
                             continue
                         else:
-                            loop = asyncio.get_event_loop()
-                            await loop.run_in_executor(
-                                None,
-                                lambda: log_authentication(
-                                    user_id="UNKNOWN",
-                                    client_id=effective_client_id,
-                                    embedding=None,
-                                    access_granted=False,
-                                    match_score=distance
-                                )
+                            _dispatch_blockchain_log_async(
+                                user_id="UNKNOWN",
+                                client_id=effective_client_id,
+                                embedding=None,
+                                access_granted=False,
+                                match_score=distance
                             )
                             await websocket.send_json({
                                 "status": "failed",
@@ -735,18 +755,13 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                     action=action,
                                     name=user_name
                                 )
-                                loop = asyncio.get_event_loop()
-                                log_res = await loop.run_in_executor(
-                                    None,
-                                    lambda: log_authentication(
-                                        user_id=user_id,
-                                        client_id=effective_client_id,
-                                        embedding=None,
-                                        access_granted=True,
-                                        match_score=distance
-                                    )
+                                _dispatch_blockchain_log_async(
+                                    user_id=user_id,
+                                    client_id=effective_client_id,
+                                    embedding=None,
+                                    access_granted=True,
+                                    match_score=distance
                                 )
-                                tx_hash = log_res.get("tx_hash")
                                 await websocket.send_json({
                                     "status": "passed",
                                     "message": f"¡Identidad verificada ({mode_label})! Bienvenido, {user_name}",
@@ -755,21 +770,17 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                     "role": role,
                                     "token": token,
                                     "match_score": distance,
-                                    "tx_hash": tx_hash,
+                                    "tx_hash": None,
                                     "metrics": metrics_payload
                                 })
                             else:
                                 distance = auth_res.get("distance", 0.0)
-                                loop = asyncio.get_event_loop()
-                                await loop.run_in_executor(
-                                    None,
-                                    lambda: log_authentication(
-                                        user_id="UNKNOWN",
-                                        client_id=effective_client_id,
-                                        embedding=None,
-                                        access_granted=False,
-                                        match_score=distance
-                                    )
+                                _dispatch_blockchain_log_async(
+                                    user_id="UNKNOWN",
+                                    client_id=effective_client_id,
+                                    embedding=None,
+                                    access_granted=False,
+                                    match_score=distance
                                 )
                                 await websocket.send_json({
                                     "status": "failed",
@@ -996,19 +1007,14 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             name=user_name
                         )
                         
-                        # Registrar en blockchain de forma no bloqueante
-                        loop = asyncio.get_event_loop()
-                        log_res = await loop.run_in_executor(
-                            None,
-                            lambda: log_authentication(
-                                user_id=user_id,
-                                client_id=effective_client_id,
-                                embedding=None,
-                                access_granted=True,
-                                match_score=distance
-                            )
+                        # Registrar en blockchain de forma no bloqueante en background
+                        _dispatch_blockchain_log_async(
+                            user_id=user_id,
+                            client_id=effective_client_id,
+                            embedding=None,
+                            access_granted=True,
+                            match_score=distance
                         )
-                        tx_hash = log_res.get("tx_hash")
                         
                         await websocket.send_json({
                             "status": "passed",
@@ -1018,7 +1024,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                             "role": role,
                             "token": token,
                             "match_score": distance,
-                            "tx_hash": tx_hash,
+                            "tx_hash": None,
                             "metrics": metrics_payload
                         })
                     else:
@@ -1026,17 +1032,13 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                         distance = auth_res.get("distance", 0.0)
                         effective_client_id = client_id or "LOCAL_AUTH"
                         
-                        # Registrar fallo en blockchain de forma no bloqueante
-                        loop = asyncio.get_event_loop()
-                        await loop.run_in_executor(
-                            None,
-                            lambda: log_authentication(
-                                user_id="UNKNOWN",
-                                client_id=effective_client_id,
-                                embedding=None,
-                                access_granted=False,
-                                match_score=distance
-                            )
+                        # Registrar fallo en blockchain de forma no bloqueante en background
+                        _dispatch_blockchain_log_async(
+                            user_id="UNKNOWN",
+                            client_id=effective_client_id,
+                            embedding=None,
+                            access_granted=False,
+                            match_score=distance
                         )
                         
                         await websocket.send_json({

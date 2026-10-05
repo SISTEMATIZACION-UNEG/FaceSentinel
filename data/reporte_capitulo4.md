@@ -1,8 +1,8 @@
 # FaceSentinel — Resultados Experimentales y Evaluación Científica del Capítulo IV
 
-**Fecha de Evaluación:** 2026-09-27 18:47:23  
+**Fecha de Evaluación:** 2026-10-05 19:18:15  
 **Dataset Analizado:** `metricas_tesis.csv`  
-**Total de Ensayos Registrados:** 421 intentos de autenticación
+**Total de Ensayos Registrados:** 16 intentos de autenticación
 
 ---
 
@@ -12,18 +12,18 @@ La siguiente matriz clasifica las decisiones del sistema entre accesos legítimo
 
 | Condición Real \ Decisión Sistema | Acceso Concedido (GRANTED) | Acceso Denegado (DENIED) | Total Real |
 |:---|:---:|:---:|:---:|
-| **Sujeto Autorizado (Bona Fide Live)** | **Verdaderos Positivos (VP): 88** | **Falsos Negativos (FN): 16** | 104 |
-| **Intento Indebido (Ataques + Impostores)** | **Falsos Positivos (FP): 2** | **Verdaderos Negativos (VN): 315** | 317 |
-| **Total Clasificado** | 90 | 331 | **421** |
+| **Sujeto Autorizado (Bona Fide Live)** | **Verdaderos Positivos (VP): 10** | **Falsos Negativos (FN): 5** | 15 |
+| **Intento Indebido (Ataques + Impostores)** | **Falsos Positivos (FP): 0** | **Verdaderos Negativos (VN): 1** | 1 |
+| **Total Clasificado** | 10 | 6 | **16** |
 
 ### Indicadores Globales de Seguridad
-- **Exactitud General (Accuracy):** `95.72%`
-- **Precisión (Precision):** `97.78%`
-- **Sensibilidad / Tasa de Acierto (Recall / TPR):** `84.62%`
-- **Especificidad (TNR):** `99.37%`
-- **F1-Score:** `90.72%`
-- **Tasa Global de Falsa Aceptación (FAR):** `0.63%` *(Vulnerabilidad de acceso)*
-- **Tasa Global de Falso Rechazo (FRR):** `15.38%` *(Fricción de usuario)*
+- **Exactitud General (Accuracy):** `68.75%`
+- **Precisión (Precision):** `100.00%`
+- **Sensibilidad / Tasa de Acierto (Recall / TPR):** `66.67%`
+- **Especificidad (TNR):** `100.00%`
+- **F1-Score:** `80.00%`
+- **Tasa Global de Falsa Aceptación (FAR):** `0.00%` *(Vulnerabilidad de acceso)*
+- **Tasa Global de Falso Rechazo (FRR):** `33.33%` *(Fricción de usuario)*
 
 ---
 
@@ -33,11 +33,11 @@ Evaluación del subsistema Anti-Spoofing en el borde y servidor (MediaPipe Blink
 
 | Indicador PAD (ISO/IEC 30107-3) | Valor Obtenido | Muestras Evaluadas | Interpretación Técnica |
 |:---|:---:|:---:|:---|
-| **APCER - Fotos Impresas/Pantalla** | `1.87%` | 107 intentos | Fotos que burlaron la detección de liveness |
-| **APCER - Video Replay con Parpadeo** | `0.00%` | 97 intentos | Videos en smartphone que lograron traspasar |
-| **APCER Global (Ataques no detectados)** | **`0.98%`** | 204 ataques | Tasa total de filtración de ataques de presentación |
-| **BPCER (Falso rechazo a vivos genuinos)**| **`12.50%`** | 104 intentos | Usuarios vivos confundidos erróneamente con spoofing |
-| **ACER (Error Medio de Clasificación)**   | **`6.74%`** | 308 muestras | Media balanceada entre APCER y BPCER |
+| **APCER - Fotos Impresas/Pantalla** | `0.00%` | 1 intentos | Fotos que burlaron la detección de liveness |
+| **APCER - Video Replay con Parpadeo** | `0.00%` | 0 intentos | Videos en smartphone que lograron traspasar |
+| **APCER Global (Ataques no detectados)** | **`0.00%`** | 1 ataques | Tasa total de filtración de ataques de presentación |
+| **BPCER (Falso rechazo a vivos genuinos)**| **`6.67%`** | 15 intentos | Usuarios vivos confundidos erróneamente con spoofing |
+| **ACER (Error Medio de Clasificación)**   | **`3.33%`** | 16 muestras | Media balanceada entre APCER y BPCER |
 
 ---
 
@@ -47,10 +47,10 @@ Rendimiento del modelo DeepFace ArcFace (512 dimensiones) con indexación vector
 
 | Métrica Biometría Facial | Valor Obtenido | Muestras | Interpretación |
 |:---|:---:|:---:|:---|
-| **FNMR (False Non-Match Rate)** | `2.88%` | 104 | Usuarios autorizados vivos rechazados por distancia $d > 0.75$ |
-| **FMR (False Match Rate)** | `0.00%` | 113 | Impostores vivos aceptados con distancia $d \le 0.75$ |
-| **Distancia Coseno (Genuine Match)** | `0.27 ± 0.05` | 90 | Distancia promedio para accesos autorizados |
-| **Distancia Coseno (Impostores/Desconocidos)** | `0.79 ± 0.07` | 113 | Distancia promedio para rostros no emparejados |
+| **FNMR (False Non-Match Rate)** | `26.67%` | 15 | Usuarios autorizados vivos rechazados por distancia $d > 0.75$ |
+| **FMR (False Match Rate)** | `0.00%` | 0 | Impostores vivos aceptados con distancia $d \le 0.75$ |
+| **Distancia Coseno (Genuine Match)** | `0.03 ± 0.07` | 10 | Distancia promedio para accesos autorizados |
+| **Distancia Coseno (Impostores/Desconocidos)** | `0.86 ± 0.04` | 4 | Distancia promedio para rostros no emparejados |
 
 ---
 
@@ -58,9 +58,9 @@ Rendimiento del modelo DeepFace ArcFace (512 dimensiones) con indexación vector
 
 | Entorno Evaluado | Muestras Totales | Decisiones Correctas | Fallos | Exactitud (%) | Latencia Media E2E (ms) |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| **Iluminación Normal (Oficina/Lab)** | 421 | 403 | 18 | 95.72% | 367.16 ms |
+| **Iluminación Normal (Oficina/Lab)** | 15 | 10 | 5 | 66.67% | 489.18 ms |
 | **Baja Iluminación (< 50 lux)** | 0 | 0 | 0 | 0.00% | 0.0 ms |
-| **Alta Luz / Contraluz (> 1000 lux)** | 0 | 0 | 0 | 0.00% | 0.0 ms |
+| **Alta Luz / Contraluz (> 1000 lux)** | 1 | 1 | 0 | 100.00% | 71.0 ms |
 
 ---
 
@@ -68,21 +68,21 @@ Rendimiento del modelo DeepFace ArcFace (512 dimensiones) con indexación vector
 
 | Componente de Arquitectura | Media (ms) | Desv. Est. (ms) | Percentil 95 (ms) | Mín (ms) | Máx (ms) | Muestras |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Borde: MediaPipe Face Mesh (EAR)** | `4.3` | `±1.19` | `5.97` | `2.5` | `10.84` | 421 |
-| **Borde: Procesamiento Total Borde** | `6.3` | `±1.19` | `7.97` | `4.5` | `12.84` | 421 |
-| **Red Troncal: Tránsito RTT** | `0.0` | `±0.0` | `0.0` | `0.0` | `0.0` | 0 |
-| **Servidor: LBP Entropía Textura** | `12.49` | `±1.23` | `14.69` | `10.54` | `21.26` | 421 |
-| **Servidor: FFT Espectro Frecuencia** | `0.9` | `±0.32` | `1.58` | `0.6` | `2.74` | 421 |
-| **Servidor: ArcFace Extracción 512d** | `250.39` | `±66.47` | `285.55` | `209.15` | `1149.63` | 203 |
-| **Servidor: ChromaDB Búsqueda Vectorial** | `1.59` | `±0.26` | `2.06` | `1.1` | `2.39` | 203 |
-| **Servidor: SQLite Validación ACL/RBAC** | `211.6` | `±2.25` | `214.89` | `208.4` | `230.17` | 421 |
-| **Servidor: Latencia Total Backend** | `360.85` | `±134.98` | `513.42` | `232.03` | `1386.93` | 421 |
-| **Latencia Total End-to-End** | **`367.16`** | **`±135.4`** | **`520.02`** | **`237.75`** | **`1393.2`** | 421 |
+| **Borde: MediaPipe Face Mesh (EAR)** | `6.64` | `±5.72` | `22.5` | `4.18` | `22.5` | 16 |
+| **Borde: Procesamiento Total Borde** | `10.24` | `±9.94` | `38.0` | `6.18` | `38.0` | 16 |
+| **Red Troncal: Tránsito RTT** | `14.6` | `±0.6` | `15.2` | `14.0` | `15.2` | 2 |
+| **Servidor: LBP Entropía Textura** | `12.83` | `±1.03` | `15.62` | `11.0` | `15.62` | 16 |
+| **Servidor: FFT Espectro Frecuencia** | `7.8` | `±0.3` | `8.1` | `7.5` | `8.1` | 2 |
+| **Servidor: ArcFace Extracción 512d** | `268.32` | `±11.51` | `287.93` | `245.0` | `287.93` | 14 |
+| **Servidor: ChromaDB Búsqueda Vectorial** | `2.44` | `±2.45` | `11.2` | `1.35` | `11.2` | 14 |
+| **Servidor: SQLite Validación ACL/RBAC** | `184.22` | `±68.93` | `217.18` | `1.8` | `217.18` | 16 |
+| **Servidor: Latencia Total Backend** | `450.98` | `±139.62` | `530.68` | `22.0` | `530.68` | 16 |
+| **Latencia Total End-to-End** | **`463.04`** | **`±128.27`** | **`537.13`** | **`71.0`** | **`537.13`** | 16 |
 
 ---
 
 ## 6. Eficiencia de Auditoría Blockchain (Smart Contract en Ethereum)
 
-- **Consumo de Gas Promedio (`logAuthentication`):** `207,539 gas` (Mín: `187,419` | Máx: `252,489`)
-- **Tiempo de Sellado de Bloque (Sealing Time):** `37.72 ms` (`±7.88 ms` | P95: `45.07 ms`)
-- **Total de Transacciones Notariadas en Cadena:** `421` eventos
+- **Consumo de Gas Promedio (`logAuthentication`):** `211,448 gas` (Mín: `68,432` | Máx: `247,659`)
+- **Tiempo de Sellado de Bloque (Sealing Time):** `47.47 ms` (`±24.79 ms` | P95: `115.4 ms`)
+- **Total de Transacciones Notariadas en Cadena:** `16` eventos
