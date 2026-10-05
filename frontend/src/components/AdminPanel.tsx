@@ -429,14 +429,14 @@ export default function AdminPanel() {
                                 <span className={`text-xs px-2.5 py-1 rounded-full font-bold border self-start sm:self-center ${
                                     portalPolicy === "active" 
                                         ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                        : (portalPolicy === "passive_fft" || portalPolicy === "passive")
+                                        : portalPolicy === "passive_fft"
                                         ? "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30"
                                         : portalPolicy === "passive_lbp"
                                         ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
                                         : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
                                 }`}>
                                     {portalPolicy === "active" && "NIVEL 4: ACTIVO (BLINDADO)"}
-                                    {(portalPolicy === "passive_fft" || portalPolicy === "passive") && "NIVEL 3: MULTIMODAL (ESTRICTO)"}
+                                    {portalPolicy === "passive_fft" && "NIVEL 3: MULTIMODAL (ESTRICTO)"}
                                     {portalPolicy === "passive_lbp" && "NIVEL 2: ESTÁNDAR (EAR+LBP)"}
                                     {portalPolicy === "none" && "NIVEL 1: BÁSICO (1-SHOT)"}
                                 </span>
@@ -618,7 +618,7 @@ export default function AdminPanel() {
                                                                 className={`text-[11px] font-semibold rounded px-2 py-1 border transition-colors cursor-pointer ${
                                                                     (client.liveness_policy || "active") === "active"
                                                                         ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                                                        : (client.liveness_policy === "passive_fft" || client.liveness_policy === "passive")
+                                                                        : client.liveness_policy === "passive_fft"
                                                                         ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30"
                                                                         : client.liveness_policy === "passive_lbp"
                                                                         ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"

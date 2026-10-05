@@ -406,7 +406,7 @@ export default function Login() {
                                 <strong className="text-primary uppercase font-bold">
                                     {portalPolicy === "none" && "Nivel 1 (1-Shot / Sin Liveness)"}
                                     {portalPolicy === "passive_lbp" && "Nivel 2 (EAR + LBP)"}
-                                    {(portalPolicy === "passive_fft" || portalPolicy === "passive") && "Nivel 3 (EAR + LBP + FFT)"}
+                                    {portalPolicy === "passive_fft" && "Nivel 3 (EAR + LBP + FFT)"}
                                     {portalPolicy === "active" && "Nivel 4 (Desafío Activo Completo)"}
                                 </strong>
                             </span>

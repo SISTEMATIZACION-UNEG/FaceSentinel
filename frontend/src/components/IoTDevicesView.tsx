@@ -32,7 +32,6 @@ export default function IoTDevicesView() {
     const [location, setLocation] = useState("")
     const [streamUrl, setStreamUrl] = useState("")
     const [lbpThreshold, setLbpThreshold] = useState("3.670")
-    const [antispoofingEnabled, setAntispoofingEnabled] = useState(true)
     const [livenessPolicy, setLivenessPolicy] = useState<"none" | "passive_lbp" | "passive_fft">("passive_fft")
     const [registering, setRegistering] = useState(false)
 
@@ -41,7 +40,6 @@ export default function IoTDevicesView() {
     const [editThreshold, setEditThreshold] = useState("3.670")
     const [editStreamUrl, setEditStreamUrl] = useState("")
     const [editLocation, setEditLocation] = useState("")
-    const [editAntispoofing, setEditAntispoofing] = useState(true)
     const [editLivenessPolicy, setEditLivenessPolicy] = useState<"none" | "passive_lbp" | "passive_fft">("passive_fft")
     const [editActive, setEditActive] = useState(true)
     const [savingEdit, setSavingEdit] = useState(false)
@@ -143,7 +141,6 @@ export default function IoTDevicesView() {
             setStreamUrl("")
             setLbpThreshold("3.670")
             setLivenessPolicy("passive_fft")
-            setAntispoofingEnabled(true)
             fetchDevices()
         } catch (err: any) {
             setError(err.response?.data?.detail || "Error al registrar el dispositivo físico.")
@@ -159,7 +156,6 @@ export default function IoTDevicesView() {
         setEditLocation(device.location || "")
         const pol = (device.liveness_policy as any) || (device.antispoofing_enabled === false ? "none" : "passive_fft")
         setEditLivenessPolicy(pol)
-        setEditAntispoofing(pol !== "none")
         setEditActive(device.is_active)
         setCalibResult(null)
         setCalibError("")
