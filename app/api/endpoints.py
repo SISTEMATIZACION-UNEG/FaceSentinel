@@ -550,17 +550,8 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
         frame_count = 0
         none_policy_attempts = 0
         while True:
-            # Esperar el frame del frontend
+            # Lectura limpia del frame entrante
             data = await websocket.receive_text()
-            
-            # Drenar frames obsoletos acumulados en el buffer del socket mientras el CPU procesaba
-            # para analizar siempre el fotograma en tiempo real más reciente y eliminar latencia acumulada
-            while True:
-                try:
-                    data = await asyncio.wait_for(websocket.receive_text(), timeout=0.001)
-                except (asyncio.TimeoutError, TimeoutError):
-                    break
-
             frame_count += 1
             if frame_count == 1:
                 print("Primer frame de WebSocket recibido en el backend.")
