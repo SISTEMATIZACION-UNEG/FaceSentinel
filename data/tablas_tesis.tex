@@ -12,9 +12,9 @@
 \begin{tabular}{l|c|c|c}
 \hline
 \textbf{Condición Real \textbackslash{} Decisión} & \textbf{Acceso Concedido} & \textbf{Acceso Denegado} & \textbf{Total} \\ \hline
-\textbf{Sujeto Autorizado (Bona Fide)} & \textbf{12} (VP) & \textbf{5} (FN) & 17 \\ \hline
-\textbf{Intento Indebido (Ataques/Impostores)} & \textbf{0} (FP) & \textbf{3} (VN) & 3 \\ \hline
-\textbf{Total Evaluado} & 12 & 8 & \textbf{20} \\ \hline
+\textbf{Sujeto Autorizado (Bona Fide)} & \textbf{15} (VP) & \textbf{5} (FN) & 20 \\ \hline
+\textbf{Intento Indebido (Ataques/Impostores)} & \textbf{0} (FP) & \textbf{6} (VN) & 6 \\ \hline
+\textbf{Total Evaluado} & 15 & 11 & \textbf{26} \\ \hline
 \end{tabular}
 \end{table}
 
@@ -26,16 +26,16 @@
 \begin{tabular}{l|c|l}
 \hline
 \textbf{Métrica Evaluada} & \textbf{Valor Obtenido} & \textbf{Definición / Norma} \\ \hline
-Exactitud Global (Accuracy) & 75.00\% & Tasa de clasificación global correcta \\
+Exactitud Global (Accuracy) & 80.77\% & Tasa de clasificación global correcta \\
 Precisión (Precision) & 100.00\% & Fiabilidad de accesos autorizados concedidos \\
-Sensibilidad / Recall (TPR) & 70.59\% & Capacidad de autenticación de usuarios legítimos \\
+Sensibilidad / Recall (TPR) & 75.00\% & Capacidad de autenticación de usuarios legítimos \\
 Especificidad (TNR) & 100.00\% & Tasa de bloqueo ante ataques e impostores \\
-F1-Score & 82.76\% & Media armónica de precisión y sensibilidad \\
+F1-Score & 85.71\% & Media armónica de precisión y sensibilidad \\
 APCER Global (Presentation Attacks) & 0.00\% & Tasa de ataques que eludieron liveness (ISO 30107-3) \\
-BPCER (Bona Fide Rejection) & 5.88\% & Usuarios vivos denegados por falso spoofing \\
-ACER (Average Error Rate) & 2.94\% & Media balanceada (APCER + BPCER) / 2 \\
+BPCER (Bona Fide Rejection) & 5.00\% & Usuarios vivos denegados por falso spoofing \\
+ACER (Average Error Rate) & 2.50\% & Media balanceada (APCER + BPCER) / 2 \\
 Tasa Global de Falsa Aceptación (FAR) & 0.00\% & Intentos no autorizados aceptados \\
-Tasa Global de Falso Rechazo (FRR) & 29.41\% & Usuarios legítimos rechazados indebidamente \\ \hline
+Tasa Global de Falso Rechazo (FRR) & 25.00\% & Usuarios legítimos rechazados indebidamente \\ \hline
 \end{tabular}
 \end{table}
 
@@ -47,9 +47,9 @@ Tasa Global de Falso Rechazo (FRR) & 29.41\% & Usuarios legítimos rechazados in
 \begin{tabular}{l|c|c|c|c}
 \hline
 \textbf{Condición de Iluminación} & \textbf{Muestras} & \textbf{Aciertos} & \textbf{Exactitud (\%)} & \textbf{Latencia E2E (ms)} \\ \hline
-Normal (Oficina/Laboratorio) & 17 & 12 & 70.59\% & 471.41 \\
+Normal (Oficina/Laboratorio) & 20 & 15 & 75.00\% & 451.43 \\
 Baja Iluminación ($< 50$ lux) & 0 & 0 & 0.00\% & 0.0 \\
-Alta Luz / Contraluz ($> 1000$ lux) & 3 & 3 & 100.00\% & 71.0 \\ \hline
+Alta Luz / Contraluz ($> 1000$ lux) & 6 & 6 & 100.00\% & 71.0 \\ \hline
 \end{tabular}
 \end{table}
 
@@ -61,16 +61,16 @@ Alta Luz / Contraluz ($> 1000$ lux) & 3 & 3 & 100.00\% & 71.0 \\ \hline
 \begin{tabular}{l|c|c|c|c|c}
 \hline
 \textbf{Componente del Pipeline} & \textbf{Media} & \textbf{Desv. Est.} & \textbf{P95} & \textbf{Mín} & \textbf{Máx} \\ \hline
-Borde: MediaPipe Face Mesh EAR & 9.66 & $\pm 7.92$ & 22.5 & 4.18 & 22.5 \\
-Borde: Procesamiento Total Borde & 15.49 & $\pm 13.78$ & 38.0 & 6.18 & 38.0 \\
+Borde: MediaPipe Face Mesh EAR & 12.45 & $\pm 8.62$ & 22.5 & 4.18 & 22.5 \\
+Borde: Procesamiento Total Borde & 20.34 & $\pm 15.0$ & 38.0 & 6.18 & 38.0 \\
 Red Troncal: Tránsito RTT & 14.6 & $\pm 0.6$ & 15.2 & 14.0 & 15.2 \\
-Backend: LBP Entropía de Textura & 12.6 & $\pm 1.07$ & 13.97 & 11.0 & 15.62 \\
+Backend: LBP Entropía de Textura & 12.39 & $\pm 1.07$ & 13.97 & 11.0 & 15.62 \\
 Backend: FFT Espectro Frecuencia & 7.8 & $\pm 0.3$ & 8.1 & 7.5 & 8.1 \\
-Backend: ArcFace Extracción 512d & 265.4 & $\pm 13.24$ & 287.93 & 245.0 & 287.93 \\
-Backend: ChromaDB Match Vectorial & 3.53 & $\pm 3.69$ & 11.2 & 1.35 & 11.2 \\
-Backend: SQLite Validación ACL & 147.77 & $\pm 95.48$ & 213.91 & 1.8 & 217.18 \\ \hline
-\textbf{Backend: Tiempo Total Servidor} & \textbf{391.48} & $\pm 182.24$ & \textbf{530.31} & 22.0 & 530.68 \\ \hline
-\textbf{Latencia Total End-to-End} & \textbf{411.35} & $\pm 165.58$ & \textbf{536.7} & 71.0 & 537.13 \\ \hline
+Backend: ArcFace Extracción 512d & 262.18 & $\pm 14.25$ & 287.93 & 245.0 & 287.93 \\
+Backend: ChromaDB Match Vectorial & 4.74 & $\pm 4.39$ & 11.2 & 1.35 & 11.2 \\
+Backend: SQLite Validación ACL & 114.12 & $\pm 103.86$ & 213.91 & 1.8 & 217.18 \\ \hline
+\textbf{Backend: Tiempo Total Servidor} & \textbf{336.56} & $\pm 198.98$ & \textbf{530.31} & 22.0 & 530.68 \\ \hline
+\textbf{Latencia Total End-to-End} & \textbf{363.64} & $\pm 181.1$ & \textbf{536.7} & 71.0 & 537.13 \\ \hline
 \end{tabular}
 \end{table}
 
@@ -82,8 +82,8 @@ Backend: SQLite Validación ACL & 147.77 & $\pm 95.48$ & 213.91 & 1.8 & 217.18 \
 \begin{tabular}{l|c|l}
 \hline
 \textbf{Parámetro Evaluado} & \textbf{Valor Promedio} & \textbf{Observaciones Técnicas} \\ \hline
-Consumo de Gas (\texttt{logAuthentication}) & 182,844 gas & Costo de ejecución en Ethereum Virtual Machine \\
-Tiempo de Sellado de Bloque & 60.51 ms & Tiempo de inclusión asíncrona en bloque \\
-Eventos Inmutables Notariados & 20 & Transacciones confirmadas en ledger distribuido \\ \hline
+Consumo de Gas (\texttt{logAuthentication}) & 156,442 gas & Costo de ejecución en Ethereum Virtual Machine \\
+Tiempo de Sellado de Bloque & 72.56 ms & Tiempo de inclusión asíncrona en bloque \\
+Eventos Inmutables Notariados & 26 & Transacciones confirmadas en ledger distribuido \\ \hline
 \end{tabular}
 \end{table}

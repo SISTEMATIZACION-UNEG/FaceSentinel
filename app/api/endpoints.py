@@ -515,19 +515,26 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
     """
     await websocket.accept()
     
-    # REGLA DE SEGURIDAD (Anti-Downgrade):
-    # Si se envía client_id, usa la política del cliente registrado.
-    # Si no se envía client_id (acceso directo al portal FaceSentinel), usa la política global del portal.
-    if client_id:
-        client_info = get_oauth_client(client_id)
+    # REGLA DE SEGURIDAD (Anti-Downgrade & IdP Delegation Routing):
+    # Si no se envía client_id o corresponde a autenticación local/portal propio (LOCAL_AUTH, etc.):
+    # usamos "LOCAL_AUTH" y la política global del portal.
+    clean_client = str(client_id).strip() if client_id else ""
+    is_internal_auth = (
+        not clean_client
+        or clean_client.lower() in ["null", "undefined", "none", "local_auth", "facesentinel-portal", "facesentinel-api", "facesentinel_core", "facesentinel", "portal", "core", "api"]
+    )
+    if is_internal_auth:
+        effective_client_id = "LOCAL_AUTH"
+        liveness_policy = get_system_setting("portal_liveness_policy", "active")
+    else:
+        effective_client_id = client_id.strip()
+        client_info = get_oauth_client(effective_client_id)
         if client_info:
             liveness_policy = client_info.get("liveness_policy", "active") or "active"
         else:
             liveness_policy = "active"
-    else:
-        liveness_policy = get_system_setting("portal_liveness_policy", "active")
 
-    logger.info(f"🌐 WebSocket Liveness conectado. Client ID: '{client_id}' | Política activa: '{liveness_policy}'")
+    logger.info(f"🌐 WebSocket Liveness conectado. Client ID: '{effective_client_id}' | Política activa: '{liveness_policy}'")
     
     # Calibración optimizada para CPU: ear_threshold=0.24 (cerrado) y open_threshold=0.27 (abierto)
     # con 1 solo frame requerido para capturar parpadeos naturales instantáneamente (<0.5s).
@@ -587,9 +594,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                     if ear < 0.01:
                         ear = client_ear
                 else:
-                    if frame_count == 1: print("Llamando a analyze_blink...")
                     has_face, ear = analyze_blink(img_rgb)
-                    if frame_count == 1: print("analyze_blink terminó correctamente.")
                 
                     if not has_face:
                         await websocket.send_json({
@@ -598,7 +603,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                         })
                         continue
 
-                effective_client_id = client_id or "LOCAL_AUTH"
+                effective_client_id = effective_client_id or "LOCAL_AUTH"
 
                 # -------------------------------------------------------------
                 # POLÍTICA 1: "none" (1-Shot Instantáneo sin anti-spoofing)
@@ -1018,7 +1023,7 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                         role = auth_res["role"]
                         distance = auth_res["distance"]
                         
-                        effective_client_id = client_id or "LOCAL_AUTH"
+                        effective_client_id = effective_client_id or "LOCAL_AUTH"
                         token = generate_idp_token(
                             user_id=user_id,
                             client_id=effective_client_id,

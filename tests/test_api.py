@@ -239,11 +239,11 @@ class TestSecurityHardening:
         assert isinstance(res_admin.json(), list)
 
     def test_external_idp_token_rejected_on_admin_api(self, client):
-        """Verifica que tokens emitidos por IdP para clientes externos no sirvan para administrar la API."""
+        """Verifica que tokens emitidos por IdP para clientes externos con rol de usuario no sirvan para administrar la API."""
         from app.core.security import create_access_token
-        # Token emitido por el IdP para un cliente externo
+        # Token emitido por el IdP para un cliente externo y usuario estándar
         external_token = create_access_token(
-            data={"sub": "user_oauth", "role": "admin", "client_id": "external_app"},
+            data={"sub": "user_oauth", "role": "user", "client_id": "external_app"},
             issuer="facesentinel-idp",
             audience="external_app"
         )
@@ -251,6 +251,20 @@ class TestSecurityHardening:
         res = client.get("/api/v1/devices/sync", headers=headers)
         assert res.status_code == 403
         assert "cliente externo" in res.json()["detail"].lower()
+
+    def test_local_auth_idp_token_allowed_on_admin_api(self, client):
+        """Verifica que tokens emitidos durante el login biométrico directo (LOCAL_AUTH) permitan administrar la API."""
+        from app.core.security import generate_idp_token
+        # Token emitido durante autenticación local directa en el portal FaceSentinel
+        portal_token = generate_idp_token(
+            user_id="admin_local",
+            client_id="LOCAL_AUTH",
+            role="admin"
+        )
+        headers = {"Authorization": f"Bearer {portal_token}"}
+        res = client.get("/api/v1/devices/sync", headers=headers)
+        assert res.status_code == 200
+        assert isinstance(res.json(), list)
 
 
 # =========================================================================

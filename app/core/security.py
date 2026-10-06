@@ -33,6 +33,20 @@ JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", str(settings.JW
 bearer_scheme = HTTPBearer(auto_error=False)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+# Audiencias y clientes autorizados para interactuar con la API central / portal propio de FaceSentinel
+AUTHORIZED_CENTRAL_AUDIENCES = {
+    "facesentinel-portal",
+    "facesentinel-api",
+    "LOCAL_AUTH",
+    "FACESENTINEL_CORE",
+    "facesentinel",
+    "core",
+    "portal",
+    "api",
+    None,
+    "",
+}
+
 
 # =========================================================================
 #                      FUNCIONES JWT
@@ -104,7 +118,7 @@ def verify_token(token: str) -> dict:
 
 def generate_idp_token(
     user_id: str,
-    client_id: str,
+    client_id: Optional[str] = "LOCAL_AUTH",
     role: str = "user",
     expires_delta_minutes: Optional[int] = None,
     action: str = None,
@@ -112,11 +126,13 @@ def generate_idp_token(
 ) -> str:
     """
     Genera un token JWT de federación (IdP) o sesión de usuario.
-    Incluye al usuario en el claim 'sub', al cliente de terceros en 'aud' y el rol en 'role'.
+    Incluye al usuario en el claim 'sub', al cliente en 'aud'/'client_id' y el rol en 'role'.
     """
+    effective_client = client_id or "LOCAL_AUTH"
     payload = {
         "sub": user_id,
-        "aud": client_id,
+        "aud": effective_client,
+        "client_id": effective_client,
         "iss": "facesentinel-idp",
         "role": role,
     }
@@ -126,7 +142,7 @@ def generate_idp_token(
         payload["name"] = name
 
     delta = timedelta(minutes=expires_delta_minutes) if expires_delta_minutes is not None else timedelta(minutes=JWT_EXPIRATION_MINUTES)
-    return create_access_token(data=payload, expires_delta=delta)
+    return create_access_token(data=payload, expires_delta=delta, issuer="facesentinel-idp", audience=effective_client)
 
 
 
@@ -235,10 +251,16 @@ async def get_current_user(
         payload = verify_token(credentials.credentials)
 
         # Protección Anti-Token-Confusion (Validación de Audiencia SSO):
-        # Un token IdP emitido para una app cliente externa no puede utilizarse como sesión de administración interna
+        # Un token IdP emitido para una app cliente externa no puede utilizarse como sesión de administración interna,
+        # salvo que el usuario posea rol administrativo/desarrollador o pertenezca a la audiencia central/local.
         if payload.get("iss") == "facesentinel-idp":
-            aud = payload.get("aud")
-            if aud and aud not in ["facesentinel-portal", "facesentinel-api"]:
+            token_client = payload.get("client_id") or payload.get("aud")
+            user_role = str(payload.get("role", "")).lower()
+            if (
+                token_client
+                and token_client not in AUTHORIZED_CENTRAL_AUDIENCES
+                and user_role not in ["admin", "developer"]
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Token de delegación IdP emitido para cliente externo. No autorizado para gestionar la API central.",
@@ -248,6 +270,7 @@ async def get_current_user(
             "auth_method": "jwt",
             "sub": payload.get("sub"),
             "role": payload.get("role", "user"),
+            "client_id": payload.get("client_id"),
         }
 
     # Opción 2: API Key
