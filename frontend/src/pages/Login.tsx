@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Camera, CheckCircle2, UserCircle2, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react"
 import axios from "axios"
 import { API_BASE_URL, getWebSocketUrl } from "@/config/api"
+import { useBlinkDetector } from "@/lib/useBlinkDetector"
 
 export default function Login() {
     const navigate = useNavigate()
@@ -30,12 +31,17 @@ export default function Login() {
     const [passwordInput, setPasswordInput] = useState("")
     const [portalPolicy, setPortalPolicy] = useState<"none" | "passive_lbp" | "passive_fft" | "active">("active")
     const [scanSession, setScanSession] = useState(0)
+    const [localEar, setLocalEar] = useState<number | null>(null)
+    // blinkActive: true while in camera step and waiting for a blink event (policies != none)
+    const [blinkActive, setBlinkActive] = useState(false)
 
     const videoRef = useRef<HTMLVideoElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const wsRef = useRef<WebSocket | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const intervalRef = useRef<number | null>(null)
+    // Tracks whether a blink event was already sent to avoid double-firing
+    const blinkSentRef = useRef(false)
 
     useEffect(() => {
         if (!clientId) {
@@ -50,6 +56,7 @@ export default function Login() {
     }, [clientId])
 
     const stopCameraAndSocket = useCallback(() => {
+        setBlinkActive(false)
         if (intervalRef.current) {
             window.clearInterval(intervalRef.current)
             intervalRef.current = null
@@ -264,10 +271,25 @@ export default function Login() {
             const ws = new WebSocket(wsUrl)
             wsRef.current = ws
 
+            // Determine effective policy (client_id param wins over portal policy)
+            const effectivePolicy = clientId ? "active" : portalPolicy
+
             ws.onopen = () => {
                 setLivenessMessage("Analizando... Por favor, mira fijamente a la cámara.")
                 if (intervalRef.current) clearInterval(intervalRef.current)
-                intervalRef.current = window.setInterval(sendFrame, 100)
+
+                if (effectivePolicy === "none") {
+                    // 1-Shot mode: send frames continuously for server-side recognition
+                    intervalRef.current = window.setInterval(sendFrame, 100)
+                } else {
+                    // Blink-based modes: local detector handles blink event;
+                    // we still send periodic frames so the backend can run no_face checks
+                    // but at a low rate (500 ms) — just for presence detection.
+                    intervalRef.current = window.setInterval(sendFrame, 500)
+                    blinkSentRef.current = false
+                    setBlinkActive(true)
+                    setLivenessMessage("Analizando... Por favor, parpadea naturalmente.")
+                }
             }
 
             ws.onmessage = (event) => {
@@ -333,9 +355,10 @@ export default function Login() {
                     // Resume tracking after 3 seconds
                     setTimeout(() => {
                         setError("")
-                        setLivenessMessage("Analizando... Por favor, mira fijamente a la cámara.")
+                        setLivenessMessage("Analizando... Por favor, parpadea nuevamente.")
                         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                            intervalRef.current = window.setInterval(sendFrame, 100)
+                            blinkSentRef.current = false
+                            setBlinkActive(true)
                         }
                     }, 3000)
                 } else if (data.status === "tracking" || data.status === "no_face") {
@@ -345,6 +368,12 @@ export default function Login() {
                     }
                     if (typeof data.match_score === "number") {
                         setAuthDistance(data.match_score)
+                    }
+                    // If backend is signalling a blink reset (e.g. challenge timeout),
+                    // reactivate the local detector so the user can blink again.
+                    if (!data.challenge && blinkSentRef.current) {
+                        blinkSentRef.current = false
+                        setBlinkActive(true)
                     }
                 } else if (data.status === "error") {
                     setError("Error del servidor: " + data.message)
@@ -365,7 +394,32 @@ export default function Login() {
                 }
             }
         }
-    }, [step, scanSession, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket])
+    }, [step, scanSession, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket, portalPolicy])
+
+    // onBlink: called by useBlinkDetector when a local blink is detected.
+    // Sends a special event to the backend so it can skip EAR and jump to LBP+FFT.
+    const onBlinkDetected = useCallback((imageBase64: string, ear: number) => {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+        if (blinkSentRef.current) return  // already sent for this blink phase
+        blinkSentRef.current = true
+        setBlinkActive(false)  // pause detector until backend requests new blink (challenge phase)
+        setLivenessMessage("Parpadeo detectado. Validando autenticidad...")
+        wsRef.current.send(JSON.stringify({
+            event: "blink_detected",
+            image_base64: imageBase64,
+            client_ear: Math.round(ear * 1000) / 1000,
+        }))
+    }, [])
+
+    // Local blink detector — only active while in camera step with a non-none policy
+    useBlinkDetector({
+        videoEl: videoRef.current,
+        canvasEl: canvasRef.current,
+        active: blinkActive && step === "camera",
+        onBlink: onBlinkDetected,
+        onEarUpdate: setLocalEar,
+    })
+
 
     return (
         <div className="flex h-screen w-full items-center justify-center bg-muted/40 p-4">
