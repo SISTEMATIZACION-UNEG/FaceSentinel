@@ -13,10 +13,12 @@ export default function Signup() {
     const [searchParams] = useSearchParams()
 
     // Extract query parameters for federated signup
-    const clientId = searchParams.get("client_id")
-    const redirectUri = searchParams.get("redirect_uri")
-    const urlUserId = searchParams.get("user_id")
-    const urlName = searchParams.get("name")
+    const urlParams = new URLSearchParams(window.location.search)
+    const clientId = searchParams.get("client_id") || urlParams.get("client_id") || searchParams.get("clientId") || urlParams.get("clientId")
+    const redirectUri = searchParams.get("redirect_uri") || urlParams.get("redirect_uri") || searchParams.get("redirectUri") || urlParams.get("redirectUri") || searchParams.get("redirect_url") || urlParams.get("redirect_url")
+    const state = searchParams.get("state") || urlParams.get("state")
+    const urlUserId = searchParams.get("user_id") || urlParams.get("user_id")
+    const urlName = searchParams.get("name") || urlParams.get("name")
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -112,7 +114,8 @@ export default function Signup() {
                 setStep("success")
                 setTimeout(() => {
                     if (clientId && redirectUri) {
-                        navigate(`/?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&action=enrollment`)
+                        const stateQuery = state ? `&state=${encodeURIComponent(state)}` : ""
+                        navigate(`/?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&action=enrollment${stateQuery}`)
                     } else {
                         navigate("/")
                     }

@@ -13,11 +13,36 @@ export default function Login() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
-    // Extract query parameters for federated login
-    const clientId = searchParams.get("client_id")
-    const redirectUri = searchParams.get("redirect_uri")
-    const appName = searchParams.get("app_name")
-    const action = searchParams.get("action") || "authentication"
+    // Capturar parámetros de consulta de la URL (query params) de React Router y window.location
+    const urlParams = new URLSearchParams(window.location.search)
+    const clientId = searchParams.get("client_id") || urlParams.get("client_id") || searchParams.get("clientId") || urlParams.get("clientId")
+    const redirectUri = searchParams.get("redirect_uri") || urlParams.get("redirect_uri") || searchParams.get("redirectUri") || urlParams.get("redirectUri") || searchParams.get("redirect_url") || urlParams.get("redirect_url")
+    const state = searchParams.get("state") || urlParams.get("state")
+    const appName = searchParams.get("app_name") || urlParams.get("app_name")
+    const action = searchParams.get("action") || urlParams.get("action") || "authentication"
+
+    const buildRedirectUrl = (baseUri: string, token: string, stateParam?: string | null) => {
+        try {
+            const url = new URL(baseUri)
+            if (url.hostname.includes("jwt.io")) {
+                url.hash = `token=${token}`
+            } else {
+                url.searchParams.set("token", token)
+                url.searchParams.set("access_token", token)
+                if (stateParam) {
+                    url.searchParams.set("state", stateParam)
+                }
+            }
+            return url.toString()
+        } catch (e) {
+            const separator = baseUri.includes("?") ? "&" : "?"
+            let target = `${baseUri}${separator}token=${encodeURIComponent(token)}&access_token=${encodeURIComponent(token)}`
+            if (stateParam) {
+                target += `&state=${encodeURIComponent(stateParam)}`
+            }
+            return target
+        }
+    }
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -129,18 +154,10 @@ export default function Login() {
                 setStep("success")
 
                 setTimeout(() => {
-                    if (redirectUri && response.data.token) {
-                        try {
-                            const url = new URL(redirectUri)
-                            if (url.hostname.includes("jwt.io")) {
-                                url.hash = `token=${response.data.token}`
-                            } else {
-                                url.searchParams.append("token", response.data.token)
-                            }
-                            window.location.href = url.toString()
-                        } catch (urlErr) {
-                            setError("Error al construir la URL de redirección")
-                        }
+                    const token = response.data.token || response.data.access_token
+                    if (redirectUri && token) {
+                        const targetUrl = buildRedirectUrl(redirectUri, token, state)
+                        window.location.href = targetUrl
                     } else {
                         navigate("/dashboard")
                     }
@@ -307,7 +324,11 @@ export default function Login() {
                     localStorage.setItem("token", data.token || "")
                     setUserName(data.user_name || "Usuario verificado")
 
-                    const token = data.token
+                    const token = data.token || data.access_token
+
+                    if (token) {
+                        setIdpToken(token)
+                    }
 
                     if (redirectUri && !token) {
                         setError("Error fatal: No se emitió token de federación")
@@ -315,25 +336,12 @@ export default function Login() {
                         return
                     }
 
-                    if (token) {
-                        setIdpToken(token)
-                    }
-
                     setStep("success")
 
                     setTimeout(() => {
                         if (redirectUri && token) {
-                            try {
-                                const url = new URL(redirectUri)
-                                if (url.hostname.includes("jwt.io")) {
-                                    url.hash = `token=${token}`
-                                } else {
-                                    url.searchParams.append("token", token)
-                                }
-                                window.location.href = url.toString()
-                            } catch (urlErr) {
-                                setError("Error al construir la URL de redirección")
-                            }
+                            const targetUrl = buildRedirectUrl(redirectUri, token, state)
+                            window.location.href = targetUrl
                         } else {
                             navigate("/dashboard")
                         }
@@ -617,17 +625,8 @@ export default function Login() {
                                 <div className="mt-4 pt-2 w-full max-w-xs mx-auto text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     {redirectUri ? (
                                         <Button size="lg" className="w-full shadow-lg border border-primary/20 hover:scale-105 transition-all group" onClick={() => {
-                                            try {
-                                                const url = new URL(redirectUri)
-                                                if (url.hostname.includes("jwt.io")) {
-                                                    url.hash = `token=${idpToken}`
-                                                } else {
-                                                    url.searchParams.append("token", idpToken)
-                                                }
-                                                window.location.href = url.toString()
-                                            } catch (urlErr) {
-                                                setError("Error al construir la URL de redirección")
-                                            }
+                                            const targetUrl = buildRedirectUrl(redirectUri, idpToken, state)
+                                            window.location.href = targetUrl
                                         }}>
                                             Continuar a {appName || "Aplicación"} <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                         </Button>
