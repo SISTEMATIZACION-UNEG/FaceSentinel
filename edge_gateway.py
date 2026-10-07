@@ -28,7 +28,7 @@ os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 # =========================================================================
 API_URL = os.environ.get(
     "FACESENTINEL_M2M_URL",
-    "http://localhost:8000/api/v1/physical-access/authenticate"
+    "http://localhost:8001/api/v1/physical-access/authenticate"
 )
 DEVICE_TOKEN = os.environ.get("HW_CLIENT_SECRET")
 if not DEVICE_TOKEN:

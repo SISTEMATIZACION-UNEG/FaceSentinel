@@ -2,13 +2,13 @@
     {
         "device_id": "SMART20DEFINITIVO",
         "name": "SMART20DEFINITIVO",
-        "token": "hw_e1WPiXexScMIvTvG8A86jbfMz3iJbwEA4_r6kWus8H0",
-        "source": "http://192.168.100.84:4747/video",
+        "token": "hw_p-GG-tHAP0pRrOBa-iTDuUTUt9arWBYLth5jk0tNygM",
+        "source": "http://192.168.0.101:4747/video",
         "location": "Punto de Acceso",
         "enabled": true,
         "antispoofing_enabled": true,
         "liveness_policy": "passive_lbp",
-        "lbp_threshold": 3.628
+        "lbp_threshold": 3.72
     },
     {
         "device_id": "IPHONE6DEFINITIVO",
@@ -52,7 +52,7 @@
         "enabled": false,
         "antispoofing_enabled": true,
         "liveness_policy": "passive_fft",
-        "lbp_threshold": 3.5
+        "lbp_threshold": 3.547
     },
     {
         "device_id": "GATEWAY_TEST_01",

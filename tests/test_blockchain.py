@@ -40,6 +40,43 @@ class TestBlockchainConnection:
 
 
 # =========================================================================
+#              TESTS DE ANONIMIZACIÓN DE USUARIO (HASH CON SAL)
+# =========================================================================
+
+class TestUserAnonymization:
+    """Tests para el hashing y anonimización de identificadores de usuario."""
+
+    def test_compute_user_id_hash_deterministic(self):
+        """Verifica que el mismo user_id siempre produce el mismo hash con la misma sal."""
+        from app.services.blockchain import compute_user_id_hash
+
+        hash1 = compute_user_id_hash("V-12345678")
+        hash2 = compute_user_id_hash("V-12345678")
+
+        assert hash1 == hash2
+        assert len(hash1) == 32  # SHA-256 = 32 bytes (bytes32 para Solidity)
+
+    def test_different_users_produce_different_hashes(self):
+        """Verifica que dos cédulas/usuarios distintos produzcan hashes distintos."""
+        from app.services.blockchain import compute_user_id_hash
+
+        hash1 = compute_user_id_hash("V-12345678")
+        hash2 = compute_user_id_hash("V-87654321")
+
+        assert hash1 != hash2
+
+    def test_raw_id_not_contained_in_hash(self):
+        """Verifica que la cédula en texto plano no se encuentre de forma directa en el hash."""
+        from app.services.blockchain import compute_user_id_hash
+
+        user_id = "V-12345678"
+        user_hash = compute_user_id_hash(user_id)
+        
+        # El hash binario y su representación hexadecimal no deben exponer el texto plano directamente
+        assert user_id.encode() not in user_hash
+
+
+# =========================================================================
 #              TESTS DE HASHING BIOMÉTRICO
 # =========================================================================
 

@@ -110,6 +110,32 @@ def update_db_threshold(device_id: str, new_threshold: float):
         print(f"❌ Error actualizando base de datos: {e}")
         return False
 
+def update_cameras_json_threshold(device_id: str, new_threshold: float):
+    """Actualiza el lbp_threshold en data/cameras.json y cameras.json."""
+    paths = [
+        os.path.join(BASE_DIR, "data", "cameras.json"),
+        os.path.join(BASE_DIR, "cameras.json")
+    ]
+    updated_any = False
+    for p in paths:
+        if os.path.exists(p) and os.path.getsize(p) > 0:
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    configs = json.load(f)
+                modified = False
+                for c in configs:
+                    if c.get("device_id", "").upper() == device_id.upper():
+                        c["lbp_threshold"] = round(new_threshold, 3)
+                        modified = True
+                if modified:
+                    with open(p, "w", encoding="utf-8") as f:
+                        json.dump(configs, f, indent=4)
+                    print(f"✅ Archivo actualizado: {p} -> [{device_id}] lbp_threshold = {round(new_threshold, 3)}")
+                    updated_any = True
+            except Exception as e:
+                print(f"⚠️ Error actualizando {p}: {e}")
+    return updated_any
+
 def load_camera_from_config(target_device: str):
     """Busca la configuración de una cámara específica en cameras.json."""
     paths = [
@@ -370,8 +396,9 @@ def main():
         json.dump(profile_data, f, indent=4)
     print(f"📁 Perfil de calibración guardado en: {profile_path}")
 
-    # Aplicar a la base de datos
+    # Aplicar a la base de datos y a los archivos cameras.json
     update_db_threshold(device_id, suggested_threshold)
+    update_cameras_json_threshold(device_id, suggested_threshold)
     print("\n✨ ¡Calibración finalizada! Ahora el Edge Gateway y el Backend operan con el punto óptimo de esta cámara.\n")
 
 if __name__ == "__main__":

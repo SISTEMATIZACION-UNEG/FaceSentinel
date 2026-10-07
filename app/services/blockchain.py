@@ -202,6 +202,21 @@ def is_blockchain_available() -> bool:
 #                   FUNCIONES DE ESCRITURA (TRANSACCIONES)
 # =========================================================================
 
+def compute_user_id_hash(user_id: str) -> bytes:
+    """
+    Calcula un hash SHA-256 criptográfico con sal secreta del identificador del usuario.
+    Garantiza la anonimización y pseudonimización del usuario en el Smart Contract
+    evitando que la cédula/identificación viaje o se almacene en texto plano en la blockchain.
+    """
+    salt = getattr(settings, "USER_ID_SALT", "facesentinel-secure-user-salt-key-2025")
+    salted_data = f"{user_id}:{salt}".encode("utf-8")
+    return hashlib.sha256(salted_data).digest()
+
+
+# Alias interno para compatibilidad
+_compute_user_id_hash = compute_user_id_hash
+
+
 def _compute_biometric_hash(embedding: list) -> bytes:
     """
     Genera un hash SHA-256 del embedding facial.
@@ -222,9 +237,10 @@ def log_authentication(
 ) -> dict:
     """
     Registra un evento de autenticación en la blockchain.
+    Aplica anonimización mediante hash con sal al ID de usuario antes de enviarlo a la cadena.
 
     Args:
-        user_id: Identificador del usuario autenticado
+        user_id: Identificador del usuario autenticado (se hashea con sal antes de registrar)
         client_id: Identificador de la aplicación cliente (obligatorio)
         embedding: Vector facial (se hashea antes de guardar, nunca se guarda raw)
         access_granted: Si el acceso fue concedido o denegado
@@ -251,21 +267,24 @@ def log_authentication(
         return {"success": False, "message": "Blockchain no disponible", "tx_hash": None}
 
     try:
-        # Generar hash del embedding (o un hash vacío si no se proporcionó)
+        # 1. Anonimizar ID de usuario mediante SHA-256 con sal secreta (bytes32)
+        user_id_hash = compute_user_id_hash(user_id)
+
+        # 2. Generar hash del embedding (o un hash vacío si no se proporcionó)
         if embedding:
             bio_hash = _compute_biometric_hash(embedding)
         else:
             bio_hash = b'\x00' * 32
 
-        # Convertir match_score a entero (x10000 para 4 decimales de precisión)
+        # 3. Convertir match_score a entero (x10000 para 4 decimales de precisión)
         score_int = int(match_score * 10000)
 
-        # Construir la transacción con el chain ID real del nodo
+        # 4. Construir la transacción con el chain ID real del nodo
         actual_chain_id = _w3.eth.chain_id
         nonce = _w3.eth.get_transaction_count(_admin_account)
 
         tx = _contract.functions.logAuthentication(
-            user_id,
+            user_id_hash,
             bio_hash,
             access_granted,
             device_id,
@@ -298,10 +317,11 @@ def log_authentication(
                 pass
 
         tx_hash_hex = tx_hash.hex()
+        user_hash_hex = "0x" + user_id_hash.hex()
         logger.info(
             f"🔗 Autenticación registrada en blockchain — "
             f"TX: {tx_hash_hex} | Bloque: #{receipt.blockNumber} | Gas: {receipt.gasUsed} | "
-            f"Sellado: {seal_time_ms:.1f}ms | Usuario: {user_id} | "
+            f"Sellado: {seal_time_ms:.1f}ms | UsuarioAnonimizado: {user_hash_hex[:10]}... | "
             f"Acceso: {'✅' if access_granted else '❌'}"
         )
 
@@ -322,6 +342,7 @@ def log_authentication(
             "success": True,
             "tx_hash": tx_hash_hex,
             "record_id": record_id,
+            "user_id_hash": user_hash_hex,
             "block_number": receipt.blockNumber,
             "gas_used": receipt.gasUsed,
             "seal_time_ms": round(seal_time_ms, 2),
@@ -341,10 +362,10 @@ def log_authentication(
 
 def get_auth_history(user_id: str, count: int = 10) -> dict:
     """
-    Consulta el historial de autenticaciones de un usuario en la blockchain.
+    Consulta el historial de autenticaciones de un usuario en la blockchain usando su hash con sal.
 
     Args:
-        user_id: Identificador del usuario
+        user_id: Identificador del usuario (se anonimiza con sal para la consulta)
         count: Número máximo de registros recientes a retornar
 
     Returns:
@@ -354,18 +375,23 @@ def get_auth_history(user_id: str, count: int = 10) -> dict:
         return {"success": False, "message": "Blockchain no disponible", "records": []}
 
     try:
-        # Obtener los registros más recientes del usuario
-        records_raw = _contract.functions.getRecentRecordsByUser(user_id, count).call()
+        # Calcular el hash anonimizado del usuario para buscar en el mapping del contrato
+        user_id_hash = compute_user_id_hash(user_id)
+
+        # Obtener los registros más recientes del usuario anonimizado
+        records_raw = _contract.functions.getRecentRecordsByUser(user_id_hash, count).call()
 
         records = []
         for r in records_raw:
             records.append({
-                "user_id": r[0],
-                "biometric_hash": "0x" + r[1].hex(),
+                "user_id": user_id,
+                "user_id_hash": "0x" + r[0].hex() if isinstance(r[0], (bytes, bytearray)) else str(r[0]),
+                "biometric_hash": "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1]),
                 "timestamp": r[2],
                 "access_granted": r[3],
                 "device_id": r[4],
                 "match_score": r[5] / 10000.0,  # Reconvertir a float
+                "client_id": r[6] if len(r) > 6 else ""
             })
 
         logger.info(f"📋 Historial consultado para {user_id}: {len(records)} registros")
@@ -373,6 +399,7 @@ def get_auth_history(user_id: str, count: int = 10) -> dict:
         return {
             "success": True,
             "user_id": user_id,
+            "user_id_hash": "0x" + user_id_hash.hex(),
             "total_records": len(records),
             "records": records,
         }
@@ -402,14 +429,16 @@ def get_recent_records_by_client(client_id: str, limit: int = 50) -> dict:
 
         records = []
         for r in records_raw:
+            user_hash_str = "0x" + r[0].hex() if isinstance(r[0], (bytes, bytearray)) else str(r[0])
             records.append({
-                "user_id": r[0],
-                "biometric_hash": "0x" + r[1].hex(),
+                "user_id": user_hash_str,
+                "user_id_hash": user_hash_str,
+                "biometric_hash": "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1]),
                 "timestamp": r[2],
                 "access_granted": r[3],
                 "device_id": r[4],
                 "match_score": r[5] / 10000.0,  # Reconvertir a float
-                "client_id": r[6]
+                "client_id": r[6] if len(r) > 6 else ""
             })
 
         logger.info(f"📋 Historial consultado para cliente {client_id}: {len(records)} registros")

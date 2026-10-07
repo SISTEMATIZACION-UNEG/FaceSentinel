@@ -14,10 +14,10 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
-        "internalType": "string",
-        "name": "userId",
-        "type": "string"
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "userIdHash",
+        "type": "bytes32"
       },
       {
         "indexed": false,
@@ -77,9 +77,9 @@
     "name": "authRecords",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "userId",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "userIdHash",
+        "type": "bytes32"
       },
       {
         "internalType": "bytes32",
@@ -189,9 +189,9 @@
       {
         "components": [
           {
-            "internalType": "string",
-            "name": "userId",
-            "type": "string"
+            "internalType": "bytes32",
+            "name": "userIdHash",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes32",
@@ -235,9 +235,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_userId",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "_userIdHash",
+        "type": "bytes32"
       },
       {
         "internalType": "uint256",
@@ -250,9 +250,9 @@
       {
         "components": [
           {
-            "internalType": "string",
-            "name": "userId",
-            "type": "string"
+            "internalType": "bytes32",
+            "name": "userIdHash",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes32",
@@ -306,9 +306,9 @@
       {
         "components": [
           {
-            "internalType": "string",
-            "name": "userId",
-            "type": "string"
+            "internalType": "bytes32",
+            "name": "userIdHash",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes32",
@@ -352,9 +352,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_userId",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "_userIdHash",
+        "type": "bytes32"
       }
     ],
     "name": "getRecordIdsByUser",
@@ -371,9 +371,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_userId",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "_userIdHash",
+        "type": "bytes32"
       }
     ],
     "name": "getUserRecordCount",
@@ -409,9 +409,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_userId",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "_userIdHash",
+        "type": "bytes32"
       },
       {
         "internalType": "bytes32",

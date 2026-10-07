@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # Seguridad — Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 30
 
+    # Seguridad — Anonimización de Usuario en Blockchain
+    USER_ID_SALT: str = os.getenv("USER_ID_SALT", os.getenv("SALT_SECRETA", "facesentinel-secure-user-salt-key-2025"))
+
     # Seguridad M2M (Acceso Físico)
     HW_CLIENT_SECRET: str = "secret_door_01"
 

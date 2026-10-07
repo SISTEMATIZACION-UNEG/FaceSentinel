@@ -48,17 +48,20 @@ class BlockchainInfoResponse(BaseModel):
 class AuthRecordResponse(BaseModel):
     """Un registro individual de autenticación en la blockchain."""
     user_id: str
+    user_id_hash: Optional[str] = None
     biometric_hash: str
     timestamp: int
     access_granted: bool
     device_id: str
     match_score: float
+    client_id: Optional[str] = None
 
 
 class AuthHistoryResponse(BaseModel):
     """Historial de autenticaciones de un usuario."""
     success: bool
     user_id: str
+    user_id_hash: Optional[str] = None
     total_records: int
     records: List[AuthRecordResponse]
 

@@ -49,7 +49,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_CONFIG_PATH = os.path.join(BASE_DIR, "data", "cameras.json")
 ROOT_CONFIG_PATH = os.path.join(BASE_DIR, "cameras.json")
 CONFIG_PATH = DATA_CONFIG_PATH if os.path.exists(DATA_CONFIG_PATH) and os.path.getsize(DATA_CONFIG_PATH) > 0 else ROOT_CONFIG_PATH
-DEFAULT_API_URL = os.getenv("FACESENTINEL_BACKEND_URL", "http://localhost:8000/api/v1/physical-access/authenticate")
+DEFAULT_API_URL = os.getenv("FACESENTINEL_BACKEND_URL", "http://localhost:8001/api/v1/physical-access/authenticate")
 
 # Landmarks MediaPipe Face Mesh para EAR
 LEFT_EYE_IDX  = [33, 160, 158, 133, 153, 144]
@@ -593,7 +593,7 @@ def main():
     print(f"🚀 Iniciando {len(active_configs)} Workers concurrentes de cámara...")
     workers = []
     for cfg in active_configs:
-        worker = CameraWorker(cfg, DEFAULT_API_URL)
+        worker = CameraWorker(cfg, api_url)
         worker.start()
         workers.append(worker)
         print(f"   [+] Worker iniciado para [{cfg.get('device_id')}]: {cfg.get('name')} ({cfg.get('source')})")

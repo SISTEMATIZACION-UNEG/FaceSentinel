@@ -20,7 +20,7 @@ from app.services.liveness import (
 logger = logging.getLogger(__name__)
 
 # URL de tu API local (Asegúrate de que uvicorn esté corriendo)
-BASE_URL = "http://127.0.0.1:8000/api/v1"
+BASE_URL = os.getenv("FACESENTINEL_API_URL", f"http://127.0.0.1:{os.getenv('PORT', '8001')}/api/v1")
 
 # Umbrales científicos para el parpadeo (EAR - Eye Aspect Ratio)
 EAR_CERRADO = 0.20  # Si baja de este número, el ojo se considera cerrado

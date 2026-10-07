@@ -1,6 +1,7 @@
 {
-  "contract_address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24",
-  "network": "http://ganache:7545",
-  "chain_id": 1337,
-  "admin_address": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1"
+  "contract_address": "",
+  "network": "http://127.0.0.1:7545",
+  "chain_id": 0,
+  "admin_address": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
+  "deployment_metrics": {}
 }

@@ -7,6 +7,9 @@ pragma solidity ^0.8.19;
  * @notice Contrato inteligente para el registro inmutable de eventos de
  *         autenticación biométrica facial. Diseñado para Ganache (desarrollo)
  *         con estructura lista para redes Ethereum/Polygon reales.
+ *         Anonimización real: el identificador de usuario se almacena como un
+ *         hash criptográfico (bytes32 userIdHash) con sal secreta, evitando la
+ *         exposición de datos personales en texto plano en la cadena de bloques.
  */
 contract AccessRegistry {
 
@@ -16,7 +19,7 @@ contract AccessRegistry {
 
     /// @notice Estructura que representa un evento de autenticación
     struct AuthRecord {
-        string userId;           // Identificador del usuario (ej. "V-12345")
+        bytes32 userIdHash;      // Hash criptográfico (SHA-256 + sal) del ID de usuario (anonimizado)
         bytes32 biometricHash;   // Hash SHA-256 del embedding facial (no se guarda el vector real)
         uint256 timestamp;       // Marca de tiempo UNIX del momento de autenticación
         bool accessGranted;      // true = acceso concedido, false = denegado
@@ -41,8 +44,8 @@ contract AccessRegistry {
     /// @notice Todos los registros de autenticación, indexados por ID
     mapping(uint256 => AuthRecord) public authRecords;
 
-    /// @notice Índice: userId => lista de IDs de registros para ese usuario
-    mapping(string => uint256[]) private userRecordIds;
+    /// @notice Índice: userIdHash => lista de IDs de registros para ese usuario anonimizado
+    mapping(bytes32 => uint256[]) private userRecordIds;
 
     /// @notice Índice: clientId => lista de IDs de registros para ese cliente de terceros
     mapping(string => uint256[]) public clientRecordIds;
@@ -54,7 +57,7 @@ contract AccessRegistry {
     /// @notice Se emite cada vez que se registra un intento de autenticación
     event AuthenticationLogged(
         uint256 indexed recordId,
-        string userId,
+        bytes32 indexed userIdHash,
         bool accessGranted,
         uint256 timestamp,
         address indexed device,
@@ -126,7 +129,7 @@ contract AccessRegistry {
 
     /**
      * @notice Registra un evento de autenticación biométrica en la blockchain
-     * @param _userId Identificador del usuario
+     * @param _userIdHash Hash criptográfico (con sal secreta) del identificador de usuario
      * @param _biometricHash Hash SHA-256 del vector biométrico
      * @param _accessGranted Si el acceso fue concedido o denegado
      * @param _deviceId Identificador del punto de acceso
@@ -135,7 +138,7 @@ contract AccessRegistry {
      * @return recordId El ID asignado al registro
      */
     function logAuthentication(
-        string calldata _userId,
+        bytes32 _userIdHash,
         bytes32 _biometricHash,
         bool _accessGranted,
         string calldata _deviceId,
@@ -145,7 +148,7 @@ contract AccessRegistry {
         recordId = totalRecords;
 
         authRecords[recordId] = AuthRecord({
-            userId: _userId,
+            userIdHash: _userIdHash,
             biometricHash: _biometricHash,
             timestamp: block.timestamp,
             accessGranted: _accessGranted,
@@ -154,13 +157,13 @@ contract AccessRegistry {
             clientId: _clientId
         });
 
-        userRecordIds[_userId].push(recordId);
+        userRecordIds[_userIdHash].push(recordId);
         clientRecordIds[_clientId].push(recordId);
         totalRecords++;
 
         emit AuthenticationLogged(
             recordId,
-            _userId,
+            _userIdHash,
             _accessGranted,
             block.timestamp,
             msg.sender,
@@ -185,25 +188,25 @@ contract AccessRegistry {
     }
 
     /**
-     * @notice Obtiene todos los IDs de registros para un usuario
-     * @param _userId Identificador del usuario
+     * @notice Obtiene todos los IDs de registros para un usuario anonimizado
+     * @param _userIdHash Hash con sal del usuario
      * @return Array con los IDs de todos los registros de ese usuario
      */
-    function getRecordIdsByUser(string calldata _userId) external view returns (uint256[] memory) {
-        return userRecordIds[_userId];
+    function getRecordIdsByUser(bytes32 _userIdHash) external view returns (uint256[] memory) {
+        return userRecordIds[_userIdHash];
     }
 
     /**
-     * @notice Obtiene los últimos N registros de un usuario
-     * @param _userId Identificador del usuario
+     * @notice Obtiene los últimos N registros de un usuario anonimizado
+     * @param _userIdHash Hash con sal del usuario
      * @param _count Cantidad de registros a retornar (máximo)
      * @return Array de AuthRecord con los registros más recientes
      */
     function getRecentRecordsByUser(
-        string calldata _userId,
+        bytes32 _userIdHash,
         uint256 _count
     ) external view returns (AuthRecord[] memory) {
-        uint256[] storage ids = userRecordIds[_userId];
+        uint256[] storage ids = userRecordIds[_userIdHash];
         uint256 total = ids.length;
         uint256 resultCount = _count < total ? _count : total;
 
@@ -251,11 +254,11 @@ contract AccessRegistry {
     }
 
     /**
-     * @notice Obtiene el número total de autenticaciones de un usuario
-     * @param _userId Identificador del usuario
+     * @notice Obtiene el número total de autenticaciones de un usuario anonimizado
+     * @param _userIdHash Hash con sal del usuario
      * @return Cantidad de registros
      */
-    function getUserRecordCount(string calldata _userId) external view returns (uint256) {
-        return userRecordIds[_userId].length;
+    function getUserRecordCount(bytes32 _userIdHash) external view returns (uint256) {
+        return userRecordIds[_userIdHash].length;
     }
 }
