@@ -23,6 +23,7 @@ protobuf==3.20.3           # Compatibilidad de serialización entre MediaPipe y 
 # --- 3. Anti-Spoofing, Texturas y Análisis Científico ---
 numpy==1.26.4              # Manipulación matricial y de vectores de características
 scipy==1.15.3              # Análisis de señales y frecuencias (FFT) para detección de pantallas/papel
+scikit-learn>=1.4.0        # Métricas de validación, curvas ROC, matrices de confusión y datasets (LFW)
 scikit-image==0.25.2       # Análisis de textura LBP (Local Binary Patterns) para anti-spoofing
 matplotlib==3.10.9         # Generación de gráficas y visualización de métricas
 pillow==12.3.0             # Manipulación y decodificación de formatos de imagen
