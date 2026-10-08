@@ -1,0 +1,21 @@
+# =========================================================================
+#             FACESENTINEL - REQUIREMENTS CORE (CAPA PESADA INMUTABLE)
+# =========================================================================
+
+# --- 1. PyTorch & Computación Acelerada ---
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.4.0+cpu
+torchvision==0.19.0+cpu
+
+# --- 2. Núcleo de IA, Deep Learning y Visión Artificial ---
+tensorflow==2.15.0
+keras==2.15.0
+tf-keras==2.15.0
+deepface==0.0.101
+retina-face==0.0.18
+mtcnn==1.0.0
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.11
+onnxruntime==1.23.2
+protobuf==3.20.3
