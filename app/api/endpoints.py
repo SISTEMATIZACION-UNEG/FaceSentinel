@@ -10,6 +10,8 @@ from app.services.liveness import comprehensive_liveness_check, calibrate_camera
 from app.services.metrics_collector import log_experiment_metric
 from app.api.schemas import (
     UserRegister,
+    UserCreateAdmin,
+    UserUpdateAdmin,
     AuthRequest,
     AuthResponse,
     BlockchainInfoResponse,
@@ -35,6 +37,8 @@ from app.services.storage import (
     update_user_password,
     get_user_by_id,
     save_user_data,
+    create_user_profile,
+    update_user_profile,
     get_device_by_token,
     verify_device_access,
     get_all_users,
@@ -61,7 +65,7 @@ from app.core.security import (
 )
 
 # Importamos las funciones reales de IA que creamos en el paso anterior
-from app.services.face_recognition import register_face, verify_face, remove_face, base64_to_image
+from app.services.face_recognition import register_face, verify_face, remove_face, base64_to_image, get_embedding
 
 # Importamos el servicio de blockchain
 from app.services.blockchain import (
@@ -185,6 +189,93 @@ def list_users(current_user: dict = Depends(require_admin)):
     (Sólo disponible para Administradores).
     """
     return get_all_users()
+
+
+@router.post("/users", tags=["Autenticación y Registro"])
+def admin_create_user(
+    user_data: UserCreateAdmin,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Permite al Administrador crear un usuario completo con rol, credenciales y/o biometría facial.
+    """
+    face_vector = None
+    if user_data.image_base64 and user_data.image_base64.strip():
+        try:
+            img = base64_to_image(user_data.image_base64)
+            face_vector, _ = get_embedding(img)
+            if not face_vector:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No se detectó ningún rostro válido en la foto proporcionada. Intenta con mejor iluminación."
+                )
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            raise HTTPException(status_code=400, detail=f"Error procesando la imagen biométrica: {e}")
+
+    password_hash = None
+    if user_data.password and user_data.password.strip():
+        password_hash = hash_client_secret(user_data.password)
+
+    success, message = create_user_profile(
+        user_id=user_data.user_id,
+        name=user_data.name,
+        role=user_data.role,
+        username=user_data.username,
+        password_hash=password_hash,
+        face_vector=face_vector
+    )
+
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+
+    return {"success": True, "message": message, "user_id": user_data.user_id}
+
+
+@router.put("/users/{user_id}", tags=["Autenticación y Registro"])
+@router.patch("/users/{user_id}", tags=["Autenticación y Registro"])
+def admin_update_user(
+    user_id: str,
+    user_data: UserUpdateAdmin,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Permite al Administrador actualizar los datos del usuario (Nombre, Rol, Username, Contraseña)
+    y/o actualizar su biometría facial en ChromaDB.
+    """
+    face_vector = None
+    if user_data.image_base64 and user_data.image_base64.strip():
+        try:
+            img = base64_to_image(user_data.image_base64)
+            face_vector, _ = get_embedding(img)
+            if not face_vector:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No se detectó ningún rostro válido en la foto proporcionada. Intenta con mejor iluminación."
+                )
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            raise HTTPException(status_code=400, detail=f"Error procesando la imagen biométrica: {e}")
+
+    password_hash = None
+    if user_data.password and user_data.password.strip():
+        password_hash = hash_client_secret(user_data.password)
+
+    success, message = update_user_profile(
+        user_id=user_id,
+        name=user_data.name,
+        role=user_data.role,
+        username=user_data.username,
+        password_hash=password_hash,
+        face_vector=face_vector
+    )
+
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+
+    return {"success": True, "message": message, "user_id": user_id}
 
 
 @router.post("/auth/password", tags=["Autenticación y Registro"])

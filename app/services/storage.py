@@ -429,10 +429,130 @@ def get_all_users() -> list[dict]:
                 "user_id": u.user_id,
                 "name": u.name,
                 "role": u.role,
+                "username": u.username,
                 "created_at": u.created_at
             }
             for u in users
         ]
+
+
+def create_user_profile(
+    user_id: str,
+    name: str,
+    role: str,
+    username: Optional[str] = None,
+    password_hash: Optional[str] = None,
+    face_vector: Optional[list] = None
+) -> tuple[bool, str]:
+    """Crea un usuario nuevo en SQLite y opcionalmente almacena su vector en ChromaDB."""
+    clean_username = username.strip() if username and username.strip() else None
+
+    with SessionLocal() as session:
+        existing = session.get(User, user_id)
+        if existing:
+            return False, f"Ya existe un usuario con el ID / Cédula '{user_id}'."
+
+        if clean_username:
+            stmt = select(User).where(User.username == clean_username)
+            if session.scalars(stmt).first():
+                return False, f"El nombre de usuario '{clean_username}' ya está en uso."
+
+        try:
+            user = User(
+                user_id=user_id,
+                name=name,
+                role=role,
+                username=clean_username,
+                password_hash=password_hash
+            )
+            session.add(user)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"❌ Error creando usuario en SQLite: {e}")
+            return False, f"Error en base de datos: {e}"
+
+    if face_vector:
+        try:
+            face_collection.upsert(
+                embeddings=[face_vector],
+                ids=[user_id],
+                metadatas=[{"name": name, "role": role}]
+            )
+        except Exception as e:
+            logger.error(f"❌ Error guardando vector biométrico en ChromaDB: {e}")
+
+    logger.info(f"✅ Usuario '{name}' (ID: {user_id}) creado exitosamente por Administrador.")
+    return True, f"Usuario '{name}' creado exitosamente."
+
+
+def update_user_profile(
+    user_id: str,
+    name: Optional[str] = None,
+    role: Optional[str] = None,
+    username: Optional[str] = None,
+    password_hash: Optional[str] = None,
+    face_vector: Optional[list] = None
+) -> tuple[bool, str]:
+    """Actualiza los atributos de perfil de un usuario en SQLite y sincroniza metadatos / vector en ChromaDB."""
+    with SessionLocal() as session:
+        user = session.get(User, user_id)
+        if not user:
+            return False, f"Usuario '{user_id}' no encontrado."
+
+        if username is not None:
+            clean_user = username.strip() if username.strip() != "" else None
+            if clean_user and clean_user != user.username:
+                stmt = select(User).where(User.username == clean_user, User.user_id != user_id)
+                if session.scalars(stmt).first():
+                    return False, f"El nombre de usuario '{clean_user}' ya está en uso por otra cuenta."
+                user.username = clean_user
+            elif not clean_user:
+                user.username = None
+
+        if name is not None and name.strip():
+            user.name = name.strip()
+
+        if role is not None and role.strip():
+            user.role = role.strip()
+
+        if password_hash is not None and password_hash.strip():
+            user.password_hash = password_hash
+
+        user.updated_at = datetime.utcnow()
+
+        try:
+            session.commit()
+            current_name = user.name
+            current_role = user.role
+        except Exception as e:
+            session.rollback()
+            logger.error(f"❌ Error actualizando usuario en SQLite: {e}")
+            return False, f"Error en base de datos: {e}"
+
+    # Sincronizar en ChromaDB
+    if face_vector:
+        try:
+            face_collection.upsert(
+                embeddings=[face_vector],
+                ids=[user_id],
+                metadatas=[{"name": current_name, "role": current_role}]
+            )
+            logger.info(f"📸 Vector biométrico de '{user_id}' actualizado en ChromaDB.")
+        except Exception as e:
+            logger.error(f"❌ Error actualizando vector en ChromaDB: {e}")
+    elif name is not None or role is not None:
+        try:
+            face_collection.update(
+                ids=[user_id],
+                metadatas=[{"name": current_name, "role": current_role}]
+            )
+            logger.debug(f"Metadatos de '{user_id}' sincronizados en ChromaDB.")
+        except Exception as ex_chroma:
+            logger.debug(f"Aviso al sincronizar metadatos en ChromaDB: {ex_chroma}")
+
+    logger.info(f"✅ Perfil de usuario '{user_id}' actualizado correctamente.")
+    return True, f"Usuario '{user_id}' actualizado correctamente."
 
 
 def save_access_log(

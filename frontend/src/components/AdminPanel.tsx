@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ShieldCheck, Plus, CheckCircle2, Copy, AlertCircle, RefreshCw, Key, FileText, Check, Clock, XCircle, Users, Camera, Upload } from "lucide-react"
+import { ShieldCheck, Plus, CheckCircle2, Copy, AlertCircle, RefreshCw, Key, FileText, Check, Clock, XCircle, Users, Camera, Upload, Pencil, Trash2, UserPlus, X, Lock, User as UserIcon } from "lucide-react"
 import axios from "axios"
 import { API_BASE_URL } from "@/config/api"
 import IoTDevicesView from "./IoTDevicesView"
@@ -50,6 +50,28 @@ export default function AdminPanel() {
     const [cameraLoading, setCameraLoading] = useState(false)
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const mediaStreamRef = useRef<MediaStream | null>(null)
+
+    // Create User Modal State
+    const [showCreateUserModal, setShowCreateUserModal] = useState(false)
+    const [newUserId, setNewUserId] = useState("")
+    const [newUserName, setNewUserName] = useState("")
+    const [newUserRole, setNewUserRole] = useState("Employee")
+    const [newUserUsername, setNewUserUsername] = useState("")
+    const [newUserPassword, setNewUserPassword] = useState("")
+    const [newUserImageBase64, setNewUserImageBase64] = useState("")
+    const [creatingUser, setCreatingUser] = useState(false)
+
+    // Edit User Modal State
+    const [editingUser, setEditingUser] = useState<SystemUser | null>(null)
+    const [editName, setEditName] = useState("")
+    const [editRole, setEditRole] = useState("")
+    const [editUsername, setEditUsername] = useState("")
+    const [editPassword, setEditPassword] = useState("")
+    const [editImageBase64, setEditImageBase64] = useState("")
+    const [savingEdit, setSavingEdit] = useState(false)
+
+    // Delete User State
+    const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
     
     // Register client form
     const [appName, setAppName] = useState("")
@@ -327,6 +349,114 @@ export default function AdminPanel() {
             } finally {
                 setCameraLoading(false)
             }
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newUserId.trim() || !newUserName.trim() || !newUserRole.trim()) {
+            alert("Por favor completa Cédula / ID, Nombre y Rol.")
+            return
+        }
+        setCreatingUser(true)
+        setError("")
+        setEnrollSuccess("")
+        try {
+            const res = await axios.post(`${baseUrl}/api/v1/users`, {
+                user_id: newUserId.trim(),
+                name: newUserName.trim(),
+                role: newUserRole.trim(),
+                username: newUserUsername.trim() || null,
+                password: newUserPassword.trim() || null,
+                image_base64: newUserImageBase64 || null
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setEnrollSuccess(res.data?.message || `Usuario '${newUserName}' creado exitosamente.`)
+            setShowCreateUserModal(false)
+            setNewUserId("")
+            setNewUserName("")
+            setNewUserRole("Employee")
+            setNewUserUsername("")
+            setNewUserPassword("")
+            setNewUserImageBase64("")
+            fetchUsers()
+        } catch (err: any) {
+            setError(err.response?.data?.detail || "Error al registrar el usuario.")
+        } finally {
+            setCreatingUser(false)
+        }
+    }
+
+    const openEditModal = (u: SystemUser) => {
+        setEditingUser(u)
+        setEditName(u.name)
+        setEditRole(u.role)
+        setEditUsername(u.username || "")
+        setEditPassword("")
+        setEditImageBase64("")
+        setError("")
+        setEnrollSuccess("")
+    }
+
+    const handleSaveEditUser = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editingUser) return
+        if (!editName.trim() || !editRole.trim()) {
+            alert("El nombre y rol son obligatorios.")
+            return
+        }
+        setSavingEdit(true)
+        setError("")
+        setEnrollSuccess("")
+        try {
+            const res = await axios.put(`${baseUrl}/api/v1/users/${editingUser.user_id}`, {
+                name: editName.trim(),
+                role: editRole.trim(),
+                username: editUsername.trim() || null,
+                password: editPassword.trim() || null,
+                image_base64: editImageBase64 || null
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setEnrollSuccess(res.data?.message || `Usuario '${editName}' actualizado exitosamente.`)
+            setEditingUser(null)
+            fetchUsers()
+        } catch (err: any) {
+            setError(err.response?.data?.detail || "Error al actualizar el usuario.")
+        } finally {
+            setSavingEdit(false)
+        }
+    }
+
+    const handleDeleteUser = async (u: SystemUser) => {
+        const confirmed = window.confirm(`¿Estás seguro de eliminar permanentemente al usuario ${u.name} (ID: ${u.user_id}) y sus vectores biométricos?`)
+        if (!confirmed) return
+        setDeletingUserId(u.user_id)
+        setError("")
+        setEnrollSuccess("")
+        try {
+            const res = await axios.delete(`${baseUrl}/api/v1/users/${u.user_id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setEnrollSuccess(res.data?.message || `Usuario '${u.name}' eliminado exitosamente.`)
+            fetchUsers()
+        } catch (err: any) {
+            setError(err.response?.data?.detail || "Error al eliminar el usuario.")
+        } finally {
+            setDeletingUserId(null)
+        }
+    }
+
+    const handleModalImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: "create" | "edit") => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+            const base64 = ev.target?.result as string
+            if (target === "create") setNewUserImageBase64(base64)
+            else setEditImageBase64(base64)
         }
         reader.readAsDataURL(file)
     }
@@ -750,9 +880,326 @@ export default function AdminPanel() {
                         </div>
                     )}
 
+                    {/* Modal / Card para Registrar Nuevo Usuario */}
+                    {showCreateUserModal && (
+                        <Card className="border-primary shadow-lg bg-card/95 backdrop-blur border-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-3">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2 text-primary text-lg">
+                                        <UserPlus className="w-5 h-5" /> Registrar Nuevo Usuario en FaceSentinel
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Crea el perfil del usuario, asigna su rol y opcionalmente adjunta su foto para extraer el vector ArcFace de 512 dimensiones.
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setShowCreateUserModal(false)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleCreateUser} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newUserId">Cédula / ID Único *</Label>
+                                            <Input
+                                                id="newUserId"
+                                                placeholder="Ej: 28123456 o EMP-001"
+                                                value={newUserId}
+                                                onChange={e => setNewUserId(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newUserName">Nombre Completo *</Label>
+                                            <Input
+                                                id="newUserName"
+                                                placeholder="Ej: Carlos Pérez"
+                                                value={newUserName}
+                                                onChange={e => setNewUserName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newUserRole">Rol del Usuario *</Label>
+                                            <select
+                                                id="newUserRole"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                value={newUserRole}
+                                                onChange={e => setNewUserRole(e.target.value)}
+                                                required
+                                            >
+                                                <option value="Employee">Employee (Empleado)</option>
+                                                <option value="Student">Student (Estudiante)</option>
+                                                <option value="Professor">Professor (Profesor)</option>
+                                                <option value="Security">Security (Seguridad)</option>
+                                                <option value="Developer">Developer (Desarrollador)</option>
+                                                <option value="Admin">Admin (Administrador)</option>
+                                                <option value="User">User (Usuario Estándar)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newUserUsername">Nombre de Usuario SSO (Opcional)</Label>
+                                            <Input
+                                                id="newUserUsername"
+                                                placeholder="Ej: cperez"
+                                                value={newUserUsername}
+                                                onChange={e => setNewUserUsername(e.target.value)}
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">Requerido si el usuario iniciará sesión con contraseña (Admin / Developer).</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newUserPassword">Contraseña de Acceso (Opcional)</Label>
+                                            <Input
+                                                id="newUserPassword"
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={newUserPassword}
+                                                onChange={e => setNewUserPassword(e.target.value)}
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">Para inicio de sesión tradicional con password.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Adjuntar Biometría Facial */}
+                                    <div className="space-y-2 pt-2 border-t">
+                                        <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                                            <Camera className="w-4 h-4 text-primary" /> Foto para Biometría Facial (ArcFace)
+                                        </Label>
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <label className="cursor-pointer">
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    className="hidden" 
+                                                    onChange={e => handleModalImageUpload(e, "create")} 
+                                                />
+                                                <div className="inline-flex items-center justify-center rounded-md text-xs font-semibold border border-input bg-muted/70 hover:bg-muted py-2 px-3 shadow-sm transition-colors text-foreground gap-2">
+                                                    <Upload className="w-3.5 h-3.5 text-primary" /> {newUserImageBase64 ? "Cambiar Foto Seleccionada" : "Seleccionar Foto del Rostro..."}
+                                                </div>
+                                            </label>
+                                            {newUserImageBase64 ? (
+                                                <div className="flex items-center gap-2">
+                                                    <img 
+                                                        src={newUserImageBase64} 
+                                                        alt="Preview" 
+                                                        className="w-10 h-10 object-cover rounded-full border border-primary shadow-sm"
+                                                    />
+                                                    <span className="text-xs text-green-600 font-medium">Foto cargada lista para extracción ArcFace</span>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                                                        onClick={() => setNewUserImageBase64("")}
+                                                    >
+                                                        Quitar
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">
+                                                    (Opcional al crear: puedes enrolar la foto ahora o después con la cámara web).
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-3">
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => setShowCreateUserModal(false)}
+                                            disabled={creatingUser}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button 
+                                            type="submit" 
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                                            disabled={creatingUser}
+                                        >
+                                            {creatingUser ? (
+                                                <span className="flex items-center gap-2">
+                                                    <RefreshCw className="w-4 h-4 animate-spin" /> Registrando...
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-2">
+                                                    <Plus className="w-4 h-4" /> Crear Usuario
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Modal / Card para Editar Usuario */}
+                    {editingUser && (
+                        <Card className="border-primary shadow-lg bg-card/95 backdrop-blur border-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-3">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2 text-primary text-lg">
+                                        <Pencil className="w-5 h-5" /> Editar Características de: {editingUser.name} ({editingUser.user_id})
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Modifica el nombre, rol asignado, credenciales de acceso SSO o actualiza su vector facial en ChromaDB.
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setEditingUser(null)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSaveEditUser} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editUserId">Cédula / ID (Inmutable)</Label>
+                                            <Input
+                                                id="editUserId"
+                                                value={editingUser.user_id}
+                                                disabled
+                                                className="bg-muted font-mono"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editName">Nombre Completo *</Label>
+                                            <Input
+                                                id="editName"
+                                                value={editName}
+                                                onChange={e => setEditName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editRole">Rol del Usuario *</Label>
+                                            <select
+                                                id="editRole"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                value={editRole}
+                                                onChange={e => setEditRole(e.target.value)}
+                                                required
+                                            >
+                                                <option value="Employee">Employee (Empleado)</option>
+                                                <option value="Student">Student (Estudiante)</option>
+                                                <option value="Professor">Professor (Profesor)</option>
+                                                <option value="Security">Security (Seguridad)</option>
+                                                <option value="Developer">Developer (Desarrollador)</option>
+                                                <option value="Admin">Admin (Administrador)</option>
+                                                <option value="User">User (Usuario Estándar)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editUsername">Username SSO</Label>
+                                            <Input
+                                                id="editUsername"
+                                                placeholder="Ej: cperez"
+                                                value={editUsername}
+                                                onChange={e => setEditUsername(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editPassword">Nueva Contraseña (Opcional)</Label>
+                                            <Input
+                                                id="editPassword"
+                                                type="password"
+                                                placeholder="Dejar en blanco para mantener la actual"
+                                                value={editPassword}
+                                                onChange={e => setEditPassword(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Actualizar Biometría Facial */}
+                                    <div className="space-y-2 pt-2 border-t">
+                                        <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                                            <Camera className="w-4 h-4 text-primary" /> Actualizar Biometría Facial
+                                        </Label>
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <label className="cursor-pointer">
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    className="hidden" 
+                                                    onChange={e => handleModalImageUpload(e, "edit")} 
+                                                />
+                                                <div className="inline-flex items-center justify-center rounded-md text-xs font-semibold border border-input bg-muted/70 hover:bg-muted py-2 px-3 shadow-sm transition-colors text-foreground gap-2">
+                                                    <Upload className="w-3.5 h-3.5 text-primary" /> {editImageBase64 ? "Cambiar Foto Nueva" : "Subir Nueva Foto para ArcFace..."}
+                                                </div>
+                                            </label>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs gap-1.5"
+                                                onClick={() => {
+                                                    const targetUser = editingUser
+                                                    setEditingUser(null)
+                                                    startUserCamera(targetUser)
+                                                }}
+                                            >
+                                                <Camera className="w-3.5 h-3.5 text-primary" /> Abrir Cámara en Vivo
+                                            </Button>
+                                            {editImageBase64 && (
+                                                <div className="flex items-center gap-2">
+                                                    <img 
+                                                        src={editImageBase64} 
+                                                        alt="Preview" 
+                                                        className="w-10 h-10 object-cover rounded-full border border-primary shadow-sm"
+                                                    />
+                                                    <span className="text-xs text-green-600 font-medium">Nueva foto lista para re-extraer vector</span>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                                                        onClick={() => setEditImageBase64("")}
+                                                    >
+                                                        Quitar
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-3">
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => setEditingUser(null)}
+                                            disabled={savingEdit}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button 
+                                            type="submit" 
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                                            disabled={savingEdit}
+                                        >
+                                            {savingEdit ? (
+                                                <span className="flex items-center gap-2">
+                                                    <RefreshCw className="w-4 h-4 animate-spin" /> Guardando...
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-2">
+                                                    <Check className="w-4 h-4" /> Guardar Cambios
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Modal / Escáner de Enrolamiento de Cámara */}
                     {enrollingUser && (
-                        <Card className="border-primary shadow-lg bg-card/95 backdrop-blur">
+                        <Card className="border-primary shadow-lg bg-card/95 backdrop-blur border-2">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-primary">
                                     <Camera className="w-5 h-5" /> Enrolando Rostro: {enrollingUser.name} ({enrollingUser.user_id})
@@ -816,18 +1263,32 @@ export default function AdminPanel() {
 
                     {/* Tabla de Usuarios Registrados */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
                             <div>
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <Users className="w-5 h-5 text-primary" /> Directorio de Usuarios y Biometría
                                 </CardTitle>
                                 <CardDescription>
-                                    Usuarios registrados en el IdP. Puedes re-enrolar la biometría facial de cualquier persona directamente con la cámara web.
+                                    Usuarios registrados en el IdP. Puedes crear, editar características, re-enrolar biometría facial o eliminar cuentas.
                                 </CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
-                                <RefreshCw className={`h-4 w-4 mr-1.5 ${loadingUsers ? "animate-spin" : ""}`} /> Recargar
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    size="sm" 
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs gap-1.5 shadow-sm"
+                                    onClick={() => {
+                                        setShowCreateUserModal(true)
+                                        setEditingUser(null)
+                                        setEnrollingUser(null)
+                                        setError("")
+                                    }}
+                                >
+                                    <UserPlus className="w-3.5 h-3.5" /> Nuevo Usuario
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
+                                    <RefreshCw className={`h-4 w-4 mr-1.5 ${loadingUsers ? "animate-spin" : ""}`} /> Recargar
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {loadingUsers ? (
@@ -843,7 +1304,7 @@ export default function AdminPanel() {
                                                 <th className="px-4 py-3">Nombre</th>
                                                 <th className="px-4 py-3">Rol</th>
                                                 <th className="px-4 py-3">Usuario SSO</th>
-                                                <th className="px-4 py-3 text-right rounded-tr-md">Acción Biometría</th>
+                                                <th className="px-4 py-3 text-right rounded-tr-md">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -856,7 +1317,13 @@ export default function AdminPanel() {
                                                         {u.name}
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${
+                                                            u.role?.toLowerCase() === "admin" 
+                                                                ? "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30"
+                                                                : u.role?.toLowerCase() === "developer"
+                                                                ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30"
+                                                                : "bg-primary/10 text-primary border-primary/20"
+                                                        }`}>
                                                             {u.role}
                                                         </span>
                                                     </td>
@@ -864,16 +1331,44 @@ export default function AdminPanel() {
                                                         {u.username || "—"}
                                                     </td>
                                                     <td className="px-4 py-3 text-right">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs font-medium border-primary/30 text-primary hover:bg-primary/10"
-                                                            onClick={() => startUserCamera(u)}
-                                                            disabled={cameraLoading}
-                                                        >
-                                                            <Camera className="w-3.5 h-3.5 mr-1.5" />
-                                                            Re-enrolar Rostro
-                                                        </Button>
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-8 text-xs font-medium border-primary/30 text-primary hover:bg-primary/10 px-2.5"
+                                                                onClick={() => startUserCamera(u)}
+                                                                disabled={cameraLoading || deletingUserId === u.user_id}
+                                                                title="Re-enrolar Biometría Facial con Cámara"
+                                                            >
+                                                                <Camera className="w-3.5 h-3.5 mr-1" />
+                                                                Rostro
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-8 text-xs font-medium border-muted-foreground/30 hover:bg-muted px-2.5"
+                                                                onClick={() => openEditModal(u)}
+                                                                disabled={cameraLoading || deletingUserId === u.user_id}
+                                                                title="Editar Nombre, Rol, Contraseña o Foto"
+                                                            >
+                                                                <Pencil className="w-3.5 h-3.5 mr-1" />
+                                                                Editar
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-8 text-xs font-medium border-destructive/30 text-destructive hover:bg-destructive/10 px-2.5"
+                                                                onClick={() => handleDeleteUser(u)}
+                                                                disabled={cameraLoading || deletingUserId === u.user_id}
+                                                                title="Eliminar Usuario y Vectores Biométricos"
+                                                            >
+                                                                {deletingUserId === u.user_id ? (
+                                                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                                                )}
+                                                            </Button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

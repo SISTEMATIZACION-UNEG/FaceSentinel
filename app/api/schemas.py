@@ -12,6 +12,25 @@ class UserRegister(BaseModel):
     role: str
     image_base64: str  # La foto capturada por la cámara
 
+
+class UserCreateAdmin(BaseModel):
+    """Modelo para que un Administrador cree un usuario completo."""
+    user_id: str = Field(..., description="Cédula o identificador único del usuario")
+    name: str = Field(..., description="Nombre completo del usuario")
+    role: str = Field(..., description="Rol del usuario (ej: Admin, Developer, Professor, Student, Security, Employee)")
+    username: Optional[str] = Field(None, description="Nombre de usuario para login SSO (opcional)")
+    password: Optional[str] = Field(None, description="Contraseña de acceso para roles autorizados (opcional)")
+    image_base64: Optional[str] = Field(None, description="Foto en base64 para enrolar biometría facial (opcional)")
+
+
+class UserUpdateAdmin(BaseModel):
+    """Modelo para que un Administrador actualice atributos o biometría de un usuario."""
+    name: Optional[str] = Field(None, description="Nombre completo del usuario")
+    role: Optional[str] = Field(None, description="Rol del usuario")
+    username: Optional[str] = Field(None, description="Nombre de usuario para login SSO")
+    password: Optional[str] = Field(None, description="Nueva contraseña de acceso (opcional)")
+    image_base64: Optional[str] = Field(None, description="Nueva foto en base64 para actualizar biometría facial (opcional)")
+
 # Lo que el sistema espera recibir cuando alguien intenta entrar
 class AuthRequest(BaseModel):
     image_base64: str

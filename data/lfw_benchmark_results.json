@@ -1,15 +1,15 @@
 {
   "benchmark_metadata": {
-    "timestamp": "2026-10-07T23:43:41.017625Z",
+    "timestamp": "2026-10-07T23:56:01.810169Z",
     "standard": "ISO/IEC 19795-1 (Biometric performance testing and reporting)",
     "dataset": "Labeled Faces in the Wild (LFW)",
     "dataset_subset": "test",
-    "total_pairs_requested": 10,
-    "pairs_successfully_evaluated": 10,
-    "failed_detection_pairs": 0,
-    "failure_to_acquire_rate_fta": 0.0,
-    "total_evaluation_time_seconds": 5.26,
-    "mean_extraction_latency_ms": 388.18
+    "total_pairs_requested": 1000,
+    "pairs_successfully_evaluated": 978,
+    "failed_detection_pairs": 22,
+    "failure_to_acquire_rate_fta": 0.022,
+    "total_evaluation_time_seconds": 279.89,
+    "mean_extraction_latency_ms": 180.33
   },
   "pipeline_configuration": {
     "model_name": "ArcFace",
@@ -24,56 +24,56 @@
   "iso_metrics": {
     "literature_threshold": {
       "threshold": 0.68,
-      "accuracy": 1.0,
-      "accuracy_pct": 100.0,
-      "fmr": 0.0,
-      "fmr_pct": 0.0,
-      "fnmr": 0.0,
-      "fnmr_pct": 0.0,
+      "accuracy": 0.8548057259713702,
+      "accuracy_pct": 85.48057259713701,
+      "fmr": 0.09278350515463918,
+      "fmr_pct": 9.278350515463918,
+      "fnmr": 0.19675456389452334,
+      "fnmr_pct": 19.675456389452332,
       "confusion_matrix": {
-        "true_matches": 5,
-        "false_non_matches": 0,
-        "false_matches": 0,
-        "true_non_matches": 5,
-        "total_genuine": 5,
-        "total_impostor": 5
+        "true_matches": 396,
+        "false_non_matches": 97,
+        "false_matches": 45,
+        "true_non_matches": 440,
+        "total_genuine": 493,
+        "total_impostor": 485
       }
     },
     "calibrated_threshold": {
       "threshold": 0.6,
-      "accuracy": 0.9,
-      "accuracy_pct": 90.0,
-      "fmr": 0.0,
-      "fmr_pct": 0.0,
-      "fnmr": 0.2,
-      "fnmr_pct": 20.0,
+      "accuracy": 0.8660531697341514,
+      "accuracy_pct": 86.60531697341514,
+      "fmr": 0.03711340206185567,
+      "fmr_pct": 3.711340206185567,
+      "fnmr": 0.22920892494929007,
+      "fnmr_pct": 22.920892494929006,
       "confusion_matrix": {
-        "true_matches": 4,
-        "false_non_matches": 1,
-        "false_matches": 0,
-        "true_non_matches": 5,
-        "total_genuine": 5,
-        "total_impostor": 5
+        "true_matches": 380,
+        "false_non_matches": 113,
+        "false_matches": 18,
+        "true_non_matches": 467,
+        "total_genuine": 493,
+        "total_impostor": 485
       }
     },
-    "roc_auc": 1.0,
-    "eer": 0.0,
-    "eer_pct": 0.0,
-    "eer_optimal_threshold": 0.661
+    "roc_auc": 0.8522,
+    "eer": 0.1666,
+    "eer_pct": 16.66,
+    "eer_optimal_threshold": 0.7324
   },
   "chromadb_1n_stress_test": {
     "enrolled_identities": 1000,
     "embedding_dimensions": 512,
     "index_metric": "cosine",
-    "total_enroll_time_ms": 286.38,
+    "total_enroll_time_ms": 294.64,
     "query_benchmark": {
       "num_queries_executed": 50,
-      "mean_latency_ms": 0.852,
-      "median_latency_ms": 0.842,
-      "p95_latency_ms": 1.066,
-      "p99_latency_ms": 1.135,
-      "min_latency_ms": 0.738,
-      "max_latency_ms": 1.146
+      "mean_latency_ms": 0.824,
+      "median_latency_ms": 0.757,
+      "p95_latency_ms": 1.172,
+      "p99_latency_ms": 1.373,
+      "min_latency_ms": 0.715,
+      "max_latency_ms": 1.387
     }
   }
 }
