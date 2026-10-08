@@ -36,7 +36,17 @@ import requests
 
 # Forzar transporte TCP para streams RTSP en OpenCV (elimina pérdida de paquetes H.264/H.265 y macroblock glitches)
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
-import mediapipe as mp
+
+# Import universal y resiliente de MediaPipe (compatible con 0.9.x, 0.10.x y 0.10.14+)
+try:
+    import mediapipe.python.solutions.face_mesh as mp_face_mesh
+except Exception:
+    try:
+        import mediapipe.solutions.face_mesh as mp_face_mesh
+    except Exception:
+        import mediapipe as mp
+        _sol = getattr(mp, "solutions", None) or getattr(getattr(mp, "python", None), "solutions", None)
+        mp_face_mesh = _sol.face_mesh
 
 # UTF-8 para consola de Windows
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -291,8 +301,7 @@ class CameraWorker(threading.Thread):
     def run(self):
         self.reader.start()
         
-        mp_mesh = mp.solutions.face_mesh
-        face_mesh = mp_mesh.FaceMesh(
+        face_mesh = mp_face_mesh.FaceMesh(
             max_num_faces=1,
             refine_landmarks=True,
             min_detection_confidence=0.35,
