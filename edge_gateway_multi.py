@@ -46,10 +46,26 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         pass
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Cargar .env de forma nativa (Zero-Dependencies) si existe
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+if os.path.exists(ENV_PATH):
+    try:
+        with open(ENV_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+    except Exception:
+        pass
+
 DATA_CONFIG_PATH = os.path.join(BASE_DIR, "data", "cameras.json")
 ROOT_CONFIG_PATH = os.path.join(BASE_DIR, "cameras.json")
 CONFIG_PATH = DATA_CONFIG_PATH if os.path.exists(DATA_CONFIG_PATH) and os.path.getsize(DATA_CONFIG_PATH) > 0 else ROOT_CONFIG_PATH
-DEFAULT_API_URL = os.getenv("FACESENTINEL_BACKEND_URL", "http://localhost:8001/api/v1/physical-access/authenticate")
+DEFAULT_API_URL = os.getenv("FACESENTINEL_BACKEND_URL", "http://localhost:8088/api/v1/physical-access/authenticate")
 
 # Landmarks MediaPipe Face Mesh para EAR
 LEFT_EYE_IDX  = [33, 160, 158, 133, 153, 144]
@@ -576,7 +592,9 @@ def main():
     parser.add_argument("--server", type=str, default=DEFAULT_API_URL, help="URL de la API del Backend FaceSentinel")
     args = parser.parse_args()
 
-    api_url = args.server
+    api_url = args.server.strip().rstrip("/")
+    if not "/api/v1/" in api_url:
+        api_url = f"{api_url}/api/v1/physical-access/authenticate"
     print("=" * 70)
     print("    FaceSentinel — Edge Gateway Multi-Cámara Concurrente (NVR)")
     print("=" * 70)

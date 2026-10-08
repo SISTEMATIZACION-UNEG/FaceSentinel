@@ -1,0 +1,7 @@
+# FaceSentinel — Requerimientos mínimos para Edge Gateway (Dispositivos de Borde / Multi-Cámara)
+# Peso total aproximado: ~60 MB (en lugar de los ~1.8 GB del backend completo)
+
+opencv-python>=4.8.0.76
+mediapipe>=0.10.9
+requests>=2.31.0
+numpy>=1.24.0,<2.0.0
