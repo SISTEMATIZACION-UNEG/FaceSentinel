@@ -213,3 +213,17 @@ def log_experiment_metric(metric_data: Dict[str, Any]) -> bool:
         except Exception as e:
             logger.error(f"❌ Error inesperado registrando métricas experimentales: {e}")
             return False
+
+
+def record_authentication(metric_data: Dict[str, Any]) -> bool:
+    """
+    Alias semántico para registrar métricas de autenticación (Web SSO, WebSocket o M2M)
+    en 'metricas_tesis.csv' de forma thread-safe y tolerante a fallos.
+    """
+    return log_experiment_metric(metric_data)
+
+
+def record_attempt(metric_data: Dict[str, Any]) -> bool:
+    """Alias para registrar intentos individuales de autenticación."""
+    return log_experiment_metric(metric_data)
+
