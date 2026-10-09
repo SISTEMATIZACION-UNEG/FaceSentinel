@@ -5,8 +5,8 @@ pragma solidity ^0.8.19;
  * @title AccessRegistry
  * @author FaceSentinel
  * @notice Contrato inteligente para el registro inmutable de eventos de
- *         autenticación biométrica facial. Diseñado para Ganache (desarrollo)
- *         con estructura lista para redes Ethereum/Polygon reales.
+ *         autenticación biométrica facial desplegado en redes blockchain EVM
+ *         (Ethereum, Polygon o red corporativa/producción).
  *         Anonimización real: el identificador de usuario se almacena como un
  *         hash criptográfico (bytes32 userIdHash) con sal secreta, evitando la
  *         exposición de datos personales en texto plano en la cadena de bloques.
@@ -19,8 +19,8 @@ contract AccessRegistry {
 
     /// @notice Estructura que representa un evento de autenticación
     struct AuthRecord {
-        bytes32 userIdHash;      // Hash criptográfico (SHA-256 + sal) del ID de usuario (anonimizado)
-        bytes32 biometricHash;   // Hash SHA-256 del embedding facial (no se guarda el vector real)
+        bytes32 userIdHash;      // Resumen determinista SHA-256 + sal secreta (privacidad off-chain)
+        bytes32 biometricHash;   // Hash SHA-256 del embedding para verificación de integridad
         uint256 timestamp;       // Marca de tiempo UNIX del momento de autenticación
         bool accessGranted;      // true = acceso concedido, false = denegado
         string deviceId;         // Identificador del punto de acceso / dispositivo
@@ -48,7 +48,8 @@ contract AccessRegistry {
     mapping(bytes32 => uint256[]) private userRecordIds;
 
     /// @notice Índice: clientId => lista de IDs de registros para ese cliente de terceros
-    mapping(string => uint256[]) public clientRecordIds;
+    /// @dev Debe ser private: Solidity no puede generar getters automáticos para claves string
+    mapping(string => uint256[]) private clientRecordIds;
 
     // =========================================================================
     //                               EVENTOS
@@ -261,4 +262,15 @@ contract AccessRegistry {
     function getUserRecordCount(bytes32 _userIdHash) external view returns (uint256) {
         return userRecordIds[_userIdHash].length;
     }
+
+    /**
+     * @notice Obtiene todos los IDs de registros para una aplicación cliente
+     * @param _clientId Identificador de la aplicación cliente
+     * @return Array con los IDs de todos los registros de ese cliente
+     */
+    function getClientRecordIds(string memory _clientId) external view returns (uint256[] memory) {
+        return clientRecordIds[_clientId];
+    }
+
+
 }
