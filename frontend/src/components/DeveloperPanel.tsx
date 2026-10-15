@@ -342,7 +342,7 @@ export default function DeveloperPanel() {
                                                         <td className="px-3 py-2.5 text-muted-foreground">
                                                             {new Date((log.timestamp as any) * 1000).toLocaleString()}
                                                         </td>
-                                                        <td className="px-3 py-2.5 font-mono">{log.match_score?.toFixed(4)}</td>
+                                                        <td className="px-3 py-2.5 font-mono">{(log.match_score ?? 0).toFixed(4)}</td>
                                                         <td className="px-3 py-2.5 font-mono text-muted-foreground truncate max-w-[200px]" title={log.biometric_hash}>
                                                             {log.biometric_hash}
                                                         </td>

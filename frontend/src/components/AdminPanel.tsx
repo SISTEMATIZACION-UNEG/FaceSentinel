@@ -3,11 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ShieldCheck, Plus, CheckCircle2, Copy, AlertCircle, RefreshCw, Key, FileText, Check, Clock, XCircle, Users, Camera, Upload, Pencil, Trash2, UserPlus, X, Lock, User as UserIcon } from "lucide-react"
+import { ShieldCheck, Plus, CheckCircle2, Copy, AlertCircle, RefreshCw, Key, FileText, Check, Clock, XCircle, Users, Camera, Upload, Pencil, Trash2, UserPlus, X } from "lucide-react"
 import axios from "axios"
 import { API_BASE_URL } from "@/config/api"
 import IoTDevicesView from "./IoTDevicesView"
 import AccessControlView from "./AccessControlView"
+
+// Catálogo canónico de inquilinos auditables en Geth PoA
+export const DEPLOYED_BLOCKCHAIN_CLIENTS = [
+    { client_id: "PHYSICAL_ACCESS", app_name: "Control de Acceso Físico M2M (Torniquetes)" },
+    { client_id: "EXTERNAL_WEB_SSO", app_name: "Asistencia UNEG (Web SSO Institucional)" },
+    { client_id: "SMART20PRUEBA", app_name: "Ensayos Automatizados (SMART20)" },
+    { client_id: "LOCAL_AUTH", app_name: "Autenticación Local (API Host)" }
+];
 
 interface Client {
     client_id: string
@@ -791,19 +799,34 @@ export default function AdminPanel() {
                                         className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                                         value={selectedClient}
                                         onChange={e => {
-                                            setSelectedClient(e.target.value)
-                                            fetchAuditLogs(e.target.value)
+                                            setSelectedClient(e.target.value);
+                                            fetchAuditLogs(e.target.value);
                                         }}
                                     >
-                                        <option value="">Selecciona una aplicación...</option>
-                                        {clients.map((client, i) => (
-                                            <option key={i} value={client.client_id}>{client.app_name}</option>
-                                        ))}
+                                        <option value="">Selecciona una aplicación para auditar en Blockchain...</option>
+                                        <optgroup label="Inquilinos Blockchain (Geth PoA)">
+                                            {DEPLOYED_BLOCKCHAIN_CLIENTS.map((client, i) => (
+                                                <option key={`bc-${i}`} value={client.client_id}>
+                                                    {client.app_name} [{client.client_id}]
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                        {clients.filter(c => !DEPLOYED_BLOCKCHAIN_CLIENTS.some(d => d.client_id === c.client_id)).length > 0 && (
+                                            <optgroup label="Otras Aplicaciones Registradas">
+                                                {clients
+                                                    .filter(c => !DEPLOYED_BLOCKCHAIN_CLIENTS.some(d => d.client_id === c.client_id))
+                                                    .map((client, i) => (
+                                                        <option key={`db-${i}`} value={client.client_id}>
+                                                            {client.app_name}
+                                                        </option>
+                                                    ))}
+                                            </optgroup>
+                                        )}
                                     </select>
                                 </div>
                             </CardTitle>
                             <CardDescription>
-                                Consulta los bloques y logs inmutables asociados a un inquilino específico en Ganache.
+                                Consulta los bloques y logs inmutables asociados a un inquilino específico en la red privada Geth PoA (Bloques Inmutables).
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -845,7 +868,7 @@ export default function AdminPanel() {
                                                     <td className="px-3 py-2.5 text-muted-foreground">
                                                         {new Date((log.timestamp as any) * 1000).toLocaleString()}
                                                     </td>
-                                                    <td className="px-3 py-2.5 font-mono">{log.match_score?.toFixed(4)}</td>
+                                                    <td className="px-3 py-2.5 font-mono">{(log.match_score ?? 0).toFixed(4)}</td>
                                                     <td className="px-3 py-2.5 font-mono text-muted-foreground truncate max-w-[200px]" title={log.biometric_hash}>
                                                         {log.biometric_hash}
                                                     </td>

@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defensa de Trabajo de Grado · FaceSentinel · Héctor Tovar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #0f172a;
+      --bg-surface: #ffffff;
+      --bg-surface-alt: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-sub: #475569;
+      --border-color: #e2e8f0;
+      
+      --navy-900: #0a192f;
+      --navy-800: #0f274a;
+      --navy-700: #1b365d;
+      
+      --oe1-color: #0284c7;
+      --oe1-bg: #f0f9ff;
+      --oe1-border: #bae6fd;
+      
+      --oe2-color: #7c3aed;
+      --oe2-bg: #f5f3ff;
+      --oe2-border: #ddd6fe;
+      
+      --oe3-color: #d97706;
+      --oe3-bg: #fffbeb;
+      --oe3-border: #fde68a;
+      
+      --oe4-color: #059669;
+      --oe4-bg: #ecfdf5;
+      --oe4-border: #a7f3d0;
+      
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --warning: #ea580c;
+      --warning-bg: #fff7ed;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+
+      --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      --card-shadow-hover: 0 20px 30px -10px rgba(15, 23, 42, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Presentation Canvas Wrapper (16:9) */
+    #app-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+    }
+
+    #slide-viewport {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-surface);
+      border-radius: 1.25rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Breadcrumb Header */
+    .top-breadcrumb-bar {
+      height: 44px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      z-index: 20;
+    }
+
+    .chapters-list {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .chapter-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: color 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .chapter-step.active {
+      color: var(--navy-800);
+      font-weight: 900;
+      position: relative;
+    }
+
+    .chapter-step.active::after {
+      content: '';
+      position: absolute;
+      bottom: -13px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #0284c7;
+      border-radius: 2px;
+    }
+
+    .chapter-step.active.oe1-chapter::after { background: var(--oe1-color); }
+    .chapter-step.active.oe2-chapter::after { background: var(--oe2-color); }
+    .chapter-step.active.oe3-chapter::after { background: var(--oe3-color); }
+    .chapter-step.active.oe4-chapter::after { background: var(--oe4-color); }
+
+    .slide-badge-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .oe-chip {
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.375rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .oe-chip.oe1 { background: var(--oe1-bg); color: var(--oe1-color); border: 1px solid var(--oe1-border); }
+    .oe-chip.oe2 { background: var(--oe2-bg); color: var(--oe2-color); border: 1px solid var(--oe2-border); }
+    .oe-chip.oe3 { background: var(--oe3-bg); color: var(--oe3-color); border: 1px solid var(--oe3-border); }
+    .oe-chip.oe4 { background: var(--oe4-bg); color: var(--oe4-color); border: 1px solid var(--oe4-border); }
+    .oe-chip.backup { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+    .slide-number-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Main Slide Content Canvas */
+    .slide-content-area {
+      flex: 1;
+      padding: 2.25rem 3.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: radial-gradient(circle at 4% 4%, rgba(224, 242, 254, 0.45) 0%, transparent 40%),
+                  radial-gradient(circle at 96% 96%, rgba(243, 232, 255, 0.35) 0%, transparent 45%),
+                  #ffffff;
+    }
+
+    .cover-slide-content {
+      padding: 0;
+      background: #ffffff;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Slide Header */
+    .slide-title-block {
+      margin-bottom: 1.25rem;
+    }
+    .slide-category {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--oe1-color);
+      display: inline-block;
+      margin-bottom: 0.25rem;
+    }
+    .slide-main-title {
+      font-size: 1.85rem;
+      font-weight: 850;
+      color: var(--navy-900);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    .slide-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+
+    /* Typography Constraints (<25 words on screen) */
+    .screen-focus-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.45;
+      color: var(--navy-800);
+    }
+
+    /* Cards & Grids */
+    .cards-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .cards-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .cards-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .big-stat-number {
+      font-size: 2.75rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.35rem;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .source-citation-footer {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: right;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    /* Floating Dock & Controls */
+    #presentation-dock {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 50;
+    }
+
+    .dock-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .dock-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.45rem 0.85rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .dock-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .dock-btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.5);
+    }
+
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Presenter Script / Notes Panel (Side or Bottom Drawer) */
+    #notes-drawer {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 60px;
+      width: 480px;
+      background: #0f172a;
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      overflow-y: auto;
+    }
+    #notes-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.75rem;
+    }
+    .drawer-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .script-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+    .script-box-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .script-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+      font-weight: 400;
+    }
+    .transition-box {
+      background: rgba(2, 132, 199, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+    }
+    .transition-text {
+      font-size: 0.875rem;
+      color: #7dd3fc;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* Modal for Backup / Q&A / Memory numbers */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 2rem;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      width: 100%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+    .modal-head {
+      padding: 1.25rem 1.75rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 1.75rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Interactive Tabs inside Modal */
+    .tab-nav {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1.25rem;
+    }
+    .tab-btn {
+      padding: 0.6rem 1rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #0284c7;
+      border-bottom-color: #0284c7;
+    }
+
+    /* Key indicator highlights */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* 20 Min mode visual cue */
+    .mode-20m-tag {
+      background: #fef08a;
+      color: #854d0e;
+      border: 1px solid #fde047;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.25rem;
+      text-transform: uppercase;
+      margin-left: 0.5rem;
+    }
+
+    /* Table styles */
+    .clean-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.825rem;
+    }
+    .clean-table th {
+      background: #f1f5f9;
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      font-weight: 750;
+      color: var(--navy-800);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .clean-table td {
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-sub);
+    }
+    .clean-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* SVGs and Visual Elements */
+    .svg-diagram-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Fade Transition */
+    .slide-fade-enter {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.995); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Print / PDF view */
+    @media print {
+      body { overflow: visible; height: auto; background: white; }
+      #presentation-dock, #notes-drawer, .modal-overlay { display: none !important; }
+      #slide-viewport { max-width: 100%; aspect-ratio: auto; box-shadow: none; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Slide Canvas -->
+  <div id="app-container">
+    <div id="slide-viewport">
+      
+      <!-- Top Chapter Breadcrumbs -->
+      <div class="top-breadcrumb-bar">
+        <div class="chapters-list">
+          <span class="chapter-step" id="ch-apertura" onclick="jumpToSlide(1)">Apertura</span>
+          <span>·</span>
+          <span class="chapter-step" id="ch-i" onclick="jumpToSlide(3)">I · El Problema</span>
+          <span>·</span>
+          <span class="chapter-step" id="ch-ii" onclick="jumpToSlide(8)">II · Marco Referencial</span>
+          <span>·</span>
+          <span class="chapter-step" id="ch-iii" onclick="jumpToSlide(12)">III · Marco Metodológico</span>
+          <span>·</span>
+          <span class="chapter-step" id="ch-iv" onclick="jumpToSlide(17)">IV · Resultados</span>
+          <span>·</span>
+          <span class="chapter-step" id="ch-conclusiones" onclick="jumpToSlide(29)">Conclusiones</span>
+        </div>
+
+        <div class="slide-badge-meta">
+          <span id="oe-badge" class="oe-chip" style="display:none;">OE1</span>
+          <span id="speed-mode-indicator" class="mode-20m-tag" style="display:none;">20 Min</span>
+          <span class="slide-number-chip"><span id="curr-slide-num">01</span> / <span id="total-slide-num">32</span></span>
+        </div>
+      </div>
+
+      <!-- Slide Render Area -->
+      <div id="slide-canvas" class="slide-content-area slide-fade-enter">
+        <!-- Injected via JavaScript -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Interactive Presentation Dock -->
+  <div id="presentation-dock">
+    <div class="dock-group">
+      <button class="dock-btn" onclick="prevSlide()" title="Anterior (Flecha Izq)"><span style="font-size:1rem;">←</span> Anterior</button>
+      <button class="dock-btn" onclick="nextSlide()" title="Siguiente (Flecha Der / Espacio)">Siguiente <span style="font-size:1rem;">→</span></button>
+      <div class="timer-display" id="timer-box" title="Cronómetro de Defensa">
+        <span>⏱️</span>
+        <span id="timer-text">00:00</span>
+        <button onclick="toggleTimer()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.75rem;" title="Play/Pausa">⏯</button>
+        <button onclick="resetTimer()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.75rem;" title="Reiniciar">↺</button>
+      </div>
+    </div>
+
+    <div class="dock-group">
+      <button class="dock-btn" id="btn-toggle-notes" onclick="toggleNotesDrawer()" title="Atajo: Tecla S">
+        <span>🎙️</span> Guion del Expositor
+      </button>
+      <button class="dock-btn" id="btn-toggle-backup" onclick="openModal('backup')" title="Atajo: Tecla B">
+        <span>📂</span> Diapositivas de Respaldo (B1–B10)
+      </button>
+      <button class="dock-btn" id="btn-toggle-faq" onclick="openModal('faq')" title="Atajo: Tecla Q">
+        <span>🛡️</span> Preguntas del Jurado & Cifras
+      </button>
+      <button class="dock-btn" id="btn-toggle-20m" onclick="toggle20mMode()" title="Atajo: Tecla M">
+        <span>⚡</span> Modo 20 min
+      </button>
+      <button class="dock-btn" onclick="toggleFullscreen()" title="Atajo: Tecla F">
+        <span>⛶</span> Pantalla Completa
+      </button>
+    </div>
+  </div>
+
+  <!-- Speaker Notes Side Drawer -->
+  <div id="notes-drawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">Guion del Expositor</div>
+        <div style="font-size:0.75rem; color:#94a3b8;" id="drawer-slide-title">Diapositiva 1 · Portada</div>
+      </div>
+      <button class="drawer-close" onclick="toggleNotesDrawer()">✕</button>
+    </div>
+
+    <div class="script-box">
+      <div class="script-box-label">
+        <span>Lo que dices en primera persona</span>
+        <span id="script-time" style="color:#38bdf8;">30 s</span>
+      </div>
+      <p class="script-text" id="script-body">
+        "Buenos días, honorable jurado, profesora tutora y público presente. Mi nombre es Héctor Tovar..."
+      </p>
+    </div>
+
+    <div class="transition-box">
+      <div style="font-size:0.75rem; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:0.25rem;">
+        🔗 Transición hacia la siguiente diapositiva
+      </div>
+      <p class="transition-text" id="transition-body">
+        "Empiezo con las tres amenazas que originaron este trabajo."
+      </p>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:0.75rem; padding:1rem; font-size:0.8rem; color:#cbd5e1;">
+      <strong style="color:#f8fafc; display:block; margin-bottom:0.25rem;">Regla de Exposición:</strong>
+      Mantén el ritmo, mira al jurado, utiliza la frase de transición para evitar saltos bruscos y recuerda que en pantalla solo hay ~25 palabras.
+    </div>
+  </div>
+
+  <!-- Modal for Backup Slides / FAQ / Key Figures -->
+  <div class="modal-overlay" id="main-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div style="font-weight:800; font-size:1.1rem; color:var(--navy-900);" id="modal-title">Herramientas de Defensa</div>
+        <button onclick="closeModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="tab-nav">
+          <button class="tab-btn active" id="tab-btn-backup" onclick="switchModalTab('backup')">📂 Diapositivas de Respaldo (B1-B10)</button>
+          <button class="tab-btn" id="tab-btn-questions" onclick="switchModalTab('questions')">❓ 13 Preguntas del Jurado</button>
+          <button class="tab-btn" id="tab-btn-clarify" onclick="switchModalTab('clarify')">⚠️ 11 Puntos Críticos del Documento</button>
+          <button class="tab-btn" id="tab-btn-figures" onclick="switchModalTab('figures')">🧠 Cifras de Memoria</button>
+          <button class="tab-btn" id="tab-btn-20m" onclick="switchModalTab('20m')">⏱️ Guía Versión 20 min</button>
+        </div>
+
+        <!-- Tab 1: Backup Slides -->
+        <div id="tab-content-backup" class="tab-pane">
+          <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:1rem;">Haz clic en cualquier diapositiva de respaldo para proyectarla inmediatamente al jurado si profundizan en una pregunta:</p>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:0.75rem;">
+            <button onclick="jumpToBackup(33)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B1</strong> · Matriz de Casos (CSV) & Sujetos
+            </button>
+            <button onclick="jumpToBackup(34)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B2</strong> · Tabla 6 Completa (11 Indicadores)
+            </button>
+            <button onclick="jumpToBackup(35)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B3</strong> · Tabla 10 (LFW con IC 95% Wilson)
+            </button>
+            <button onclick="jumpToBackup(36)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B4</strong> · Tabla 9.1 (44 Eventos del SSO)
+            </button>
+            <button onclick="jumpToBackup(37)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B5</strong> · Figura 3 (ERD) & Figura 4 (PAD Tree)
+            </button>
+            <button onclick="jumpToBackup(38)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B6</strong> · Contrato AccessRegistry.sol
+            </button>
+            <button onclick="jumpToBackup(39)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B7</strong> · Tablas 7 y 8 (Latencia y Geth)
+            </button>
+            <button onclick="jumpToBackup(40)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B8</strong> · Tabla 4.1 Equipos & Cámara
+            </button>
+            <button onclick="jumpToBackup(41)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B9</strong> · Tabla 11 Matriz de Requerimientos
+            </button>
+            <button onclick="jumpToBackup(42)" class="dock-btn" style="background:#f8fafc; color:var(--navy-800); border:1px solid var(--border-color); text-align:left; justify-content:flex-start; padding:0.75rem;">
+              <strong>B10</strong> · Acta de Conformidad (Anexo D)
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: 13 Jury Questions -->
+        <div id="tab-content-questions" class="tab-pane" style="display:none;">
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">1. ¿Por qué solo seis personas?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Es una limitación declarada. Usé un muestreo de casos críticos: si el sistema discrimina al familiar de primer grado, el caso más difícil, hay evidencia de viabilidad. Para el reconocimiento facial lo complementé con 978 pares de LFW, y propongo un piloto con 50 o más usuarios."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">2. Un FMR de 3.71% es inaceptable. ¿Por qué el banco da 0%?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Son condiciones distintas: el banco usa captura controlada, tres usuarios enrolados y un único impostor; LFW usa imágenes no controladas. Por eso concluyo que el rostro no debe ser factor único en producción. El 0 de 113 es una observación; con ese número, el límite superior al 95% llega a cerca de 3.3%."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">3. ¿Por qué 1:N y no 1:1?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Porque el portal y la puerta física no requieren declarar identidad previa, lo que es cómodo, pero acumula error. Por eso recomiendo un segundo factor o un modo 1:1 con identidad declarada."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">4. Si no conectó el DVR de la UNEG, ¿cómo valida la compatibilidad?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Por equivalencia de interfaz: una cámara analógica de 1 MP y un DVR entregan al sistema el mismo tipo de flujo por RTSP. Lo que no se evaluó es el DVR institucional específico, y lo declaro como limitación y paso previo al piloto."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">5. ¿Por qué Blockchain si el nodo lo controla la misma universidad?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Con un solo operador la garantía es limitada: es una bitácora resistente a alteración casual y con firma. El valor real aparece con varios nodos validadores en dependencias distintas; por eso recomiendo un consorcio entre sedes."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">6. ¿Por qué notarizar tarda casi 2 segundos? ¿Es tiempo real?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Es el período de bloque de 2 segundos del consenso Clique. Como el registro es asíncrono y se guarda primero en la base local, no retrasa la respuesta al usuario."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">7. El requisito de rendimiento era 500 ms y mide 690 ms.</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Lo reformulé y lo documenté: el original no distinguía la red. El servidor cumple 500 ms con 198 ms, y el extremo a extremo cumple 1 segundo con 690 ms, donde 486 ms son de red."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">8. ¿La privacidad no depende de la sal?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Sí: es pseudonimización. La cédula nunca va en claro, pero quien tenga la sal puede recalcular el hash. Por eso la sal está fuera del código, y recomiendo gestor de secretos, versionado de claves y cifrado en reposo."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">9. ¿Por qué FFT y qué pasa con pantallas OLED de alta densidad?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"La FFT detecta el patrón regular que dejan las pantallas. En OLED de más de 460 ppi se atenúa; en ese caso la decisión recae más en el parpadeo y la textura. Lo declaré como limitación y recomiendo infrarrojo cercano."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">10. ¿Qué ataques no evaluó?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Máscaras 3D, deepfakes en tiempo real e inyección de cámara virtual. Probé fotografías impresas y videos en teléfonos, los ataques de bajo costo más comunes."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">11. ¿Por qué el falso rechazo es 15%?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Fue una decisión de diseño: prioricé que ningún intruso entre. Ocurre cuando el usuario parpadea muy rápido o cambia la luz, y se resuelve con un segundo intento. El infrarrojo cercano debería reducirlo."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">12. ¿Cuál es su aporte original?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"Integrar en una sola arquitectura de software libre: un proveedor de identidad federado, un embudo de detección de vida repartido entre el borde y el servidor con calibración por cámara, almacenamiento híbrido y auditoría en contrato inteligente, con una API abierta documentada."</p>
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:0.75rem; padding:1rem;">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.35rem;">13. ¿Qué evidencia hay del proceso de desarrollo?</strong>
+              <p style="font-size:0.85rem; color:var(--text-sub); m-0;">"El historial del repositorio, que va desde febrero hasta octubre de 2026, las pruebas unitarias, el archivo de ensayos y las bitácoras. El trabajo fue iterativo, con fases que se solapan."</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: 11 Critical points -->
+        <div id="tab-content-clarify" class="tab-pane" style="display:none;">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th style="width:30px;">#</th>
+                <th>Qué dice el documento entregado</th>
+                <th>Qué decir si el jurado pregunta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1</strong></td>
+                <td>421 ensayos en ventana ininterrumpida el 27 de sep (18:02 a 18:47), pero Tabla 3.2 los reparte en S-RES y S-UNEG</td>
+                <td><strong>Clave:</strong> Define exactamente que S-UNEG evaluó la latencia en red y S-RES el banco. "Los ensayos biométricos masivos se ejecutaron en el banco con captura rigurosa de 45 min".</td>
+              </tr>
+              <tr>
+                <td><strong>2</strong></td>
+                <td>Sprint 2 dice JWT (HS256); Tabla 9 y conclusiones dicen RS256</td>
+                <td>Di <strong>RS256</strong> (claves asimétricas en producción). Si preguntan: "Fue una errata de redacción en la bitácora del Sprint 2, en el código se consolidó RS256".</td>
+              </tr>
+              <tr>
+                <td><strong>3</strong></td>
+                <td>Scrum con 4 iteraciones formales (4, 7, 2, 2 semanas)</td>
+                <td>"Fue un desarrollo iterativo con fases que se solaparon; el historial de Git documenta las fechas reales de febrero a octubre de 2026".</td>
+              </tr>
+              <tr>
+                <td><strong>4</strong></td>
+                <td>Prueba SSO: 97.4% (38/39) vs 96.55% (28/29 solo estudiantes)</td>
+                <td>"38 de 39 considerando al grupo completo con el investigador; 28 de 29 considerando exclusivamente a los 3 estudiantes".</td>
+              </tr>
+              <tr>
+                <td><strong>5</strong></td>
+                <td>Resumen dice "especificidad anti-spoofing de 99.37%"</td>
+                <td>Di siempre <strong>"especificidad global"</strong>; el APCER (0.98%) es la cifra específica de anti-spoofing.</td>
+              </tr>
+              <tr>
+                <td><strong>6</strong></td>
+                <td>Modo 1:N: "baja criticidad" vs "despliegues masivos"</td>
+                <td>Frase unificada: "En todo despliegue de producción institucional se requiere un segundo factor".</td>
+              </tr>
+              <tr>
+                <td><strong>7</strong></td>
+                <td>Gas: 207 000 a 248 000 vs Tabla 8</td>
+                <td>Los valores iniciales eran del entorno de pruebas; en producción se consolidó en <strong>207 430 gas</strong>.</td>
+              </tr>
+              <tr>
+                <td><strong>8</strong></td>
+                <td>"Diagnóstico levantado in situ"</td>
+                <td>"Analicé la cámara física suministrada por la institución y medí la red real; la conexión directa al DVR no fue autorizada".</td>
+              </tr>
+              <tr>
+                <td><strong>9</strong></td>
+                <td>"Registro inmutable"</td>
+                <td>"Resistente a alteración; la garantía de inmutabilidad matemática crece con el número de validadores en el consorcio".</td>
+              </tr>
+              <tr>
+                <td><strong>10</strong></td>
+                <td>LFW 86.61% frente al ~99% publicado de ArcFace</td>
+                <td>"Mide el pipeline completo en producción con preprocesamiento y umbral estricto fijo; no el modelo aislado en condiciones ideales".</td>
+              </tr>
+              <tr>
+                <td><strong>11</strong></td>
+                <td>Citas Li (2023) o McIntosh (2024)</td>
+                <td>No citar apellidos oralmente; referirse a hechos públicos: "el caso de ransomware de Stanford en 2023".</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tab 4: Memory figures -->
+        <div id="tab-content-figures" class="tab-pane" style="display:none;">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>Dato Clave</th>
+                <th>Valor Exacto</th>
+                <th>Contexto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Objetivos</strong></td><td>4 (OE1, OE2, OE3, OE4)</td><td>Arquitectura, Motor+API, Contrato, Evaluación</td></tr>
+              <tr><td><strong>Participantes</strong></td><td>N = 6</td><td>3 Casos Críticos + 3 Estudiantes UNEG</td></tr>
+              <tr><td><strong>Ensayos Banco</strong></td><td>421 ensayos</td><td>104 genuinos + 113 hermano + 97 videos + 107 fotos</td></tr>
+              <tr><td><strong>Matriz Confusión</strong></td><td>VP 88 · FN 16 · FP 2 · VN 315</td><td>Tabla 5 de la tesis</td></tr>
+              <tr><td><strong>Métricas Clave</strong></td><td>Exactitud 95.72% · Especif. 99.37%</td><td>Precisión 97.78%</td></tr>
+              <tr><td><strong>APCER</strong></td><td>0.98%</td><td>Video 0/97 · Foto 2/107</td></tr>
+              <tr><td><strong>Falso Rechazo</strong></td><td>15.38% (16 / 104)</td><td>Decisión de diseño estricta</td></tr>
+              <tr><td><strong>Impostor Consanguíneo</strong></td><td>0 de 113 aceptados</td><td>Rechazo total en banco</td></tr>
+              <tr><td><strong>Prueba SSO</strong></td><td>44 eventos</td><td>38/39 legítimos · 3/3 no enrolados · 2/2 videos frenados</td></tr>
+              <tr><td><strong>Benchmark LFW</strong></td><td>978 pares · FMR 9.28% → 3.71%</td><td>Reducción de 60.0% (p &lt; 0.001)</td></tr>
+              <tr><td><strong>Error Teórico 1:N</strong></td><td>N=10 → 31.5% · N=50 → 84.9%</td><td>Fórmula: 1 - (1 - FMR)^N</td></tr>
+              <tr><td><strong>Latencia Extremo a Extremo</strong></td><td>689.98 ms</td><td>Borde 6.30 ms · WAN 485.79 ms · Server 197.89 ms</td></tr>
+              <tr><td><strong>Notarización Geth</strong></td><td>1 903.89 ms (Bloque 2s)</td><td>207 430 gas · Costo monetario 0</td></tr>
+              <tr><td><strong>Umbral Facial</strong></td><td>d &lt; 0.60</td><td>Literatura recomienda 0.68</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tab 5: 20 min guide -->
+        <div id="tab-content-20m" class="tab-pane" style="display:none;">
+          <div style="background:#fefce8; border:1px solid #fef08a; padding:1rem; border-radius:0.75rem; margin-bottom:1rem; font-size:0.85rem; color:#713f12;">
+            <strong>Estrategia de Compactación (Si el jurado reduce el tiempo a 20 min):</strong>
+            Pasa de 32 a 26 diapositivas manteniendo íntegras las diapositivas de mayor rigor (Limitaciones #7, SSO #24, LFW #25 y Modo 1:N #26).
+          </div>
+          <ol style="font-size:0.85rem; color:var(--text-sub); line-height:1.7; padding-left:1.5rem;">
+            <li>Muestra las portadas de capítulo 2 segundos (o salta directamente).</li>
+            <li>Une diapositivas 9, 10 y 11 en una sola mención ("Marco Referencial").</li>
+            <li>Une diapositivas 14 y 15 (Muestra e Instrumentos).</li>
+            <li>Une diapositivas 20 y 21 (Embudo de Vida y Reconocimiento).</li>
+            <li>Une diapositivas 27 y 28 (Latencia y Cumplimiento de Requerimientos).</li>
+            <li>Suprime la diapositiva 31 (Frase de Cierre).</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Slide Data Definition
+    const slidesData = [
+      // 1
+      {
+        id: 1, chapter: 'apertura', oe: null, title: 'Portada', time: '30 s',
+        script: 'Buenos días, honorable jurado, profesora tutora y público presente. Mi nombre es Héctor Tovar y presento mi Trabajo de Grado para optar al título de Ingeniero en Informática: un sistema proveedor de identidad ciberfísico que combina reconocimiento facial con detección de vida y auditoría en Blockchain, al que denominé FaceSentinel. Agradezco a mi tutora, la ingeniera Livia Borjas, su guía durante este proceso.',
+        transition: 'Empiezo con las tres amenazas que originaron este trabajo.',
+        html: `
+          <div class="cover-slide-content">
+            <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; padding-top:0.5rem;">
+              <img src="/diagrams/uneg_logo.png" alt="Logo UNEG" style="height:55px; width:auto;" onerror="this.src='https://placehold.co/120x60/1b365d/ffffff?text=UNEG'">
+              <div style="text-align:center; color:#1b365d; line-height:1.25;">
+                <span style="font-size:0.75rem; font-weight:900; text-transform:uppercase; display:block; letter-spacing:0.04em;">Universidad Nacional Experimental de Guayana</span>
+                <span style="font-size:0.65rem; font-weight:700; text-transform:uppercase; color:#64748b; display:block;">Vicerrectorado Académico · Coordinación General de Pregrado</span>
+                <span style="font-size:0.75rem; font-weight:900; color:#1b365d; display:block;">Proyecto de Carrera: Ingeniería en Informática</span>
+              </div>
+            </div>
+
+            <div style="text-align:center; padding:1.5rem 2rem; max-width:850px; margin:auto;">
+              <div style="display:inline-flex; align-items:center; gap:0.5rem; background:#e0f2fe; color:#0369a1; padding:0.35rem 0.85rem; border-radius:9999px; font-size:0.75rem; font-weight:800; margin-bottom:1rem; border:1px solid #bae6fd;">
+                <span>🛡️ FaceSentinel</span> · <span>Defensa de Trabajo de Grado</span>
+              </div>
+              <h1 style="font-size:1.45rem; font-weight:900; color:#0a192f; line-height:1.35; text-transform:uppercase; letter-spacing:-0.01em;">
+                Sistema Proveedor de Identidad (IdP) ciberfísico basado en autenticación biométrica facial anti-spoofing y registro inmutable en Blockchain para la gestión unificada de control de acceso
+              </h1>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:0.8rem; border-top:1px solid #e2e8f0; padding-top:0.75rem; color:#1b365d;">
+              <div>
+                <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase; display:block;">Tutora Académica</span>
+                <strong style="font-size:0.9rem; color:#0f172a;">Ing. Livia Borjas</strong>
+              </div>
+              <div style="text-align:center; font-weight:600; color:#64748b; font-size:0.75rem;">
+                Ciudad Guayana, octubre de 2026
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase; display:block;">Autor</span>
+                <strong style="font-size:0.9rem; color:#0f172a;">Br. Héctor Tovar</strong>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      // 2
+      {
+        id: 2, chapter: 'apertura', oe: null, title: 'Introducción', time: '1 min',
+        script: 'La biometría facial, el cómputo en el borde y la Blockchain permiten controlar accesos con precisión y trazabilidad. Pero al llevarlas a una institución real aparecen tres amenazas: primero, el spoofing, engañar al sistema con una foto o un video; segundo, que el software y los controles físicos funcionan como silos separados; y tercero, los puntos únicos de falla de las bases de datos centralizadas. FaceSentinel responde a las tres: reconocimiento facial profundo, un embudo de detección de vida y un registro de auditoría resistente a alteración, donde en la cadena solo se registran huellas criptográficas, nunca el rostro.',
+        transition: 'Veamos el problema con detalle en el Capítulo I.',
+        html: `
+          <div>
+            <span class="slide-category">Introducción</span>
+            <h2 class="slide-main-title">Tres Amenazas Críticas del Control de Acceso</h2>
+            <p class="slide-subtitle">Vulnerabilidades estructurales que motivaron el desarrollo de FaceSentinel</p>
+          </div>
+          <div class="cards-grid-3" style="margin:auto 0;">
+            <div class="metric-card" style="text-align:center; border-color:#fecaca; background:#fff5f5;">
+              <div style="font-size:2.5rem; margin-bottom:0.5rem;">📸</div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#991b1b;">Spoofing Facial</h3>
+              <p style="font-size:0.8rem; color:#7f1d1d; margin-top:0.35rem;">Suplantación con fotos y videos ante cámaras convencionales.</p>
+            </div>
+            <div class="metric-card" style="text-align:center; border-color:#fed7aa; background:#fffbeb;">
+              <div style="font-size:2.5rem; margin-bottom:0.5rem;">🏢</div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#9a3412;">Sistemas Aislados</h3>
+              <p style="font-size:0.8rem; color:#7c2d12; margin-top:0.35rem;">Acceso perimetral y software operando como silos inconexos.</p>
+            </div>
+            <div class="metric-card" style="text-align:center; border-color:#fbcfe8; background:#fdf2f8;">
+              <div style="font-size:2.5rem; margin-bottom:0.5rem;">⚡</div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#9d174d;">Punto Único de Falla</h3>
+              <p style="font-size:0.8rem; color:#831843; margin-top:0.35rem;">Bases centralizadas expuestas a manipulación y caída total.</p>
+            </div>
+          </div>
+          <div style="background:#0f274a; color:#ffffff; padding:0.85rem 1.5rem; border-radius:0.75rem; text-align:center; font-weight:700; font-size:0.9rem;">
+            ➡️ <span style="color:#38bdf8;">FaceSentinel:</span> Rostro + Detección de Vida Multicapa + Auditoría en Blockchain
+          </div>
+        `
+      },
+      // 3
+      {
+        id: 3, chapter: 'i', oe: null, title: 'Capítulo I · Portada', time: '5 s',
+        script: 'El primer capítulo plantea el problema, los objetivos y el alcance.',
+        transition: 'Pasemos a analizar el problema.',
+        html: `
+          <div style="margin:auto; text-align:center;">
+            <span class="pill" style="background:#e0f2fe; color:#0369a1; margin-bottom:1rem;">Contexto y Diagnóstico</span>
+            <h1 style="font-size:3.5rem; font-weight:900; color:#0a192f; letter-spacing:-0.03em;">CAPÍTULO I</h1>
+            <div style="width:5rem; height:4px; background:#0284c7; margin:1rem auto; border-radius:2px;"></div>
+            <h2 style="font-size:1.5rem; font-weight:800; color:#0284c7;">EL PROBLEMA</h2>
+          </div>
+        `
+      },
+      // 4
+      {
+        id: 4, chapter: 'i', oe: null, title: 'El Problema', time: '1 min',
+        script: 'Tradicionalmente validamos identidad con contraseñas o tarjetas, y la literatura muestra que las credenciales de proximidad se pueden clonar con dispositivos de bajo costo. Concentrar las identidades en una sola base de datos crea además un punto único de falla; universidades como Stanford sufrieron una exfiltración masiva por ransomware en 2023. En la UNEG, el control de acceso del Edificio Administrativo descansa en vigilancia manual y en un circuito cerrado pasivo: las cámaras graban, pero no verifican identidad ni se integran con los sistemas de software. De allí surge la pregunta de investigación que aparece al pie: cómo unificar y asegurar el control de acceso lógico y físico.',
+        transition: 'De esa pregunta salen cuatro objetivos.',
+        html: `
+          <div>
+            <span class="slide-category">Diagnóstico Institucional</span>
+            <h2 class="slide-main-title">Planteamiento del Problema</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:0.85rem;">
+              <div class="metric-card" style="padding:0.85rem; border-color:#fecaca;">
+                <strong style="color:#b91c1c; font-size:0.9rem;">💳 Tarjetas RFID y contraseñas:</strong>
+                <span style="font-size:0.8rem; color:#475569;">Clonables con hardware de bajo costo y transferibles.</span>
+              </div>
+              <div class="metric-card" style="padding:0.85rem; border-color:#fed7aa;">
+                <strong style="color:#c2410c; font-size:0.9rem;">🏢 Repositorios centralizados:</strong>
+                <span style="font-size:0.8rem; color:#475569;">Punto único de falla y ransomware (Stanford, 2023).</span>
+              </div>
+              <div class="metric-card" style="padding:0.85rem; border-color:#cbd5e1;">
+                <strong style="color:#334155; font-size:0.9rem;">📹 UNEG: CCTV pasivo:</strong>
+                <span style="font-size:0.8rem; color:#475569;">Vigilancia manual sin integración con software institucional.</span>
+              </div>
+            </div>
+            <div class="metric-card" style="background:#f0f9ff; border-color:#bae6fd; text-align:center; padding:1.5rem;">
+              <span class="stat-label" style="color:#0369a1;">Flujo Actual Edificio Administrativo</span>
+              <div style="font-size:0.8rem; font-weight:700; color:#0f172a; margin:1.25rem 0; display:flex; justify-content:center; gap:0.5rem; align-items:center;">
+                <span class="pill" style="background:white;">Cámaras</span> →
+                <span class="pill" style="background:white;">DVR</span> →
+                <span class="pill" style="background:white;">Monitor</span> →
+                <span class="pill" style="background:#fee2e2; color:#991b1b;">Vigilante</span>
+              </div>
+              <div style="background:white; padding:0.75rem; border-radius:0.5rem; border:1px solid #bae6fd; font-weight:800; font-size:0.85rem; color:#0369a1;">
+                ¿Cómo unificar y asegurar el control de acceso lógico y físico?
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Diagnóstico in situ en el Edificio Administrativo UNEG</div>
+        `
+      },
+      // 5
+      {
+        id: 5, chapter: 'i', oe: null, title: 'Objetivos', time: '1.5 min',
+        script: 'El objetivo general es desarrollar ese sistema. Para lograrlo planteé cuatro objetivos específicos. El primero, diseñar la arquitectura ciberfísica partiendo del diagnóstico de la infraestructura existente. El segundo, desarrollar el núcleo del proveedor de identidad: el motor biométrico con ArcFace y detección de vida, integrado con el almacenamiento híbrido en una API asíncrona para inicio de sesión único y comunicación máquina a máquina. El tercero, implementar el contrato inteligente de auditoría. Y el cuarto, evaluar rendimiento, latencia y seguridad. Cada objetivo corresponde a una sección del Capítulo IV, y los colores que ven aquí los usaré en los resultados.',
+        transition: '¿Por qué vale la pena? La justificación.',
+        html: `
+          <div>
+            <span class="slide-category">Estructura del Proyecto</span>
+            <h2 class="slide-main-title">Objetivos de la Investigación</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:5fr 7fr; gap:1.5rem; margin:auto 0; align-items:center;">
+            <div class="metric-card" style="background:#f0f9ff; border-color:#bae6fd; text-align:center; padding:1.75rem;">
+              <div style="font-size:2.5rem; margin-bottom:0.5rem;">🎯</div>
+              <span class="stat-label" style="color:#0369a1;">Objetivo General</span>
+              <p style="font-size:0.85rem; font-weight:700; color:#0f172a; margin-top:0.5rem; line-height:1.4;">
+                Desarrollar un IdP ciberfísico con autenticación facial anti-spoofing y registro en Blockchain.
+              </p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.65rem;">
+              <div style="padding:0.75rem 1rem; border-radius:0.75rem; background:var(--oe1-bg); border:1px solid var(--oe1-border); display:flex; align-items:center; gap:0.75rem;">
+                <span class="oe-chip oe1">OE1</span>
+                <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);">Diseñar la arquitectura (a partir del diagnóstico).</span>
+              </div>
+              <div style="padding:0.75rem 1rem; border-radius:0.75rem; background:var(--oe2-bg); border:1px solid var(--oe2-border); display:flex; align-items:center; gap:0.75rem;">
+                <span class="oe-chip oe2">OE2</span>
+                <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);">Desarrollar núcleo del IdP: motor biométrico + API asíncrona.</span>
+              </div>
+              <div style="padding:0.75rem 1rem; border-radius:0.75rem; background:var(--oe3-bg); border:1px solid var(--oe3-border); display:flex; align-items:center; gap:0.75rem;">
+                <span class="oe-chip oe3">OE3</span>
+                <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);">Implementar el contrato inteligente de auditoría inmutable.</span>
+              </div>
+              <div style="padding:0.75rem 1rem; border-radius:0.75rem; background:var(--oe4-bg); border:1px solid var(--oe4-border); display:flex; align-items:center; gap:0.75rem;">
+                <span class="oe-chip oe4">OE4</span>
+                <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);">Evaluar rendimiento, latencia y seguridad en entornos reales.</span>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Codificación cromática consistente para el Capítulo IV</div>
+        `
+      },
+      // 6
+      {
+        id: 6, chapter: 'i', oe: null, title: 'Justificación', time: '45 s',
+        script: 'El trabajo se justifica en cuatro dimensiones. Tecnológicamente, integra en una sola plataforma visión artificial profunda, detección de vida, una base vectorial y registro distribuido. Operativamente, está pensado para consumir video por protocolos estándar, de modo que sea compatible con cámaras analógicas ya instaladas. En lo ético y legal, aplica privacidad por diseño: en la cadena solo hay identificadores pseudonimizados. Y en lo soberano, está construido con software libre, en línea con la Ley de Infogobierno.',
+        transition: 'Y hasta dónde llega el trabajo.',
+        html: `
+          <div>
+            <span class="slide-category">Relevancia</span>
+            <h2 class="slide-main-title">Justificación de la Investigación</h2>
+          </div>
+          <div class="cards-grid-4" style="margin:auto 0;">
+            <div class="metric-card" style="text-align:center;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#e0f2fe; color:#0284c7; font-weight:900; margin:0 auto 0.75rem; display:flex; align-items:center; justify-content:center;">1</div>
+              <h3 style="font-size:0.95rem; font-weight:800; color:var(--navy-800); margin-bottom:0.25rem;">Tecnológica</h3>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Visión profunda + liveness + base vectorial + Blockchain.</p>
+            </div>
+            <div class="metric-card" style="text-align:center;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#dbeafe; color:#2563eb; font-weight:900; margin:0 auto 0.75rem; display:flex; align-items:center; justify-content:center;">2</div>
+              <h3 style="font-size:0.95rem; font-weight:800; color:var(--navy-800); margin-bottom:0.25rem;">Operativa</h3>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Compatible con cámaras CCTV analógicas ya instaladas.</p>
+            </div>
+            <div class="metric-card" style="text-align:center;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#ede9fe; color:#7c3aed; font-weight:900; margin:0 auto 0.75rem; display:flex; align-items:center; justify-content:center;">3</div>
+              <h3 style="font-size:0.95rem; font-weight:800; color:var(--navy-800); margin-bottom:0.25rem;">Ética y Legal</h3>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Privacidad por diseño: identificadores pseudonimizados.</p>
+            </div>
+            <div class="metric-card" style="text-align:center;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#dcfce7; color:#16a34a; font-weight:900; margin:0 auto 0.75rem; display:flex; align-items:center; justify-content:center;">4</div>
+              <h3 style="font-size:0.95rem; font-weight:800; color:var(--navy-800); margin-bottom:0.25rem;">Soberana</h3>
+              <p style="font-size:0.75rem; color:var(--text-sub);">100% Software libre (Ley de Infogobierno nacional).</p>
+            </div>
+          </div>
+          <div class="source-citation-footer">Cuatro dimensiones estratégicas de impacto universitario</div>
+        `
+      },
+      // 7
+      {
+        id: 7, chapter: 'i', oe: null, title: 'Alcance y Limitaciones', time: '1 min',
+        script: 'El alcance se organizó en cuatro fases, una por objetivo, en el Edificio Administrativo y la Dirección de Sistemas Automatizados Inteligentes de la UNEG. Quiero declarar desde ahora tres limitaciones. Primera: la muestra física es pequeña, seis participantes. Segunda: por políticas de seguridad institucional no se me autorizó conectar el sistema al DVR del Edificio Administrativo; lo resolví con equipos equivalentes, como mostraré. Y tercera: el sistema identifica buscando entre todos los usuarios enrolados, lo que tiene una consecuencia que explicaré en los resultados. Además, \'ciberfísico\' aquí significa que el sistema llega hasta emitir el veredicto lógico; accionar cerraduras queda como trabajo futuro.',
+        transition: 'Pasemos al marco referencial.',
+        html: `
+          <div>
+            <span class="slide-category">Delimitación</span>
+            <h2 class="slide-main-title">Alcance y Limitaciones</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1.25rem;">
+            <div>
+              <span class="stat-label" style="display:block; margin-bottom:0.5rem; color:var(--navy-800);">Fases Metodológicas</span>
+              <div class="cards-grid-4">
+                <div class="pill" style="background:#f0f9ff; border:1px solid #bae6fd; justify-content:center; color:#0369a1; padding:0.6rem;">Fase 1: Diagnóstico</div>
+                <div class="pill" style="background:#f5f3ff; border:1px solid #ddd6fe; justify-content:center; color:#6d28d9; padding:0.6rem;">Fase 2: Motor + API</div>
+                <div class="pill" style="background:#fffbeb; border:1px solid #fde68a; justify-content:center; color:#b45309; padding:0.6rem;">Fase 3: Contrato PoA</div>
+                <div class="pill" style="background:#ecfdf5; border:1px solid #a7f3d0; justify-content:center; color:#047857; padding:0.6rem;">Fase 4: Evaluación</div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.4rem; font-style:italic;">
+                "Ciberfísico" = Hasta la emisión del veredicto lógico M2M (cerraduras como trabajo futuro).
+              </div>
+            </div>
+            <div class="metric-card" style="border-color:#fde68a; background:#fffbeb;">
+              <strong style="color:#b45309; font-size:0.85rem; display:block; margin-bottom:0.5rem;">⚠️ Limitaciones Declaradas</strong>
+              <div class="cards-grid-3" style="font-size:0.8rem; color:#451a03;">
+                <div style="background:white; padding:0.65rem; border-radius:0.5rem; border:1px solid #fde68a;">
+                  <strong>N = 6 participantes:</strong> Muestra intencional de casos críticos.
+                </div>
+                <div style="background:white; padding:0.65rem; border-radius:0.5rem; border:1px solid #fde68a;">
+                  <strong>DVR no conectado:</strong> Validación por equivalencia de interfaz RTSP.
+                </div>
+                <div style="background:white; padding:0.65rem; border-radius:0.5rem; border:1px solid #fde68a;">
+                  <strong>Modo 1:N:</strong> Acumulación probabilística de falso error.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Transparencia científica: límites reconocidos y abordados</div>
+        `
+      },
+      // 8
+      {
+        id: 8, chapter: 'ii', oe: null, title: 'Capítulo II · Portada', time: '5 s',
+        script: 'Este capítulo reúne los antecedentes, las bases teóricas y el sustento legal.',
+        transition: 'Comenzamos con los antecedentes.',
+        html: `
+          <div style="margin:auto; text-align:center;">
+            <span class="pill" style="background:#e0f2fe; color:#0369a1; margin-bottom:1rem;">Fundamento Teórico</span>
+            <h1 style="font-size:3.5rem; font-weight:900; color:#0a192f; letter-spacing:-0.03em;">CAPÍTULO II</h1>
+            <div style="width:5rem; height:4px; background:#0284c7; margin:1rem auto; border-radius:2px;"></div>
+            <h2 style="font-size:1.5rem; font-weight:800; color:#0284c7;">MARCO REFERENCIAL</h2>
+          </div>
+        `
+      },
+      // 9
+      {
+        id: 9, chapter: 'ii', oe: null, title: 'Antecedentes', time: '45 s',
+        script: 'Seleccioné cuatro antecedentes y tres son de la propia UNEG. Seijas implementó un contrato de auditoría sobre Geth con consenso de autoridad, base de mi capa Blockchain. Medina trabajó gestión de identidades con FastAPI, base de mi API. Salazar y Aguirre mostraron la viabilidad del almacenamiento híbrido con una base vectorial. Y Morcillo aporta la visión artificial para reconocimiento facial. No partí de cero: integré cuatro líneas de trabajo en un solo sistema.',
+        transition: 'Y estos son los conceptos que sostienen cada bloque.',
+        html: `
+          <div>
+            <span class="slide-category">Estado del Arte</span>
+            <h2 class="slide-main-title">Antecedentes de Investigación</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; gap:1rem;">
+            <div class="metric-card" style="border-color:#fde68a;">
+              <span class="oe-chip oe3" style="width:fit-content; margin-bottom:0.35rem;">Blockchain</span>
+              <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy-900);">Seijas (2025, UNEG)</h4>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Auditoría inmutable sobre Geth PoA → Base de la capa de auditoría.</p>
+            </div>
+            <div class="metric-card" style="border-color:#ddd6fe;">
+              <span class="oe-chip oe2" style="width:fit-content; margin-bottom:0.35rem;">API & IAM</span>
+              <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy-900);">Medina (2024, UNEG)</h4>
+              <p style="font-size:0.75rem; color:var(--text-sub);">IAM y control RBAC asíncrono con FastAPI → Base de la API del IdP.</p>
+            </div>
+            <div class="metric-card" style="border-color:#bae6fd;">
+              <span class="oe-chip oe1" style="width:fit-content; margin-bottom:0.35rem;">Datos Híbridos</span>
+              <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy-900);">Salazar y Aguirre (2024, UNEG)</h4>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Almacenamiento híbrido con base vectorial → ChromaDB + SQLite.</p>
+            </div>
+            <div class="metric-card" style="border-color:#e2e8f0;">
+              <span class="oe-chip" style="background:#f1f5f9; color:#475569; width:fit-content; margin-bottom:0.35rem;">Visión Artificial</span>
+              <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy-900);">Morcillo (2020, UPV)</h4>
+              <p style="font-size:0.75rem; color:var(--text-sub);">Reconocimiento facial biométrico con OpenCV → Preprocesamiento.</p>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tres de cuatro antecedentes provienen de la UNEG</div>
+        `
+      },
+      // 10
+      {
+        id: 10, chapter: 'ii', oe: null, title: 'Bases Teóricas', time: '1 min',
+        script: 'Destaco tres ideas. Primera, ArcFace convierte un rostro en un vector de 512 dimensiones que se compara por distancia coseno. Segunda, la detección de vida, o PAD, busca distinguir un rostro real de una foto o un video, y yo la construí como un embudo de capas. Y tercera, una distinción que será clave en los resultados: la verificación 1:1 compara contra una identidad declarada, mientras que la identificación 1:N busca entre todos los usuarios enrolados. Esa diferencia determina cómo se acumula el error.',
+        transition: 'Y el marco legal.',
+        html: `
+          <div>
+            <span class="slide-category">Conceptos Clave</span>
+            <h2 class="slide-main-title">Bases Teóricas Fundamentales</h2>
+          </div>
+          <div class="cards-grid-3" style="margin:auto 0;">
+            <div class="metric-card" style="border-color:var(--oe1-border);">
+              <strong style="color:var(--oe1-color); font-size:0.9rem;">📐 ArcFace</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">Vector de 512 dimensiones y pérdida de margen angular.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe2-border);">
+              <strong style="color:var(--oe2-color); font-size:0.9rem;">👁️ Detección PAD</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">Embudo multicapa: parpadeo (EAR), LBP y análisis FFT.</p>
+            </div>
+            <div class="metric-card" style="border-color:#cbd5e1;">
+              <strong style="color:#475569; font-size:0.9rem;">⚖️ 1:1 vs. 1:N</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">Verificación con identidad declarada vs. Búsqueda en galería.</p>
+            </div>
+            <div class="metric-card" style="border-color:#bae6fd;">
+              <strong style="color:#0284c7; font-size:0.9rem;">🗄️ HNSW Vectorial</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">Indexación aproximada de grafos en ChromaDB.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe3-border);">
+              <strong style="color:var(--oe3-color); font-size:0.9rem;">⛓️ Consenso PoA</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">Algoritmo Clique en Geth: validadores identificados sin gas real.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe4-border);">
+              <strong style="color:var(--oe4-color); font-size:0.9rem;">🔑 IdP & JWT</strong>
+              <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">SSO WebSockets para personas y REST M2M para dispositivos.</p>
+            </div>
+          </div>
+          <div class="source-citation-footer">Fundamentos matemáticos y arquitectónicos integrados</div>
+        `
+      },
+      // 11
+      {
+        id: 11, chapter: 'ii', oe: null, title: 'Bases Legales', time: '30 s',
+        script: 'El diseño responde al marco venezolano. El Artículo 28 de la Constitución protege la autodeterminación informativa, por eso en la cadena no se registran imágenes ni datos personales en claro. La Ley de Infogobierno promueve software libre y estándares abiertos, que es el camino que seguí. La Ley contra los Delitos Informáticos tipifica el acceso indebido, que el sistema busca prevenir, y la Ley de Mensajes de Datos reconoce el valor de los registros electrónicos.',
+        transition: 'Veamos cómo se hizo: el marco metodológico.',
+        html: `
+          <div>
+            <span class="slide-category">Normativa</span>
+            <h2 class="slide-main-title">Sustento Legal (Marco Venezolano)</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; gap:1rem;">
+            <div class="metric-card" style="border-color:#bae6fd;">
+              <strong style="color:#0284c7; font-size:0.9rem;">📜 CRBV Art. 28:</strong>
+              <span style="font-size:0.8rem; color:var(--text-sub); display:block; margin-top:0.25rem;">
+                Autodeterminación informativa: prohíbe datos sensibles o fotos en claro en la Blockchain.
+              </span>
+            </div>
+            <div class="metric-card" style="border-color:#a7f3d0;">
+              <strong style="color:#059669; font-size:0.9rem;">🐧 Ley de Infogobierno:</strong>
+              <span style="font-size:0.8rem; color:var(--text-sub); display:block; margin-top:0.25rem;">
+                Adopción de software libre y estándares abiertos en plataformas del Estado.
+              </span>
+            </div>
+            <div class="metric-card" style="border-color:#fecaca;">
+              <strong style="color:#dc2626; font-size:0.9rem;">⚖️ Delitos Informáticos:</strong>
+              <span style="font-size:0.8rem; color:var(--text-sub); display:block; margin-top:0.25rem;">
+                Prevención del acceso indebido y sanción de suplantaciones digitales.
+              </span>
+            </div>
+            <div class="metric-card" style="border-color:#fed7aa;">
+              <strong style="color:#ea580c; font-size:0.9rem;">✍️ Mensajes de Datos:</strong>
+              <span style="font-size:0.8rem; color:var(--text-sub); display:block; margin-top:0.25rem;">
+                Validez legal y probatoria de registros criptográficos y firmas digitales.
+              </span>
+            </div>
+          </div>
+          <div class="source-citation-footer">Marco legal de la República Bolivariana de Venezuela</div>
+        `
+      },
+      // 12
+      {
+        id: 12, chapter: 'iii', oe: null, title: 'Capítulo III · Portada', time: '5 s',
+        script: 'Explico ahora cómo se diseñó la investigación y cómo se midió.',
+        transition: 'Comenzamos con el diseño y los escenarios.',
+        html: `
+          <div style="margin:auto; text-align:center;">
+            <span class="pill" style="background:#e0f2fe; color:#0369a1; margin-bottom:1rem;">Rigor Experimental</span>
+            <h1 style="font-size:3.5rem; font-weight:900; color:#0a192f; letter-spacing:-0.03em;">CAPÍTULO III</h1>
+            <div style="width:5rem; height:4px; background:#0284c7; margin:1rem auto; border-radius:2px;"></div>
+            <h2 style="font-size:1.5rem; font-weight:800; color:#0284c7;">MARCO METODOLÓGICO</h2>
+          </div>
+        `
+      },
+      // 13
+      {
+        id: 13, chapter: 'iii', oe: null, title: 'Diseño y Escenarios', time: '1 min',
+        script: 'La investigación es aplicada, porque produce una solución funcional, y proyectiva, porque propone un modelo a partir de un diagnóstico. El diseño es experimental, en banco de pruebas y de campo, y se organizó en cuatro escenarios: un banco de pruebas, el Edificio Administrativo de la UNEG con la red real de la universidad, una evaluación sobre el conjunto público LFW para el reconocimiento facial, y el nodo Geth institucional para la auditoría. Cada escenario responde a una pregunta distinta, y los resultados del Capítulo IV se presentan en ese orden.',
+        transition: '¿Con quién y con cuántos ensayos?',
+        html: `
+          <div>
+            <span class="slide-category">Metodología</span>
+            <h2 class="slide-main-title">Diseño Experimental y 4 Escenarios</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; color:var(--navy-800); background:#f8fafc; padding:0.6rem 1rem; border-radius:0.5rem; border:1px solid #e2e8f0;">
+              <span>Tipo: Aplicada y Proyectiva</span>
+              <span>·</span>
+              <span>Diseño: Experimental en banco y campo</span>
+            </div>
+            <table class="clean-table" style="background:white; border-radius:0.75rem; overflow:hidden; border:1px solid #e2e8f0;">
+              <thead>
+                <tr>
+                  <th>Escenario</th>
+                  <th>Entorno Físico / Tecnológico</th>
+                  <th>Qué se evaluó</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong style="color:var(--oe1-color);">S-RES (Banco)</strong></td>
+                  <td>Cámara HiLook + DVR Hikvision (RTSP/TCP)</td>
+                  <td>Detección de vida y reconocimiento</td>
+                </tr>
+                <tr>
+                  <td><strong style="color:var(--oe2-color);">S-UNEG (Campo)</strong></td>
+                  <td>Edificio Administrativo UNEG en red WAN</td>
+                  <td>Latencia en red real y flujo SSO</td>
+                </tr>
+                <tr>
+                  <td><strong style="color:var(--oe4-color);">S-DATASET (LFW)</strong></td>
+                  <td>978 pares del benchmark público en servidor</td>
+                  <td>Reconocimiento en población amplia</td>
+                </tr>
+                <tr>
+                  <td><strong style="color:var(--oe3-color);">S-CADENA (Geth)</strong></td>
+                  <td>Nodo Geth institucional con consenso PoA</td>
+                  <td>Notarización, latencia y consumo de gas</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="source-citation-footer">Tabla 3.1 de la tesis: Matriz de escenarios evaluados</div>
+        `
+      },
+      // 14
+      {
+        id: 14, chapter: 'iii', oe: null, title: 'Muestra', time: '1 min',
+        script: 'Apliqué un muestreo intencional de casos críticos: tres sujetos, el investigador, mi hermano, que es el caso de máxima semejanza facial, y un voluntario administrativo de la UNEG. Con ellos hice 421 ensayos: 104 intentos legítimos, 113 del impostor consanguíneo y 204 ataques de presentación, 97 con video en un teléfono y 107 con fotografía impresa. Además, tres estudiantes de la UNEG probaron el inicio de sesión único, lo que da seis participantes en total. Soy transparente: es una muestra pequeña; por eso la complementé con un benchmark público de 978 pares.',
+        transition: '¿Y cómo se midió?',
+        html: `
+          <div>
+            <span class="slide-category">Población Experimental</span>
+            <h2 class="slide-main-title">Muestra y 421 Ensayos en Banco</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; align-items:center;">
+            <div class="metric-card" style="text-align:center; padding:1.75rem; border-color:#bae6fd;">
+              <div class="big-stat-number" style="color:#0284c7;">N = 6</div>
+              <span class="stat-label">Participantes Totales</span>
+              <div style="text-align:left; font-size:0.75rem; color:var(--text-sub); margin-top:1rem; display:flex; flex-direction:column; gap:0.4rem;">
+                <div style="background:#f0f9ff; padding:0.4rem 0.6rem; border-radius:0.35rem; border:1px solid #bae6fd;">
+                  <strong>3 Casos Críticos:</strong> Investigador · Hermano (impostor) · Voluntario UNEG.
+                </div>
+                <div style="background:#f5f3ff; padding:0.4rem 0.6rem; border-radius:0.35rem; border:1px solid #ddd6fe;">
+                  <strong>3 Prueba SSO:</strong> Estudiantes de informática ajenos al desarrollo.
+                </div>
+              </div>
+            </div>
+            <div class="metric-card" style="padding:1.5rem;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem;">
+                <strong style="color:var(--navy-900);">421 Ensayos Totales</strong>
+                <span class="stat-label">Desglose</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.75rem; font-weight:700;">
+                <div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#dcfce7; color:#14532d; border-radius:0.35rem;">
+                  <span>Genuinos Legítimos</span><span>104</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#fef3c7; color:#78350f; border-radius:0.35rem;">
+                  <span>Hermano Consanguíneo</span><span>113</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#ffe4e6; color:#881337; border-radius:0.35rem;">
+                  <span>Ataques Video (Teléfono)</span><span>97</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#fee2e2; color:#7f1d1d; border-radius:0.35rem;">
+                  <span>Ataques Foto Impresa</span><span>107</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Muestreo intencional de casos críticos complementado con LFW (978 pares)</div>
+        `
+      },
+      // 15
+      {
+        id: 15, chapter: 'iii', oe: null, title: 'Instrumentos y Métricas', time: '45 s',
+        script: 'Los datos salen de bitácoras automáticas del sistema, del archivo de ensayos con cada intento registrado y del repositorio de código. Para medir adopté las métricas definidas en las normas ISO/IEC 19795-1 y 30107-3: tasas de falsa coincidencia y de falso rechazo, y de error en la clasificación de ataques de presentación. Utilizo esas normas como marco de terminología y reporte; no afirmo conformidad con sus protocolos completos. Y los porcentajes de LFW van con intervalo de confianza al 95%.',
+        transition: 'Y el procedimiento de desarrollo.',
+        html: `
+          <div>
+            <span class="slide-category">Instrumentación</span>
+            <h2 class="slide-main-title">Instrumentos y Estándares ISO</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; gap:1.25rem;">
+            <div class="metric-card" style="border-color:#bae6fd;">
+              <strong style="color:#0284c7; font-size:0.9rem; margin-bottom:0.6rem; display:block;">📋 Instrumentos de Recolección</strong>
+              <ul style="font-size:0.8rem; color:var(--text-sub); list-style:none; display:flex; flex-direction:column; gap:0.5rem;">
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>Bitácoras automáticas:</strong> Logs estructurados en FastAPI.
+                </li>
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>Archivo de ensayos (CSV):</strong> Registro riguroso con puntaje y resultado.
+                </li>
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>Repositorio Git:</strong> Historial verificable de commits.
+                </li>
+              </ul>
+            </div>
+            <div class="metric-card" style="border-color:#ddd6fe;">
+              <strong style="color:#7c3aed; font-size:0.9rem; margin-bottom:0.6rem; display:block;">📏 Métricas Biométricas</strong>
+              <ul style="font-size:0.8rem; color:var(--text-sub); list-style:none; display:flex; flex-direction:column; gap:0.5rem;">
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>ISO/IEC 19795-1:</strong> FMR (falsa coincidencia), FNMR (falso rechazo).
+                </li>
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>ISO/IEC 30107-3:</strong> APCER (ataque aceptado), BPCER.
+                </li>
+                <li style="background:#f8fafc; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>Inferencia:</strong> Intervalos Wilson al 95% y prueba McNemar.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="source-citation-footer">Normas ISO aplicadas como marco de terminología y reporte técnico</div>
+        `
+      },
+      // 16
+      {
+        id: 16, chapter: 'iii', oe: null, title: 'Procedimiento', time: '1 min',
+        script: 'El desarrollo siguió un proceso iterativo inspirado en Scrum y adaptado a un trabajo individual, en cuatro iteraciones vinculadas una a una con los objetivos. Todo se construyó con software libre: Python y FastAPI en el servidor, OpenCV, MediaPipe y ArcFace para la visión, SQLite y ChromaDB para los datos, Solidity y Geth para la cadena, y React para la interfaz, desplegado con Docker. El historial del repositorio documenta el trabajo realizado.',
+        transition: 'Con esto, los resultados: el Capítulo IV.',
+        html: `
+          <div>
+            <span class="slide-category">Metodología Ágil</span>
+            <h2 class="slide-main-title">Procedimiento de Desarrollo</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1.25rem;">
+            <div class="cards-grid-4" style="text-align:center;">
+              <div style="background:var(--oe1-bg); border:1px solid var(--oe1-border); padding:0.75rem; border-radius:0.5rem;">
+                <span class="oe-chip oe1">Iteración 1</span>
+                <span style="display:block; font-size:0.75rem; font-weight:700; margin-top:0.35rem;">Diagnóstico & Arquitectura (OE1)</span>
+              </div>
+              <div style="background:var(--oe2-bg); border:1px solid var(--oe2-border); padding:0.75rem; border-radius:0.5rem;">
+                <span class="oe-chip oe2">Iteración 2</span>
+                <span style="display:block; font-size:0.75rem; font-weight:700; margin-top:0.35rem;">Motor Biométrico & API (OE2)</span>
+              </div>
+              <div style="background:var(--oe3-bg); border:1px solid var(--oe3-border); padding:0.75rem; border-radius:0.5rem;">
+                <span class="oe-chip oe3">Iteración 3</span>
+                <span style="display:block; font-size:0.75rem; font-weight:700; margin-top:0.35rem;">Contrato Inteligente (OE3)</span>
+              </div>
+              <div style="background:var(--oe4-bg); border:1px solid var(--oe4-border); padding:0.75rem; border-radius:0.5rem;">
+                <span class="oe-chip oe4">Iteración 4</span>
+                <span style="display:block; font-size:0.75rem; font-weight:700; margin-top:0.35rem;">Evaluación Integral (OE4)</span>
+              </div>
+            </div>
+            <div class="metric-card" style="background:#0f172a; color:white; text-align:center; padding:1.25rem;">
+              <span style="font-size:0.75rem; color:#38bdf8; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:0.5rem;">
+                Stack 100% Software Libre y Estándares Abiertos
+              </span>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:#cbd5e1; line-height:1.6;">
+                Python · FastAPI · OpenCV · MediaPipe · ArcFace · SQLite · ChromaDB · Solidity · Geth · React · Docker
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Desarrollo iterativo documentado de febrero a octubre de 2026</div>
+        `
+      },
+      // 17
+      {
+        id: 17, chapter: 'iv', oe: null, title: 'Capítulo IV · Portada', time: '5 s',
+        script: 'Presento los resultados siguiendo los cuatro objetivos.',
+        transition: 'Comenzamos con el Objetivo 1: Diagnóstico de la infraestructura.',
+        html: `
+          <div style="margin:auto; text-align:center;">
+            <span class="pill" style="background:#e0f2fe; color:#0369a1; margin-bottom:1rem;">Evidencia Empírica</span>
+            <h1 style="font-size:3.5rem; font-weight:900; color:#0a192f; letter-spacing:-0.03em;">CAPÍTULO IV</h1>
+            <div style="width:5rem; height:4px; background:#0284c7; margin:1rem auto; border-radius:2px;"></div>
+            <h2 style="font-size:1.5rem; font-weight:800; color:#0284c7; margin-bottom:1.25rem;">DESARROLLO Y RESULTADOS</h2>
+            <div style="display:flex; gap:0.5rem; justify-content:center;">
+              <span class="oe-chip oe1">OE1 · Arquitectura</span>
+              <span class="oe-chip oe2">OE2 · Motor & API</span>
+              <span class="oe-chip oe3">OE3 · Blockchain</span>
+              <span class="oe-chip oe4">OE4 · Evaluación</span>
+            </div>
+          </div>
+        `
+      },
+      // 18
+      {
+        id: 18, chapter: 'iv', oe: 1, title: 'OE1 · Diagnóstico de Infraestructura', time: '1.5 min',
+        script: 'La institución me suministró una cámara analógica Hikvision para analizar el tipo de infraestructura que existe; aquí está. Por políticas de seguridad no se autorizó conectar el sistema al DVR del Edificio Administrativo, así que validé por equivalencia de interfaz: reproduje la cadena con una cámara HiLook y un DVR Hikvision, entregando video por RTSP sobre TCP; y en el edificio probé en la red real de la universidad con teléfonos como nodos de borde. El argumento técnico es que el software consume video por protocolos estándar, no depende del modelo del sensor. En el banco encontré un problema real: con UDP las tramas llegaban dañadas, error POC 0, y lo resolví forzando TCP. Lo que no evalué es el DVR institucional específico.',
+        transition: 'Con ese diagnóstico, la arquitectura.',
+        html: `
+          <div>
+            <span class="oe-chip oe1">OE1 · Arquitectura</span>
+            <h2 class="slide-main-title">Diagnóstico de Infraestructura</h2>
+            <p class="slide-subtitle">Validación por equivalencia de interfaz analógica a digital</p>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; align-items:center;">
+            <div class="metric-card" style="border-color:#cbd5e1; text-align:center;">
+              <span class="stat-label" style="color:#64748b;">Antes: Circuito Pasivo</span>
+              <p style="font-size:0.8rem; color:var(--text-sub); margin:0.75rem 0;">
+                Cámaras → DVR → Monitor → Vigilante.<br>
+                <strong style="color:#b91c1c;">Sin verificación de identidad lógica.</strong>
+              </p>
+              <div style="font-size:0.75rem; color:#64748b; background:#f8fafc; padding:0.5rem; border-radius:0.35rem;">
+                Muestra analizada: Hikvision DS-2CE66C0T-IRM
+              </div>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe1-border); background:var(--oe1-bg); text-align:center;">
+              <span class="stat-label" style="color:var(--oe1-color);">Con FaceSentinel: Edge Gateway</span>
+              <p style="font-size:0.8rem; color:var(--navy-900); font-weight:700; margin:0.75rem 0;">
+                Cámara + DVR HiLook → RTSP/TCP → Gateway → API.<br>
+                <strong style="color:var(--oe4-color);">✔ Veredicto lógico instantáneo.</strong>
+              </p>
+              <div style="font-size:0.75rem; color:#0369a1; background:white; padding:0.5rem; border-radius:0.35rem; border:1px solid #bae6fd;">
+                Resolución del error POC 0: Forzado de TCP sobre UDP.
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tabla 4.1 de la tesis: Banco de pruebas equivalente</div>
+        `
+      },
+      // 19
+      {
+        id: 19, chapter: 'iv', oe: 1, title: 'OE1 · Arquitectura', time: '1 min',
+        script: 'La arquitectura tiene cuatro capas: el borde, donde están las cámaras y la primera verificación; la API en FastAPI, que actúa como proveedor de identidad; el almacenamiento híbrido; y la auditoría en la cadena de bloques. Separé los datos en tres espacios para que ninguno, por sí solo, permita reconstruir una identidad: SQLite guarda usuarios y permisos, ChromaDB solo los vectores, y la cadena solo huellas criptográficas. El acceso se gobierna con cuatro roles: administrador, nodo de borde, auditor y aplicación cliente, bajo el principio de mínimo privilegio. Si cae la cadena, el sistema sigue operando con su bitácora local.',
+        transition: 'Pasemos al núcleo del proveedor de identidad: el Objetivo 2.',
+        html: `
+          <div>
+            <span class="oe-chip oe1">OE1 · Arquitectura</span>
+            <h2 class="slide-main-title">Arquitectura Modular de 4 Capas</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:7fr 5fr; gap:1.25rem; margin:auto 0; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:#f0f9ff; border:1px solid #bae6fd; font-size:0.8rem; font-weight:800; color:#0369a1; display:flex; justify-content:space-between;">
+                <span>4. Capa Auditoría</span><span style="font-weight:600; font-family:'JetBrains Mono';">Geth PoA (Clique)</span>
+              </div>
+              <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:#eff6ff; border:1px solid #bfdbfe; font-size:0.8rem; font-weight:800; color:#1d4ed8; display:flex; justify-content:space-between;">
+                <span>3. Capa Datos Híbridos</span><span style="font-weight:600; font-family:'JetBrains Mono';">SQLite + ChromaDB</span>
+              </div>
+              <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:#eef2ff; border:1px solid #c7d2fe; font-size:0.8rem; font-weight:800; color:#4338ca; display:flex; justify-content:space-between;">
+                <span>2. Capa API (IdP)</span><span style="font-weight:600; font-family:'JetBrains Mono';">FastAPI (SSO & M2M)</span>
+              </div>
+              <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:#f8fafc; border:1px solid #e2e8f0; font-size:0.8rem; font-weight:800; color:#334155; display:flex; justify-content:space-between;">
+                <span>1. Capa de Borde (Edge)</span><span style="font-weight:600; font-family:'JetBrains Mono';">OpenCV + MediaPipe</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+              <div class="metric-card" style="padding:0.85rem; border-color:#bae6fd;">
+                <strong style="font-size:0.8rem; color:#0284c7;">Aislamiento de Almacenes:</strong>
+                <span style="font-size:0.75rem; color:var(--text-sub); display:block; margin-top:0.2rem;">Ninguno permite por sí solo reconstruir la identidad.</span>
+              </div>
+              <div class="metric-card" style="padding:0.85rem; border-color:#ddd6fe;">
+                <strong style="font-size:0.8rem; color:#7c3aed;">RBAC de Mínimo Privilegio:</strong>
+                <span style="font-size:0.75rem; color:var(--text-sub); display:block; margin-top:0.2rem;">Admin, Nodo de Borde, Auditor y App Cliente.</span>
+              </div>
+              <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:0.65rem; border-radius:0.5rem; font-size:0.75rem; font-weight:700; color:#047857; text-align:center;">
+                🛡️ Si la cadena cae, opera con bitácora local resiliente.
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Figura 2 de la tesis: Arquitectura ciberfísica modular</div>
+        `
+      },
+      // 20
+      {
+        id: 20, chapter: 'iv', oe: 2, title: 'OE2 · Embudo de Vida (PAD)', time: '1.5 min',
+        script: 'El corazón del sistema es un embudo de cuatro capas repartido entre el borde y el servidor. En el borde, el parpadeo, medido con la relación de aspecto del ojo: si hay un parpadeo real, se envía un solo fotograma al servidor en vez de video continuo. En el servidor, la textura de la piel con patrones binarios locales, y el análisis de frecuencias con la transformada de Fourier, que detecta el patrón que dejan las pantallas. Y la cuarta, un desafío activo en el canal de inicio de sesión: dos retos aleatorios, girar la cabeza y abrir la boca. Cada sensor se configura con un nivel de seguridad del 1 al 4; el nivel 1 desactiva la detección de vida y no está pensado para áreas sensibles. Los umbrales de textura se calibran por cámara, porque dependen del sensor.',
+        transition: 'Si el intento sobrevive al embudo, entra el reconocimiento.',
+        html: `
+          <div>
+            <span class="oe-chip oe2">OE2 · Motor Biométrico</span>
+            <h2 class="slide-main-title">Embudo de Detección de Vida (PAD)</h2>
+          </div>
+          <div class="cards-grid-4" style="margin:auto 0; text-align:center;">
+            <div class="metric-card" style="border-color:var(--oe2-border); background:var(--oe2-bg);">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--oe2-color); color:white; font-weight:800; font-size:0.8rem; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center;">1</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">EAR (Borde)</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Parpadeo biológico: envía solo 1 fotograma al servidor.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe2-border); background:var(--oe2-bg);">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--oe2-color); color:white; font-weight:800; font-size:0.8rem; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center;">2</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">LBP (Servidor)</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Textura microdérmica: discrimina papel impreso.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe2-border); background:var(--oe2-bg);">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--oe2-color); color:white; font-weight:800; font-size:0.8rem; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center;">3</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">FFT 2D (Servidor)</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Frecuencias espaciales: detecta rejillas de pantallas.</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe2-border); background:var(--oe2-bg);">
+              <div style="width:28px; height:28px; border-radius:50%; background:var(--oe2-color); color:white; font-weight:800; font-size:0.8rem; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center;">4</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">Desafío Activo</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Retos dinámicos en portal Web: girar cabeza o sonreír.</p>
+            </div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:0.6rem 1rem; border-radius:0.5rem; font-size:0.75rem; font-weight:700; color:var(--text-sub); display:flex; justify-content:space-between;">
+            <span>Niveles de seguridad: 1 al 4 por cámara</span>
+            <span>·</span>
+            <span>Calibración individual por óptica del sensor</span>
+          </div>
+          <div class="source-citation-footer">Figura 5 de la tesis: Pipeline híbrido anti-spoofing</div>
+        `
+      },
+      // 21
+      {
+        id: 21, chapter: 'iv', oe: 2, title: 'OE2 · Reconocimiento e IdP', time: '1 min',
+        script: 'Superado el embudo, ArcFace genera el vector y se busca el candidato más cercano en ChromaDB; si la distancia es menor a 0.60, hay coincidencia. La API opera como proveedor de identidad por dos vías. Para personas, el inicio de sesión único: una aplicación externa redirige al portal, donde un canal WebSocket evalúa la vida y la identidad en tiempo real, y se devuelve un token firmado. Para máquinas, un endpoint de acceso físico que recibe el fotograma y devuelve el veredicto; si el fotograma llega dañado por la red, responde con código 422 y pide otro, sin generar un falso rechazo ni basura en la cadena.',
+        transition: 'Cada decisión queda registrada: Objetivo 3.',
+        html: `
+          <div>
+            <span class="oe-chip oe2">OE2 · Motor & API</span>
+            <h2 class="slide-main-title">Reconocimiento Facial e IdP Asíncrono</h2>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; gap:1.25rem;">
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div class="metric-card" style="border-color:var(--oe2-border); padding:1rem;">
+                <strong style="font-size:0.85rem; color:var(--oe2-color);">ArcFace + ChromaDB:</strong>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">
+                  Vector 512D · Distancia coseno angular <strong>d &lt; 0.60</strong>.
+                </p>
+              </div>
+              <div class="metric-card" style="border-color:#bae6fd; padding:1rem;">
+                <strong style="font-size:0.85rem; color:#0284c7;">Tolerancia a Red (HTTP 422):</strong>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">
+                  Si el fotograma se corrompe, solicita reintento sin registrar falso rechazo.
+                </p>
+              </div>
+            </div>
+            <div class="metric-card" style="padding:1rem; background:#f8fafc;">
+              <span class="stat-label" style="display:block; margin-bottom:0.5rem;">Canales de Autenticación</span>
+              <div style="font-size:0.75rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <div style="background:white; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>1. Personas (SSO):</strong> Redirección + WebSocket en vivo + Token JWT (RS256).
+                </div>
+                <div style="background:white; padding:0.5rem; border-radius:0.35rem; border:1px solid #e2e8f0;">
+                  <strong>2. Máquinas (M2M):</strong> POST /physical-access/authenticate → veredicto booleano.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Figuras 6 y 7-A de la tesis: Flujo SSO y OpenAPI Swagger</div>
+        `
+      },
+      // 22
+      {
+        id: 22, chapter: 'iv', oe: 3, title: 'OE3 · Contrato Inteligente', time: '1.5 min',
+        script: 'Implementé el contrato AccessRegistry en Solidity, sin librerías externas, desplegado en un nodo Geth institucional con consenso de autoridad y bloques cada dos segundos. Cada evento guarda un identificador pseudonimizado, la huella del vector, la hora, el resultado, el dispositivo y el puntaje. El consumo promedio es de unas 207 mil unidades de gas, con costo monetario cero por ser red privada. Sobre privacidad: la cédula nunca viaja en claro; el backend calcula un SHA-256 con una sal secreta que vive fuera del código, en variables de entorno. Esto es pseudonimización, no anonimización: depende de custodiar esa sal, y por eso recomiendo un gestor de secretos con versionado. Y el registro es asíncrono: primero se guarda en la base local y luego se notariza, así la cadena nunca retrasa el acceso.',
+        transition: 'Ahora evaluamos todo esto: Objetivo 4.',
+        html: `
+          <div>
+            <span class="oe-chip oe3">OE3 · Blockchain</span>
+            <h2 class="slide-main-title">Contrato Inteligente y Privacidad</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:5fr 7fr; gap:1.25rem; margin:auto 0; align-items:center;">
+            <div class="metric-card" style="font-family:'JetBrains Mono'; font-size:0.65rem; background:#0f172a; color:#f8fafc; border-color:#334155; padding:1rem;">
+              <span style="color:#f59e0b; font-weight:800; font-family:'Plus Jakarta Sans'; display:block; margin-bottom:0.35rem;">AccessRegistry.sol</span>
+              struct AuthRecord {<br>
+              &nbsp;&nbsp;bytes32 userIdHash;<br>
+              &nbsp;&nbsp;bytes32 vectorHash;<br>
+              &nbsp;&nbsp;uint256 timestamp;<br>
+              &nbsp;&nbsp;bool granted;<br>
+              &nbsp;&nbsp;string deviceId;<br>
+              &nbsp;&nbsp;uint16 score;<br>
+              }
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+              <div class="cards-grid-3" style="text-align:center;">
+                <div style="background:var(--oe3-bg); padding:0.6rem; border-radius:0.5rem; border:1px solid var(--oe3-border);">
+                  <strong style="font-size:1.1rem; color:var(--oe3-color); display:block;">207 430</strong>
+                  <span class="stat-sub">Gas Promedio</span>
+                </div>
+                <div style="background:#ecfdf5; padding:0.6rem; border-radius:0.5rem; border:1px solid #a7f3d0;">
+                  <strong style="font-size:1.1rem; color:#059669; display:block;">Costo 0</strong>
+                  <span class="stat-sub">Red Privada</span>
+                </div>
+                <div style="background:#f0f9ff; padding:0.6rem; border-radius:0.5rem; border:1px solid #bae6fd;">
+                  <strong style="font-size:1.1rem; color:#0284c7; display:block;">2 s</strong>
+                  <span class="stat-sub">Bloque Clique</span>
+                </div>
+              </div>
+              <div class="metric-card" style="padding:0.85rem; border-color:#fde68a;">
+                <strong style="font-size:0.8rem; color:var(--oe3-color);">Pseudonimización Robusta:</strong>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.2rem;">
+                  userIdHash = SHA-256(id + sal secreta). Cédula nunca visible en la cadena. Notarización asíncrona.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Figura 10 de la tesis: Estructura de eventos y gas en Geth</div>
+        `
+      },
+      // 23
+      {
+        id: 23, chapter: 'iv', oe: 4, title: 'OE4 · Ensayos en Banco (N=421)', time: '1.5 min',
+        script: 'De los 421 ensayos, el sistema aceptó 88 de los 104 accesos legítimos y rechazó 315 de los 317 intentos indebidos. Esto da una especificidad global de 99.37% y una exactitud de 95.72%. De los 204 ataques de presentación, solo 2 superaron el sistema, ambos fotografías impresas: ningún video fue aceptado, y mi hermano, el caso más exigente de semejanza facial, fue rechazado en los 113 intentos. Pero esta seguridad tiene un costo que presento sin esconder: un falso rechazo del 15.38%, usuarios legítimos que necesitaron un segundo intento, por ejemplo cuando parpadean muy rápido o cambia la luz. Prioricé que un intruso no entre. Y recuerdo que son tres sujetos y un solo impostor consanguíneo: es una prueba de viabilidad en banco, no una estadística poblacional.',
+        transition: 'Para validar el flujo con usuarios ajenos al desarrollo, lo probaron tres estudiantes.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Resultados de los 421 Ensayos en Banco</h2>
+            <p class="slide-subtitle">Ningún video ni intento del hermano fue aceptado</p>
+          </div>
+          <div style="display:grid; grid-template-columns:5fr 7fr; gap:1.25rem; margin:auto 0; align-items:center;">
+            <div class="metric-card" style="padding:1rem;">
+              <span class="stat-label" style="display:block; margin-bottom:0.5rem; text-align:center;">Matriz de Confusión</span>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; font-size:0.75rem; text-align:center;">
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:0.5rem; border-radius:0.35rem;">
+                  <span style="color:#065f46; display:block; font-size:0.65rem;">Verdaderos Positivos</span>
+                  <strong style="font-size:1.2rem; color:#047857;">88</strong>
+                </div>
+                <div style="background:#fffbeb; border:1px solid #fde68a; padding:0.5rem; border-radius:0.35rem;">
+                  <span style="color:#92400e; display:block; font-size:0.65rem;">Falsos Rechazos</span>
+                  <strong style="font-size:1.2rem; color:#b45309;">16</strong>
+                </div>
+                <div style="background:#fef2f2; border:1px solid #fecaca; padding:0.5rem; border-radius:0.35rem;">
+                  <span style="color:#991b1b; display:block; font-size:0.65rem;">Falsas Aceptaciones</span>
+                  <strong style="font-size:1.2rem; color:#dc2626;">2</strong>
+                </div>
+                <div style="background:#f1f5f9; border:1px solid #cbd5e1; padding:0.5rem; border-radius:0.35rem;">
+                  <span style="color:#334155; display:block; font-size:0.65rem;">Verdaderos Negativos</span>
+                  <strong style="font-size:1.2rem; color:#0f172a;">315</strong>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <div class="cards-grid-2" style="text-align:center;">
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:0.6rem; border-radius:0.5rem;">
+                  <strong style="font-size:1.35rem; color:#059669; display:block;">99.37%</strong>
+                  <span class="stat-sub">Especificidad Global</span>
+                </div>
+                <div style="background:#f0f9ff; border:1px solid #bae6fd; padding:0.6rem; border-radius:0.5rem;">
+                  <strong style="font-size:1.35rem; color:#0284c7; display:block;">0.98%</strong>
+                  <span class="stat-sub">APCER (Video: 0/97)</span>
+                </div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:0.6rem; border-radius:0.5rem; font-size:0.75rem; text-align:center;">
+                <strong>Impostor Consanguíneo:</strong> 0 de 113 aceptados.
+              </div>
+              <div style="background:#fffbeb; border:1px solid #fde68a; padding:0.6rem; border-radius:0.5rem; font-size:0.75rem; color:#92400e; text-align:center;">
+                Costo: Falso rechazo de 15.38% (priorizó no dejar pasar intrusos).
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tablas 5 y 6 de la tesis: Desempeño global en banco de pruebas</div>
+        `
+      },
+      // 24
+      {
+        id: 24, chapter: 'iv', oe: 4, title: 'OE4 · Prueba SSO con Usuarios Reales', time: '1.5 min',
+        script: 'Tres estudiantes de la UNEG accedieron al módulo preliminar de UNEGIA y se autenticaron con su rostro en FaceSentinel por el canal WebSocket. Quedaron 44 eventos registrados. De 39 intentos de usuarios legítimos, 38 fueron concedidos; el único denegado se autenticó seis segundos después. Tres intentos de personas no enroladas fueron rechazados, dos de ellos con distancias de 0.63 y 0.65, muy cerca del umbral, lo que concuerda con lo que veremos en LFW. Y dos ataques con un video de parpadeo en un teléfono engañaron la capa del parpadeo y la textura, pero la FFT los detuvo: eso demuestra por qué el embudo necesita varias capas. Es una prueba de operatividad con usuarios reales, no una estadística de desempeño.',
+        transition: 'Ahora, el reconocimiento en una población amplia.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Prueba de Aceptación del SSO (UNEGIA)</h2>
+            <p class="slide-subtitle">8 de octubre de 2026 · 44 eventos registrados con estudiantes de la UNEG</p>
+          </div>
+          <div class="cards-grid-3" style="margin:auto 0; text-align:center;">
+            <div class="metric-card" style="border-color:#a7f3d0; background:#ecfdf5;">
+              <div class="big-stat-number" style="color:#059669;">38 / 39</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">Legítimos Concedidos</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">(97.4%) · 1 reintento exitoso a los 6 s.</p>
+            </div>
+            <div class="metric-card" style="border-color:#fecaca; background:#fef2f2;">
+              <div class="big-stat-number" style="color:#dc2626;">3 / 3</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">No Enrolados Rechazados</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Distancias: 0.63 y 0.65 (muy cerca de 0.60).</p>
+            </div>
+            <div class="metric-card" style="border-color:var(--oe2-border); background:var(--oe2-bg);">
+              <div class="big-stat-number" style="color:var(--oe2-color);">2 / 2</div>
+              <strong style="font-size:0.85rem; color:var(--navy-900);">Videos Spoofing Detenidos</strong>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.25rem;">Superaron parpadeo; FFT los frenó en seco.</p>
+            </div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:0.6rem; border-radius:0.5rem; text-align:center; font-size:0.8rem; font-weight:700; color:var(--navy-800);">
+            💡 El embudo multicapa es indispensable: ninguna técnica aislada es suficiente.
+          </div>
+          <div class="source-citation-footer">Tabla 9.1 y Figuras 11-12 de la tesis: Validación de aceptación en UNEGIA</div>
+        `
+      },
+      // 25
+      {
+        id: 25, chapter: 'iv', oe: 4, title: 'OE4 · Evaluación Poblacional (LFW)', time: '1.5 min',
+        script: 'Para mitigar la limitación de la muestra, evalué el reconocimiento facial sobre 978 pares del conjunto público LFW, con el pipeline real de producción dentro del servidor. Con el umbral de 0.68 que sugiere la literatura, las falsas coincidencias fueron de 9.28%; con mi umbral de 0.60 bajaron a 3.71%: 27 de 45 falsas aceptaciones eliminadas, una reducción de 60.0%, significativa según la prueba de McNemar. La contrapartida es que el falso rechazo sube a 22.92%. Debo aclarar que esto mide el pipeline completo en producción, con fallos de detección y un umbral fijo estricto, y que su exactitud de 86.61% es inferior a lo que se publica para el modelo ArcFace aislado. Lo valioso es que me da una cota poblacional realista, que el banco de tres sujetos no puede dar.',
+        transition: 'Y esa cota tiene una consecuencia importante.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Evaluación Poblacional en Benchmark LFW</h2>
+            <p class="slide-subtitle">978 pares evaluados con el pipeline real del servidor en producción</p>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; align-items:center;">
+            <div class="metric-card" style="padding:1.5rem; border-color:#a7f3d0; background:#ecfdf5; text-align:center;">
+              <span class="stat-label" style="color:#065f46;">Reducción de Falsas Coincidencias</span>
+              <div class="big-stat-number" style="color:#059669; margin:0.5rem 0;">-60.0%</div>
+              <p style="font-size:0.8rem; color:#047857; font-weight:700;">
+                FMR: 9.28% (d &lt; 0.68) → <strong>3.71% (d &lt; 0.60)</strong><br>
+                Prueba McNemar altamente significativa (p &lt; 0.001)
+              </p>
+            </div>
+            <div class="metric-card" style="padding:1.25rem;">
+              <span class="stat-label" style="display:block; margin-bottom:0.6rem;">Balance de Rendimiento (ISO 19795-1)</span>
+              <div style="font-size:0.8rem; display:flex; flex-direction:column; gap:0.4rem; color:var(--text-sub);">
+                <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:0.4rem; border-radius:0.35rem;">
+                  <span>Falso Rechazo (FNMR):</span><strong>19.68% → 22.92%</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:0.4rem; border-radius:0.35rem;">
+                  <span>Equal Error Rate (EER):</span><strong>16.66%</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:0.4rem; border-radius:0.35rem;">
+                  <span>Exactitud Global Pipeline:</span><strong>86.61%</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tabla 10 de la tesis: Evaluación de 978 pares de LFW con intervalo Wilson al 95%</div>
+        `
+      },
+      // 26
+      {
+        id: 26, chapter: 'iv', oe: 4, title: 'OE4 · Modo 1:N y Segundo Factor', time: '1.5 min',
+        script: 'Esta es la conclusión más importante de mi evaluación. Como el sistema busca entre todos los usuarios enrolados, cada usuario adicional es una oportunidad de falsa coincidencia, y el error del sistema crece con el tamaño de la galería. Con el 3.71% medido en LFW, esa probabilidad teórica sería del 31% con 10 usuarios y del 85% con 50. En mi banco, con tres usuarios enrolados, ese efecto casi no se manifiesta, y por eso mis resultados no lo contradicen. Y no es un problema particular de los familiares: ningún sistema facial tiene error cero. Por eso la guía NIST SP 800-63B admite la biometría como parte de una autenticación multifactor. Mi conclusión es que el rostro es un factor, no un oráculo: en producción se requiere un segundo factor, o verificar contra una identidad declarada. Mi tesis demuestra el factor facial y mide su límite.',
+        transition: 'Veamos ahora la velocidad.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Modo 1:N y Necesidad de Segundo Factor</h2>
+            <p class="slide-subtitle">Acumulación teórica del error en función de la galería N</p>
+          </div>
+          <div class="cards-grid-2" style="margin:auto 0; align-items:center;">
+            <div class="metric-card" style="border-color:#fde68a; background:#fffbeb; padding:1.25rem;">
+              <span class="stat-label" style="color:#b45309;">Acumulación Probabilística</span>
+              <div style="font-family:'JetBrains Mono'; font-size:0.9rem; font-weight:800; color:#92400e; margin:0.5rem 0;">
+                Error ≈ 1 − (1 − FMR)^N
+              </div>
+              <div style="font-size:0.8rem; color:#451a03; display:flex; flex-direction:column; gap:0.3rem;">
+                <div style="display:flex; justify-content:space-between;"><span>N = 10 usuarios:</span><strong>31.5%</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>N = 20 usuarios:</span><strong>53.1%</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>N = 50 usuarios:</span><strong style="color:#b91c1c;">84.9%</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span>N = 100 usuarios:</span><strong style="color:#b91c1c;">97.7%</strong></div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div class="metric-card" style="padding:1rem; border-color:#fecaca;">
+                <strong style="color:#dc2626; font-size:0.85rem;">Rostro como Factor Único:</strong>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">
+                  No es viable en despliegues institucionales masivos sin control previo.
+                </p>
+              </div>
+              <div class="metric-card" style="padding:1rem; border-color:#a7f3d0; background:#ecfdf5;">
+                <strong style="color:#059669; font-size:0.85rem;">Recomendación NIST SP 800-63B:</strong>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:0.25rem;">
+                  Obligatoriedad de <strong>segundo factor (PIN / RFID)</strong> o verificación <strong>1:1</strong> con cédula declarada.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Estimación teórica de acumulación probabilística a partir de FMR LFW (3.71%)</div>
+        `
+      },
+      // 27
+      {
+        id: 27, chapter: 'iv', oe: 4, title: 'OE4 · Latencia y Notarización', time: '1 min',
+        script: 'La latencia de extremo a extremo medida en la red WAN de la universidad fue de 690 milisegundos. El 70% corresponde al tránsito de red, 486 ms, que no depende del sistema; el cómputo del servidor fue de 198 ms. Inicialmente el requisito de rendimiento fijaba 500 ms sin distinguir la red, y al medir en la WAN real lo reformulé en dos criterios, servidor menor a 500 ms y extremo a extremo menor a 1 segundo, y lo dejé documentado en la tesis. La notarización en Geth promedió 1.9 segundos con 20 transacciones, determinada por el período de bloque de 2 segundos; como es asíncrona, no retrasa la respuesta al usuario.',
+        transition: 'Resumo cómo quedaron los requerimientos.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Latencia Extremo a Extremo en Red WAN</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1.25rem;">
+            <div style="text-align:center;">
+              <div class="big-stat-number" style="color:#059669;">689.98 ms</div>
+              <span class="stat-label">Latencia Total Extremo a Extremo (WAN Real)</span>
+            </div>
+            <div class="metric-card" style="padding:1.25rem;">
+              <span class="stat-label" style="display:block; margin-bottom:0.5rem;">Desglose de Tiempos</span>
+              <div style="display:flex; height:24px; border-radius:0.35rem; overflow:hidden; font-size:0.7rem; font-weight:800; color:white; text-align:center;">
+                <div style="width:2%; background:#0284c7;" title="Borde 6.3 ms"></div>
+                <div style="width:70.4%; background:#f59e0b; display:flex; align-items:center; justify-content:center;">Tránsito Red WAN: 485.79 ms (70.4%)</div>
+                <div style="width:27.6%; background:#059669; display:flex; align-items:center; justify-content:center;">Servidor: 197.89 ms (28.7%)</div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-sub); margin-top:0.5rem; font-weight:600;">
+                <span>Borde: 6.30 ms</span>
+                <span>Servidor: &lt; 500 ms ✔ (197.89 ms)</span>
+                <span>Total: &lt; 1 s ✔ (689.98 ms)</span>
+              </div>
+            </div>
+            <div style="background:#f0f9ff; border:1px solid #bae6fd; padding:0.65rem 1rem; border-radius:0.5rem; font-size:0.75rem; color:#0369a1; text-align:center; font-weight:700;">
+              ⛓️ Notarización Geth: 1.90 s (asíncrona en segundo plano, período Clique 2 s)
+            </div>
+          </div>
+          <div class="source-citation-footer">Tablas 7 y 8 de la tesis: Tiempos de respuesta en la red WAN universitaria</div>
+        `
+      },
+      // 28
+      {
+        id: 28, chapter: 'iv', oe: 4, title: 'Cumplimiento y Trazabilidad', time: '45 s',
+        script: 'Verifiqué los seis requerimientos funcionales y los cinco no funcionales de la Tabla 11, cada uno con su evidencia y su entorno de verificación, y cada uno vinculado a un objetivo. Con esto, los cuatro objetivos quedan cubiertos: la arquitectura con su diagnóstico, el motor y la API, el contrato inteligente y la evaluación. Paso a las conclusiones.',
+        transition: 'Retomo las tres amenazas del inicio.',
+        html: `
+          <div>
+            <span class="oe-chip oe4">OE4 · Evaluación</span>
+            <h2 class="slide-main-title">Matriz de Cumplimiento de Requerimientos</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1.25rem;">
+            <div class="metric-card" style="padding:1.25rem; text-align:center;">
+              <span class="stat-label" style="display:block; margin-bottom:0.75rem; color:#059669;">11 de 11 Requerimientos Verificados con Éxito (100%)</span>
+              <div style="display:grid; grid-template-columns:repeat(11, 1fr); gap:0.25rem; font-family:'JetBrains Mono'; font-size:0.7rem; font-weight:800;">
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF1 ✔</div>
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF2 ✔</div>
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF3 ✔</div>
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF4 ✔</div>
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF5 ✔</div>
+                <div style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RF6 ✔</div>
+                <div style="background:#f0fdf4; color:#14532d; border:1px solid #bbf7d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RNF1 ✔</div>
+                <div style="background:#f0fdf4; color:#14532d; border:1px solid #bbf7d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RNF2 ✔</div>
+                <div style="background:#f0fdf4; color:#14532d; border:1px solid #bbf7d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RNF3 ✔</div>
+                <div style="background:#f0fdf4; color:#14532d; border:1px solid #bbf7d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RNF4 ✔</div>
+                <div style="background:#f0fdf4; color:#14532d; border:1px solid #bbf7d0; padding:0.4rem 0.2rem; border-radius:0.25rem;">RNF5 ✔</div>
+              </div>
+            </div>
+            <div class="cards-grid-4" style="text-align:center; font-size:0.75rem; font-weight:700;">
+              <div style="background:var(--oe1-bg); border:1px solid var(--oe1-border); padding:0.5rem; border-radius:0.35rem; color:#0369a1;">OE1 ✔ Arquitectura</div>
+              <div style="background:var(--oe2-bg); border:1px solid var(--oe2-border); padding:0.5rem; border-radius:0.35rem; color:#6d28d9;">OE2 ✔ Motor + API</div>
+              <div style="background:var(--oe3-bg); border:1px solid var(--oe3-border); padding:0.5rem; border-radius:0.35rem; color:#b45309;">OE3 ✔ Contrato</div>
+              <div style="background:var(--oe4-bg); border:1px solid var(--oe4-border); padding:0.5rem; border-radius:0.35rem; color:#047857;">OE4 ✔ Evaluación</div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tabla 11 de la tesis: Matriz de verificación y trazabilidad</div>
+        `
+      },
+      // 29
+      {
+        id: 29, chapter: 'conclusiones', oe: null, title: 'Conclusiones', time: '1.5 min',
+        script: 'En conclusión, el trabajo respondió la pregunta de investigación: un proveedor de identidad ciberfísico con detección de vida y auditoría en Blockchain sí unifica el control de acceso lógico y perimetral en un prototipo funcional. Retomo las tres amenazas: el spoofing se enfrentó con un embudo de cuatro capas; los silos, con un proveedor federado que sirve a personas y a máquinas; y el punto único de falla, descentralizando la auditoría y manteniendo una bitácora local. Por objetivo: diseñé una arquitectura sobre equipos equivalentes por interfaz; el motor bloqueó los videos y los intentos de mi hermano en el banco; el contrato registra cada evento a costo cero; y la latencia fue de 690 ms. Y la conclusión que más pesa: los resultados demuestran la viabilidad técnica, no el desempeño poblacional, y el rostro por sí solo no basta como factor único en producción.',
+        transition: '¿Y qué sigue? Las recomendaciones.',
+        html: `
+          <div>
+            <span class="slide-category">Síntesis Final</span>
+            <h2 class="slide-main-title">Conclusiones de la Investigación</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:1rem;">
+            <div class="cards-grid-3" style="text-align:center;">
+              <div class="metric-card" style="border-color:#a7f3d0; background:#ecfdf5; padding:0.85rem;">
+                <div style="font-size:1.5rem; margin-bottom:0.25rem;">📸 ✔</div>
+                <strong style="font-size:0.85rem; color:#065f46;">Anti-Spoofing Resuelto</strong>
+                <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.2rem;">Embudo de 4 capas: 0/97 videos aceptados.</p>
+              </div>
+              <div class="metric-card" style="border-color:#a7f3d0; background:#ecfdf5; padding:0.85rem;">
+                <div style="font-size:1.5rem; margin-bottom:0.25rem;">🏢 ✔</div>
+                <strong style="font-size:0.85rem; color:#065f46;">Unificación de Silos</strong>
+                <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.2rem;">IdP federado para SSO Web y M2M físico.</p>
+              </div>
+              <div class="metric-card" style="border-color:#a7f3d0; background:#ecfdf5; padding:0.85rem;">
+                <div style="font-size:1.5rem; margin-bottom:0.25rem;">⚡ ✔</div>
+                <strong style="font-size:0.85rem; color:#065f46;">Sin Punto Único de Falla</strong>
+                <p style="font-size:0.7rem; color:var(--text-sub); margin-top:0.2rem;">Auditoría en Blockchain y log local resiliente.</p>
+              </div>
+            </div>
+            <div class="cards-grid-4" style="text-align:center; font-size:0.75rem;">
+              <div class="pill" style="background:#f0f9ff; border:1px solid #bae6fd; justify-content:center; color:#0369a1;">OE1: Equivalencia interfaz</div>
+              <div class="pill" style="background:#f5f3ff; border:1px solid #ddd6fe; justify-content:center; color:#6d28d9;">OE2: 0/113 hermano</div>
+              <div class="pill" style="background:#fffbeb; border:1px solid #fde68a; justify-content:center; color:#b45309;">OE3: 207 430 gas · $0</div>
+              <div class="pill" style="background:#ecfdf5; border:1px solid #a7f3d0; justify-content:center; color:#047857;">OE4: 689.98 ms WAN</div>
+            </div>
+            <div style="background:#fffbeb; border:1px solid #fde68a; padding:0.65rem; border-radius:0.5rem; font-size:0.8rem; font-weight:800; color:#92400e; text-align:center;">
+              ⚠️ Límite: El rostro por sí solo no basta en producción; se requiere segundo factor.
+            </div>
+          </div>
+          <div class="source-citation-footer">Respuesta categórica y rigurosa a la pregunta de investigación</div>
+        `
+      },
+      // 30
+      {
+        id: 30, chapter: 'conclusiones', oe: null, title: 'Recomendaciones', time: '1 min',
+        script: 'Las recomendaciones corresponden una a una con los objetivos. Para la infraestructura: cámaras IP con óptica infrarroja, aislar el video en una VLAN con transporte cifrado y llevar pasarelas de borde a las puertas, lo que además reduciría el 70% de latencia que vino de la red. Para el motor: el segundo factor en producción, infrarrojo cercano para reducir el falso rechazo y OpenID Connect para el inicio de sesión. Para la cadena: un consorcio de nodos entre sedes, gestión formal de secretos con versionado de claves y cifrado en reposo de los vectores. Y para la evaluación: construir la capa de actuación con microcontroladores y realizar un piloto de un semestre con 50 o más usuarios. Adicionalmente, como trabajo futuro, evaluar el sistema frente a máscaras 3D y deepfakes y bajo pruebas de carga.',
+        transition: 'Frase final de cierre.',
+        html: `
+          <div>
+            <span class="slide-category">Visión Futura</span>
+            <h2 class="slide-main-title">Recomendaciones por Objetivo</h2>
+          </div>
+          <div style="margin:auto 0; display:flex; flex-direction:column; gap:0.65rem;">
+            <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:var(--oe1-bg); border:1px solid var(--oe1-border); font-size:0.8rem; color:var(--text-main);">
+              <span class="oe-chip oe1">OE1</span> <strong>Infraestructura:</strong> Cámaras IP con NIR, VLAN dedicada y Gateways locales en accesos.
+            </div>
+            <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:var(--oe2-bg); border:1px solid var(--oe2-border); font-size:0.8rem; color:var(--text-main);">
+              <span class="oe-chip oe2">OE2</span> <strong>Motor:</strong> Segundo factor obligatorio en producción y adopción de OIDC con PKCE.
+            </div>
+            <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:var(--oe3-bg); border:1px solid var(--oe3-border); font-size:0.8rem; color:var(--text-main);">
+              <span class="oe-chip oe3">OE3</span> <strong>Blockchain:</strong> Consorcio de nodos multisucursal, rotación de sal secreta y cifrado en reposo.
+            </div>
+            <div style="padding:0.65rem 1rem; border-radius:0.5rem; background:var(--oe4-bg); border:1px solid var(--oe4-border); font-size:0.8rem; color:var(--text-main);">
+              <span class="oe-chip oe4">OE4</span> <strong>Evaluación:</strong> Actuadores de puerta (ESP32) y piloto semestral con N ≥ 50 participantes.
+            </div>
+          </div>
+          <div class="source-citation-footer">Hoja de ruta para adopción y escalabilidad institucional</div>
+        `
+      },
+      // 31
+      {
+        id: 31, chapter: 'conclusiones', oe: null, title: 'Frase de Cierre', time: '15 s',
+        script: 'Este trabajo muestra que es posible construir, desde la universidad, un sistema de identidad que cuide la seguridad y la privacidad con software libre.',
+        transition: 'Agradecimientos.',
+        html: `
+          <div style="margin:auto; text-align:center; max-width:850px;">
+            <div style="font-size:3rem; color:#0284c7; font-family:serif; line-height:1;">“</div>
+            <blockquote style="font-size:1.65rem; font-weight:850; color:var(--navy-900); line-height:1.35; margin:0.5rem 0 1.5rem;">
+              La seguridad, la privacidad y la soberanía tecnológica también se pueden construir desde la universidad.
+            </blockquote>
+            <div style="width:4rem; height:3px; background:#0284c7; margin:0 auto 1rem; border-radius:2px;"></div>
+            <span style="font-size:0.85rem; font-weight:800; color:#0369a1; text-transform:uppercase; letter-spacing:0.05em;">
+              FaceSentinel · UNEG 2026
+            </span>
+          </div>
+        `
+      },
+      // 32
+      {
+        id: 32, chapter: 'conclusiones', oe: null, title: 'Gracias', time: '10 s',
+        script: 'Agradezco al jurado su atención, a mi tutora, a la UNEG y a mi familia. Quedo atento a sus preguntas.',
+        transition: 'Fin de la exposición. Abrir respaldo si preguntan.',
+        html: `
+          <div style="margin:auto; text-align:center;">
+            <img src="/diagrams/uneg_logo.png" alt="Logo UNEG" style="height:65px; width:auto; margin-bottom:1rem;" onerror="this.src='https://placehold.co/120x60/1b365d/ffffff?text=UNEG'">
+            <h1 style="font-size:3rem; font-weight:900; color:#1b365d; letter-spacing:-0.02em; margin-bottom:0.5rem;">
+              MUCHAS GRACIAS
+            </h1>
+            <p style="font-size:1rem; font-weight:600; color:var(--text-sub); margin-bottom:1.5rem;">
+              Quedo a la disposición del honorable jurado para la sesión de preguntas.
+            </p>
+            <div style="display:inline-block; background:#f0f9ff; border:1px solid #bae6fd; padding:0.6rem 1.25rem; border-radius:9999px; font-size:0.85rem; color:#0369a1; font-weight:700;">
+              Br. Héctor Tovar · Escuela de Ingeniería en Informática · UNEG
+            </div>
+          </div>
+        `
+      },
+      // B1
+      {
+        id: 33, chapter: 'conclusiones', oe: null, title: 'B1 · Casos de Ensayo (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B1 con la matriz de casos de ensayo del CSV.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B1</span><h2 class="slide-main-title">Matriz de Casos de Ensayo (CSV) y Sujetos</h2></div>
+          <table class="clean-table" style="margin:auto 0; background:white; border:1px solid #e2e8f0; border-radius:0.5rem;">
+            <thead><tr><th>Sujeto</th><th>Rol / Perfil</th><th>Genuinos</th><th>Fotos</th><th>Videos</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Investigador</strong></td><td>Usuario Enrolado</td><td>52</td><td>54</td><td>49</td><td><strong>155</strong></td></tr>
+              <tr><td><strong>Hermano</strong></td><td style="color:#b45309; font-weight:700;">Impostor Consanguíneo</td><td>0</td><td>0</td><td>0</td><td><strong>113</strong></td></tr>
+              <tr><td><strong>Voluntario UNEG</strong></td><td>Usuario Enrolado</td><td>52</td><td>53</td><td>48</td><td><strong>153</strong></td></tr>
+              <tr style="background:#f8fafc; font-weight:800;"><td>Total Banco</td><td>3 Sujetos</td><td>104</td><td>107</td><td>97</td><td style="color:#0284c7;">421</td></tr>
+            </tbody>
+          </table>
+          <div class="source-citation-footer">Extracto de ensayos.csv (Anexo C y Tabla 3.2 de la tesis)</div>
+        `
+      },
+      // B2
+      {
+        id: 34, chapter: 'conclusiones', oe: null, title: 'B2 · Tabla 6 Completa (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B2 con los 11 indicadores de la Tabla 6.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B2</span><h2 class="slide-main-title">Tabla 6 Completa: 11 Indicadores de Desempeño</h2></div>
+          <div class="cards-grid-3" style="margin:auto 0; font-size:0.8rem;">
+            <div class="metric-card"><span class="stat-sub">Exactitud (Accuracy):</span><strong style="color:var(--navy-900); font-size:1.1rem;">95.72%</strong></div>
+            <div class="metric-card"><span class="stat-sub">Especificidad Global:</span><strong style="color:#059669; font-size:1.1rem;">99.37%</strong></div>
+            <div class="metric-card"><span class="stat-sub">Sensibilidad (Recall):</span><strong style="color:var(--navy-900); font-size:1.1rem;">84.62%</strong></div>
+            <div class="metric-card"><span class="stat-sub">Precisión (PPV):</span><strong style="color:var(--navy-900); font-size:1.1rem;">97.78%</strong></div>
+            <div class="metric-card"><span class="stat-sub">F1-Score:</span><strong style="color:var(--navy-900); font-size:1.1rem;">0.9072</strong></div>
+            <div class="metric-card"><span class="stat-sub">APCER (Ataque Aceptado):</span><strong style="color:#059669; font-size:1.1rem;">0.98%</strong></div>
+            <div class="metric-card"><span class="stat-sub">BPCER (Rechazo Genuino):</span><strong style="color:#d97706; font-size:1.1rem;">15.38%</strong></div>
+            <div class="metric-card"><span class="stat-sub">FMR (Falsa Coincidencia):</span><strong style="color:#059669; font-size:1.1rem;">0.00% (0/113)</strong></div>
+            <div class="metric-card"><span class="stat-sub">FNMR (Falso Rechazo):</span><strong style="color:#d97706; font-size:1.1rem;">15.38% (16/104)</strong></div>
+          </div>
+          <div class="source-citation-footer">Tabla 6 de la tesis: Consolidado bajo ISO/IEC 19795-1 e ISO/IEC 30107-3</div>
+        `
+      },
+      // B3
+      {
+        id: 35, chapter: 'conclusiones', oe: null, title: 'B3 · Tabla 10 LFW (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B3 con los intervalos Wilson de LFW.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B3</span><h2 class="slide-main-title">Tabla 10 LFW: Intervalos de Confianza 95% (Wilson)</h2></div>
+          <table class="clean-table" style="margin:auto 0; background:white; border:1px solid #e2e8f0; border-radius:0.5rem;">
+            <thead><tr><th>Métrica</th><th>Literatura (d &lt; 0.68)</th><th>FaceSentinel (d &lt; 0.60)</th><th>IC 95% (Wilson d &lt; 0.60)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>FMR (Falsa Coincidencia)</strong></td><td style="color:#dc2626; font-weight:700;">9.28% (45/485)</td><td style="color:#059669; font-weight:700;">3.71% (18/485)</td><td style="font-family:'JetBrains Mono';">[2.36%, 5.79%]</td></tr>
+              <tr><td><strong>FNMR (Falso Rechazo)</strong></td><td>19.68% (97/493)</td><td style="color:#d97706; font-weight:700;">22.92% (113/493)</td><td style="font-family:'JetBrains Mono';">[19.42%, 26.83%]</td></tr>
+              <tr><td><strong>Exactitud Global</strong></td><td>85.48%</td><td>86.61%</td><td style="font-family:'JetBrains Mono';">[84.32%, 88.62%]</td></tr>
+              <tr><td><strong>Equal Error Rate (EER)</strong></td><td>-</td><td style="color:#0284c7; font-weight:700;">16.66%</td><td>En d ≈ 0.64</td></tr>
+            </tbody>
+          </table>
+          <div class="source-citation-footer">Prueba McNemar FMR: χ² = 25.04, p &lt; 0.001 (Reducción de 60.0% estadísticamente significativa)</div>
+        `
+      },
+      // B4
+      {
+        id: 36, chapter: 'conclusiones', oe: null, title: 'B4 · Tabla 9.1 SSO (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B4 con el detalle de los 44 eventos del SSO.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B4</span><h2 class="slide-main-title">Tabla 9.1: Detalle de los 44 Eventos del SSO</h2></div>
+          <table class="clean-table" style="margin:auto 0; background:white; border:1px solid #e2e8f0; border-radius:0.5rem;">
+            <thead><tr><th>Categoría</th><th>Eventos</th><th>Concedidos</th><th>Denegados</th><th>Observación</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Estudiantes UNEG</strong></td><td>29</td><td style="color:#059669; font-weight:700;">28</td><td>1</td><td>Parpadeo rápido; éxito a los 6 s</td></tr>
+              <tr><td><strong>Investigador (Control)</strong></td><td>10</td><td style="color:#059669; font-weight:700;">10</td><td>0</td><td>100% efectividad</td></tr>
+              <tr><td><strong>No Enrolados</strong></td><td>3</td><td>0</td><td style="color:#059669; font-weight:700;">3</td><td>Distancias 0.63, 0.65 y 0.71</td></tr>
+              <tr><td><strong>Ataque Video Celular</strong></td><td>2</td><td>0</td><td style="color:#059669; font-weight:700;">2</td><td>Superó EAR/LBP; detenido por FFT 2D</td></tr>
+            </tbody>
+          </table>
+          <div class="source-citation-footer">Tabla 9.1 de la tesis: 44 eventos registrados en bitácora local y notarizados en Geth</div>
+        `
+      },
+      // B5
+      {
+        id: 37, chapter: 'conclusiones', oe: null, title: 'B5 · ERD y PAD Tree (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B5 con el ERD y el árbol de decisión.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B5</span><h2 class="slide-main-title">Figura 3 (ERD) y Figura 4 (Árbol PAD)</h2></div>
+          <div class="cards-grid-2" style="margin:auto 0; font-size:0.8rem;">
+            <div class="metric-card" style="border-color:#bae6fd;">
+              <strong style="color:#0284c7; display:block; margin-bottom:0.4rem;">Entidades Relacionales (SQLite)</strong>
+              <div style="font-family:'JetBrains Mono'; font-size:0.75rem; color:var(--text-sub); display:flex; flex-direction:column; gap:0.25rem;">
+                <div>• Users (id, username, password_hash, role_id)</div>
+                <div>• Roles (id, name, permissions)</div>
+                <div>• Cameras (id, ip, location, security_level)</div>
+                <div>• AccessLogs (id, user_hash, granted, tx_hash)</div>
+              </div>
+            </div>
+            <div class="metric-card" style="border-color:#ddd6fe;">
+              <strong style="color:#7c3aed; display:block; margin-bottom:0.4rem;">Árbol de Decisión por Nivel</strong>
+              <div style="font-size:0.75rem; color:var(--text-sub); display:flex; flex-direction:column; gap:0.25rem;">
+                <div>• Nivel 1: Sin PAD (solo ArcFace, áreas de bajo riesgo)</div>
+                <div>• Nivel 2: EAR (Borde)</div>
+                <div>• Nivel 3: EAR + LBP + FFT 2D (Acceso Físico)</div>
+                <div>• Nivel 4: EAR + LBP + FFT + Reto Activo (SSO Web)</div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Figuras 3 y 4 de la tesis: Modelos de datos y políticas de seguridad</div>
+        `
+      },
+      // B6
+      {
+        id: 38, chapter: 'conclusiones', oe: null, title: 'B6 · Código Solidity (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B6 con el código del contrato.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B6</span><h2 class="slide-main-title">AccessRegistry.sol (Funciones Clave)</h2></div>
+          <div class="metric-card" style="background:#0f172a; color:#f8fafc; font-family:'JetBrains Mono'; font-size:0.7rem; padding:1.25rem; margin:auto 0;">
+            <pre style="margin:0; overflow-x:auto;">
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract AccessRegistry {
+    address public owner;
+    mapping(address => bool) public authorizedGateways;
+
+    event AccessAttempt(bytes32 indexed userHash, bool granted, uint256 timestamp);
+
+    function recordAccess(bytes32 _userHash, bytes32 _vectorHash, bool _granted,
+                          string calldata _deviceId, uint16 _score) external onlyGateway {
+        records.push(AuthRecord(_userHash, _vectorHash, block.timestamp, _granted, _deviceId, _score));
+        emit AccessAttempt(_userHash, _granted, block.timestamp);
+    }
+}
+            </pre>
+          </div>
+          <div class="source-citation-footer">AccessRegistry.sol: Implementación nativa sin librerías externas</div>
+        `
+      },
+      // B7
+      {
+        id: 39, chapter: 'conclusiones', oe: null, title: 'B7 · Tablas 7 y 8 (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B7 con las tablas completas de latencia y notarización.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B7</span><h2 class="slide-main-title">Tablas 7 y 8: Latencia de Pipeline y Notarización Geth</h2></div>
+          <div class="cards-grid-2" style="margin:auto 0; font-size:0.8rem;">
+            <div class="metric-card">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.4rem;">Pipeline Completo (Tabla 7)</strong>
+              <div style="font-family:'JetBrains Mono'; font-size:0.75rem; color:var(--text-sub); display:flex; flex-direction:column; gap:0.25rem;">
+                <div>• Borde (EAR + Crop): 6.30 ms (DE 1.2)</div>
+                <div>• Tránsito WAN UNEG: 485.79 ms (DE 42.1)</div>
+                <div>• Servidor (LBP + FFT): 48.10 ms</div>
+                <div>• ArcFace (Embedding 512D): 142.30 ms</div>
+                <div>• ChromaDB (HNSW): 7.49 ms</div>
+                <div style="font-weight:800; color:#059669; border-top:1px solid #e2e8f0; padding-top:0.25rem;">Total: 689.98 ms (&lt; 1000 ms ✔)</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <strong style="color:var(--navy-900); display:block; margin-bottom:0.4rem;">Notarización Geth (Tabla 8)</strong>
+              <div style="font-family:'JetBrains Mono'; font-size:0.75rem; color:var(--text-sub); display:flex; flex-direction:column; gap:0.25rem;">
+                <div>• Muestras: n = 20 transacciones</div>
+                <div>• Promedio: 1 903.89 ms (DE 45.20)</div>
+                <div>• Período Clique: 2.00 s</div>
+                <div>• Gas consumido: 207 430 unidades</div>
+                <div style="font-weight:800; color:#0284c7; border-top:1px solid #e2e8f0; padding-top:0.25rem;">Modo: Asíncrono no bloqueante</div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tablas 7 y 8 de la tesis: Mediciones en producción en la red WAN UNEG</div>
+        `
+      },
+      // B8
+      {
+        id: 40, chapter: 'conclusiones', oe: null, title: 'B8 · Equipos (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B8 con los equipos analizados.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B8</span><h2 class="slide-main-title">Equipamiento Experimental (Tabla 4.1)</h2></div>
+          <table class="clean-table" style="margin:auto 0; background:white; border:1px solid #e2e8f0; border-radius:0.5rem;">
+            <thead><tr><th>Componente</th><th>Modelo / Especificación</th><th>Función</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Cámara Institucional</strong></td><td>Hikvision DS-2CE66C0T-IRM (720p)</td><td>Muestra suministrada para análisis de hardware</td></tr>
+              <tr><td><strong>Cámara Banco</strong></td><td>HiLook THC-B110 1MP (CMOS)</td><td>Captura en banco equivalente</td></tr>
+              <tr><td><strong>DVR Banco</strong></td><td>Hikvision DS-7104HGHI-F1</td><td>Codificación H.264 y streaming RTSP/TCP</td></tr>
+              <tr><td><strong>Servidor Central</strong></td><td>Intel Core i5, 16GB RAM, Docker Linux</td><td>FastAPI, ArcFace, ChromaDB, Nodo Geth</td></tr>
+            </tbody>
+          </table>
+          <div class="source-citation-footer">Tabla 4.1 de la tesis: Especificaciones técnicas del equipamiento</div>
+        `
+      },
+      // B9
+      {
+        id: 41, chapter: 'conclusiones', oe: null, title: 'B9 · Tabla 11 Requerimientos (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B9 con el cumplimiento detallado de requerimientos.',
+        transition: 'Volver a preguntas.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B9</span><h2 class="slide-main-title">Tabla 11 Completa: Requerimientos y Evidencias</h2></div>
+          <div class="cards-grid-2" style="margin:auto 0; font-size:0.75rem;">
+            <div class="metric-card">
+              <strong style="color:#0284c7; display:block; margin-bottom:0.35rem;">Requerimientos Funcionales (RF)</strong>
+              <div style="display:flex; flex-direction:column; gap:0.25rem; color:var(--text-sub);">
+                <div>• RF1: Streaming RTSP (✔ S-RES)</div>
+                <div>• RF2: Embudo PAD multicapa (✔ S-RES, S-UNEG)</div>
+                <div>• RF3: Extracción ArcFace 512D (✔ S-RES, LFW)</div>
+                <div>• RF4: Búsqueda vectorial HNSW (✔ S-RES)</div>
+                <div>• RF5: Notarización en Geth (✔ S-CADENA)</div>
+                <div>• RF6: SSO y M2M con JWT (✔ S-UNEG)</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <strong style="color:#059669; display:block; margin-bottom:0.35rem;">Requerimientos No Funcionales (RNF)</strong>
+              <div style="display:flex; flex-direction:column; gap:0.25rem; color:var(--text-sub);">
+                <div>• RNF1: Servidor &lt; 500 ms (✔ 198 ms)</div>
+                <div>• RNF2: Total &lt; 1000 ms (✔ 690 ms)</div>
+                <div>• RNF3: Privacidad SHA-256 + sal (✔ Código)</div>
+                <div>• RNF4: Resiliencia ante caída de red (✔ Local log)</div>
+                <div>• RNF5: 100% Software Libre (✔ Stack OSS)</div>
+              </div>
+            </div>
+          </div>
+          <div class="source-citation-footer">Tabla 11 de la tesis: Matriz de verificación técnica completa</div>
+        `
+      },
+      // B10
+      {
+        id: 42, chapter: 'conclusiones', oe: null, title: 'B10 · Acta de Conformidad (Respaldo)', time: 'Respaldo',
+        script: 'Diapositiva de respaldo B10 con el Acta de Conformidad institucional.',
+        transition: 'Fin del respaldo.',
+        html: `
+          <div><span class="oe-chip backup">RESPALDO B10</span><h2 class="slide-main-title">Acta de Conformidad y Aceptación (Anexo D)</h2></div>
+          <div class="metric-card" style="text-align:center; padding:2rem; margin:auto; max-width:650px; border-color:#bae6fd;">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">🏛️</div>
+            <h3 style="font-size:1.1rem; font-weight:800; color:var(--navy-900);">Dirección de Sistemas Automatizados Inteligentes (UNEG)</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub); margin:0.75rem 0;">
+              Certificación institucional de pruebas operativas del sistema <strong>FaceSentinel</strong> como IdP para el portal universitario y validación funcional satisfactoria en entorno de red real.
+            </p>
+            <div style="font-size:0.75rem; color:#64748b; background:#f8fafc; padding:0.5rem; border-radius:0.35rem; display:inline-block;">
+              Octubre de 2026 · Ciudad Guayana, Estado Bolívar
+            </div>
+          </div>
+          <div class="source-citation-footer">Anexo D de la tesis: Certificación institucional consignada</div>
+        `
+      }
+    ];
+
+    // State Variables
+    let currentSlideIndex = 0;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let is20mMode = false;
+    let isNotesOpen = false;
+
+    // 20-minute mode skip list (Slide IDs to skip in 20m mode: Covers, B1-B10, Slide 31)
+    const skipIn20m = [3, 8, 12, 17, 31];
+
+    // Initialize Presentation
+    function initPresentation() {
+      renderSlide(0);
+      setupKeyboard();
+    }
+
+    // Render Slide
+    function renderSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= slidesData.length) index = slidesData.length - 1;
+      
+      currentSlideIndex = index;
+      const slide = slidesData[index];
+      const canvas = document.getElementById('slide-canvas');
+
+      // Update Breadcrumbs
+      updateBreadcrumbs(slide);
+
+      // Render Content
+      canvas.innerHTML = slide.html;
+      canvas.className = 'slide-content-area slide-fade-enter';
+
+      // Update Metadata Chips
+      document.getElementById('curr-slide-num').innerText = slide.id < 10 ? '0' + slide.id : slide.id;
+      document.getElementById('total-slide-num').innerText = slide.id > 32 ? 'B' + (slide.id - 32) : '32';
+      
+      const oeBadge = document.getElementById('oe-badge');
+      if (slide.oe) {
+        oeBadge.style.display = 'inline-block';
+        oeBadge.className = 'oe-chip oe' + slide.oe;
+        oeBadge.innerText = 'OE' + slide.oe;
+      } else if (slide.id > 32) {
+        oeBadge.style.display = 'inline-block';
+        oeBadge.className = 'oe-chip backup';
+        oeBadge.innerText = 'RESPALDO';
+      } else {
+        oeBadge.style.display = 'none';
+      }
+
+      // Update Notes Drawer
+      document.getElementById('drawer-slide-title').innerText = `Diapositiva ${slide.id} · ${slide.title}`;
+      document.getElementById('script-time').innerText = slide.time;
+      document.getElementById('script-body').innerText = `"${slide.script}"`;
+      document.getElementById('transition-body').innerText = `"${slide.transition}"`;
+    }
+
+    // Update Top Breadcrumb Bar
+    function updateBreadcrumbs(slide) {
+      const chapters = ['apertura', 'i', 'ii', 'iii', 'iv', 'conclusiones'];
+      chapters.forEach(ch => {
+        const el = document.getElementById('ch-' + ch);
+        if (el) {
+          el.className = 'chapter-step';
+          if (slide.chapter === ch) {
+            el.classList.add('active');
+            if (slide.oe) {
+              el.classList.add('oe' + slide.oe + '-chapter');
+            }
+          }
+        }
+      });
+    }
+
+    // Navigation Controls
+    function nextSlide() {
+      let nextIdx = currentSlideIndex + 1;
+      if (is20mMode) {
+        while (nextIdx < 32 && skipIn20m.includes(slidesData[nextIdx].id)) {
+          nextIdx++;
+        }
+      }
+      if (nextIdx < slidesData.length) {
+        renderSlide(nextIdx);
+      }
+    }
+
+    function prevSlide() {
+      let prevIdx = currentSlideIndex - 1;
+      if (is20mMode) {
+        while (prevIdx >= 0 && skipIn20m.includes(slidesData[prevIdx].id)) {
+          prevIdx--;
+        }
+      }
+      if (prevIdx >= 0) {
+        renderSlide(prevIdx);
+      }
+    }
+
+    function jumpToSlide(id) {
+      const idx = slidesData.findIndex(s => s.id === id);
+      if (idx !== -1) renderSlide(idx);
+    }
+
+    function jumpToBackup(id) {
+      closeModal();
+      jumpToSlide(id);
+    }
+
+    // Keyboard Handler
+    function setupKeyboard() {
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          renderSlide(0);
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          renderSlide(31);
+        } else if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          toggleNotesDrawer();
+        } else if (e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          openModal('backup');
+        } else if (e.key === 'q' || e.key === 'Q') {
+          e.preventDefault();
+          openModal('questions');
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault();
+          toggle20mMode();
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          toggleFullscreen();
+        } else if (e.key === 'Escape') {
+          closeModal();
+          if (isNotesOpen) toggleNotesDrawer();
+        }
+      });
+    }
+
+    // Timer Controls
+    function toggleTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      } else {
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          const mins = Math.floor(timerSeconds / 60);
+          const secs = timerSeconds % 60;
+          const fmt = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+          document.getElementById('timer-text').innerText = fmt;
+          
+          // Color feedback: Warning after 20m, Alert after 24m
+          const box = document.getElementById('timer-box');
+          if (timerSeconds >= 1440) { // 24 min
+            box.style.borderColor = '#ef4444';
+            document.getElementById('timer-text').style.color = '#ef4444';
+          } else if (timerSeconds >= 1200) { // 20 min
+            box.style.borderColor = '#f59e0b';
+            document.getElementById('timer-text').style.color = '#f59e0b';
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      timerSeconds = 0;
+      document.getElementById('timer-text').innerText = '00:00';
+      document.getElementById('timer-box').style.borderColor = 'rgba(56, 189, 248, 0.3)';
+      document.getElementById('timer-text').style.color = '#38bdf8';
+    }
+
+    // Notes Drawer
+    function toggleNotesDrawer() {
+      const drawer = document.getElementById('notes-drawer');
+      const btn = document.getElementById('btn-toggle-notes');
+      isNotesOpen = !isNotesOpen;
+      if (isNotesOpen) {
+        drawer.classList.add('open');
+        btn.classList.add('active');
+      } else {
+        drawer.classList.remove('open');
+        btn.classList.remove('active');
+      }
+    }
+
+    // 20-Minute Mode Toggle
+    function toggle20mMode() {
+      is20mMode = !is20mMode;
+      const tag = document.getElementById('speed-mode-indicator');
+      const btn = document.getElementById('btn-toggle-20m');
+      if (is20mMode) {
+        tag.style.display = 'inline-block';
+        btn.classList.add('active');
+      } else {
+        tag.style.display = 'none';
+        btn.classList.remove('active');
+      }
+    }
+
+    // Fullscreen
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // Modals
+    function openModal(defaultTab) {
+      document.getElementById('main-modal').classList.add('open');
+      if (defaultTab) switchModalTab(defaultTab);
+    }
+
+    function closeModal() {
+      document.getElementById('main-modal').classList.remove('open');
+    }
+
+    function switchModalTab(tabId) {
+      const tabs = ['backup', 'questions', 'clarify', 'figures', '20m'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-btn-' + t);
+        const pane = document.getElementById('tab-content-' + t);
+        if (btn) btn.classList.remove('active');
+        if (pane) pane.style.display = 'none';
+      });
+
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      const activePane = document.getElementById('tab-content-' + tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activePane) activePane.style.display = 'block';
+
+      const titles = {
+        'backup': 'Diapositivas de Respaldo (B1 a B10)',
+        'questions': '13 Preguntas Más Probables del Jurado',
+        'clarify': '11 Puntos Críticos a Aclarar Antes de Defender',
+        'figures': 'Cifras Clave que Debes Saber de Memoria',
+        '20m': 'Guía Estratégica para la Versión de 20 Minutos'
+      };
+      if (titles[tabId]) document.getElementById('modal-title').innerText = titles[tabId];
+    }
+
+    // Start on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initPresentation();
+      toggleTimer(); // Auto-start defense stopwatch
+    });
+  </script>
+</body>
+</html>

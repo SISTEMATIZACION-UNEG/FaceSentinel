@@ -67,6 +67,8 @@ cover/
 # Local Databases & WAL files (SQLite / ChromaDB)
 data/sql/*
 !data/sql/.gitkeep
+data/sql/*.db.bak*
+*metricas*.csv
 data/chromadb/*
 !data/chromadb/.gitkeep
 data/temp_images/*

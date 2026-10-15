@@ -383,15 +383,36 @@ def get_auth_history(user_id: str, count: int = 10) -> dict:
 
         records = []
         for r in records_raw:
+            if isinstance(r[0], str):
+                user_val = r[0]
+            elif isinstance(r[0], (bytes, bytearray)):
+                try:
+                    decoded = r[0].rstrip(b'\x00').decode('utf-8')
+                    user_val = decoded if decoded.isprintable() and len(decoded) > 0 else "0x" + r[0].hex()
+                except Exception:
+                    user_val = "0x" + r[0].hex()
+            else:
+                user_val = str(r[0])
+
+            bio_val = "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1])
+            ts_val = int(r[2]) if len(r) > 2 else 0
+            granted_val = bool(r[3]) if len(r) > 3 else False
+            device_val = str(r[4]) if len(r) > 4 else ""
+            try:
+                score_val = float(r[5]) / 10000.0 if len(r) > 5 else 0.0
+            except (ValueError, TypeError):
+                score_val = 0.0
+            client_val = str(r[6]) if len(r) > 6 else ""
+
             records.append({
                 "user_id": user_id,
-                "user_id_hash": "0x" + r[0].hex() if isinstance(r[0], (bytes, bytearray)) else str(r[0]),
-                "biometric_hash": "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1]),
-                "timestamp": r[2],
-                "access_granted": r[3],
-                "device_id": r[4],
-                "match_score": r[5] / 10000.0,  # Reconvertir a float
-                "client_id": r[6] if len(r) > 6 else ""
+                "user_id_hash": user_val,
+                "biometric_hash": bio_val,
+                "timestamp": ts_val,
+                "access_granted": granted_val,
+                "device_id": device_val,
+                "match_score": score_val,
+                "client_id": client_val
             })
 
         logger.info(f"📋 Historial consultado para {user_id}: {len(records)} registros")
@@ -429,16 +450,43 @@ def get_recent_records_by_client(client_id: str, limit: int = 50) -> dict:
 
         records = []
         for r in records_raw:
-            user_hash_str = "0x" + r[0].hex() if isinstance(r[0], (bytes, bytearray)) else str(r[0])
+            # r[0]: userId (str o bytes si el ABI no lo decodificó)
+            if isinstance(r[0], str):
+                user_val = r[0]
+            elif isinstance(r[0], (bytes, bytearray)):
+                try:
+                    # Intento de decodificación limpia UTF-8 sin bytes nulos
+                    decoded = r[0].rstrip(b'\x00').decode('utf-8')
+                    user_val = decoded if decoded.isprintable() and len(decoded) > 0 else "0x" + r[0].hex()
+                except Exception:
+                    user_val = "0x" + r[0].hex()
+            else:
+                user_val = str(r[0])
+
+            bio_val = "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1])
+            
+            # Manejo seguro de índices
+            ts_val = int(r[2]) if len(r) > 2 else 0
+            granted_val = bool(r[3]) if len(r) > 3 else False
+            device_val = str(r[4]) if len(r) > 4 else ""
+            
+            # Match score (score entero escalado x10000 -> float)
+            try:
+                score_val = float(r[5]) / 10000.0 if len(r) > 5 else 0.0
+            except (ValueError, TypeError):
+                score_val = 0.0
+
+            client_val = str(r[6]) if len(r) > 6 else client_id
+
             records.append({
-                "user_id": user_hash_str,
-                "user_id_hash": user_hash_str,
-                "biometric_hash": "0x" + r[1].hex() if isinstance(r[1], (bytes, bytearray)) else str(r[1]),
-                "timestamp": r[2],
-                "access_granted": r[3],
-                "device_id": r[4],
-                "match_score": r[5] / 10000.0,  # Reconvertir a float
-                "client_id": r[6] if len(r) > 6 else ""
+                "user_id": user_val,
+                "user_id_hash": user_val,
+                "biometric_hash": bio_val,
+                "timestamp": ts_val,
+                "access_granted": granted_val,
+                "device_id": device_val,
+                "match_score": score_val,
+                "client_id": client_val
             })
 
         logger.info(f"📋 Historial consultado para cliente {client_id}: {len(records)} registros")

@@ -95,12 +95,21 @@ def _dispatch_blockchain_log_async(
     Además, si se suministra metrics_payload, lo complementa con datos de Blockchain
     y lo persiste en 'metricas_tesis.csv' de forma thread-safe y no bloqueante.
     """
+    # Mapeo canónico para notarización on-chain
+    target_client = client_id
+    if str(client_id).strip().lower() in ["asistencia uneg", "asistencia", "sso", "external_web_sso", "web_sso", "external-web-sso"]:
+        target_client = "EXTERNAL_WEB_SSO"
+    elif str(client_id).strip().lower() in ["physical_access", "physical-access", "torniquetes", "iot"]:
+        target_client = "PHYSICAL_ACCESS"
+    elif str(client_id).strip().lower() in ["smart20prueba", "smart20"]:
+        target_client = "SMART20PRUEBA"
+
     def _background_worker():
         bc_result = None
         try:
             bc_result = log_authentication(
                 user_id=user_id,
-                client_id=client_id,
+                client_id=target_client,
                 embedding=embedding,
                 access_granted=access_granted,
                 device_id=device_id,
@@ -629,17 +638,33 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
     # Si no se envía client_id o corresponde a autenticación local/portal propio (LOCAL_AUTH, etc.):
     # usamos "LOCAL_AUTH" y la política global del portal.
     clean_client = str(client_id).strip() if client_id else ""
-    is_internal_auth = (
-        not clean_client
-        or clean_client.lower() in ["null", "undefined", "none", "local_auth", "facesentinel-portal", "facesentinel-api", "facesentinel_core", "facesentinel", "portal", "core", "api"]
-    )
-    if is_internal_auth:
-        effective_client_id = "LOCAL_AUTH"
-        liveness_policy = get_system_setting("portal_liveness_policy", "active")
+    if clean_client.lower() in ["asistencia uneg", "asistencia", "sso", "external_web_sso", "web_sso", "external-web-sso"]:
+        effective_client_id = "EXTERNAL_WEB_SSO"
+        client_info = get_oauth_client("EXTERNAL_WEB_SSO")
+        liveness_policy = client_info.get("liveness_policy", "active") if client_info else "active"
+    elif clean_client.lower() in ["physical_access", "physical-access", "torniquetes", "iot"]:
+        effective_client_id = "PHYSICAL_ACCESS"
+        client_info = get_oauth_client("PHYSICAL_ACCESS")
+        liveness_policy = client_info.get("liveness_policy", "passive_fft") if client_info else "passive_fft"
+    elif clean_client.lower() in ["smart20prueba", "smart20"]:
+        effective_client_id = "SMART20PRUEBA"
+        client_info = get_oauth_client("SMART20PRUEBA")
+        liveness_policy = client_info.get("liveness_policy", "passive_lbp") if client_info else "passive_lbp"
+    elif not clean_client or clean_client.lower() in ["null", "undefined", "none", "local_auth", "facesentinel-portal", "facesentinel-api", "facesentinel_core", "facesentinel", "portal", "core", "api"]:
+        if action == "sso":
+            effective_client_id = "EXTERNAL_WEB_SSO"
+            client_info = get_oauth_client("EXTERNAL_WEB_SSO")
+            liveness_policy = client_info.get("liveness_policy", "active") if client_info else "active"
+        else:
+            effective_client_id = "LOCAL_AUTH"
+            liveness_policy = get_system_setting("portal_liveness_policy", "active")
     else:
         effective_client_id = client_id.strip()
         client_info = get_oauth_client(effective_client_id)
         if client_info:
+            app_n = client_info.get("app_name", "").lower()
+            if "asistencia" in app_n or "sso" in app_n:
+                effective_client_id = "EXTERNAL_WEB_SSO"
             liveness_policy = client_info.get("liveness_policy", "active") or "active"
         else:
             liveness_policy = "active"

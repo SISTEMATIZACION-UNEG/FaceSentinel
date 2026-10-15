@@ -78,9 +78,9 @@
       "name": "authRecords",
       "outputs": [
         {
-          "internalType": "bytes32",
-          "name": "userIdHash",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "userId",
+          "type": "string"
         },
         {
           "internalType": "bytes32",
@@ -190,9 +190,9 @@
         {
           "components": [
             {
-              "internalType": "bytes32",
-              "name": "userIdHash",
-              "type": "bytes32"
+              "internalType": "string",
+              "name": "userId",
+              "type": "string"
             },
             {
               "internalType": "bytes32",
@@ -251,9 +251,9 @@
         {
           "components": [
             {
-              "internalType": "bytes32",
-              "name": "userIdHash",
-              "type": "bytes32"
+              "internalType": "string",
+              "name": "userId",
+              "type": "string"
             },
             {
               "internalType": "bytes32",
@@ -307,9 +307,9 @@
         {
           "components": [
             {
-              "internalType": "bytes32",
-              "name": "userIdHash",
-              "type": "bytes32"
+              "internalType": "string",
+              "name": "userId",
+              "type": "string"
             },
             {
               "internalType": "bytes32",

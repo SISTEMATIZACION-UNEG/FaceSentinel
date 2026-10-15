@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "slidev --open",
+    "dev:defensa": "slidev slides_defensa.md --open",
     "build": "slidev build",
+    "build:defensa": "slidev build slides_defensa.md",
     "export": "slidev export --format pdf",
+    "export:defensa": "slidev export slides_defensa.md --format pdf",
     "export:pptx": "slidev export --format pptx",
     "export:png": "slidev export --format png",
     "postinstall": "node patch-slidev.js"
