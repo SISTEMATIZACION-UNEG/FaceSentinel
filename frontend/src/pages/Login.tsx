@@ -20,6 +20,8 @@ export default function Login() {
     const state = searchParams.get("state") || urlParams.get("state")
     const appName = searchParams.get("app_name") || urlParams.get("app_name")
     const action = searchParams.get("action") || urlParams.get("action") || "authentication"
+    const rawLoginHint = searchParams.get("login_hint") || urlParams.get("login_hint") || searchParams.get("user_id") || urlParams.get("user_id") || searchParams.get("username") || urlParams.get("username")
+    const loginHint = rawLoginHint ? rawLoginHint.trim() : ""
 
     const buildRedirectUrl = (baseUri: string, token: string, stateParam?: string | null) => {
         try {
@@ -52,6 +54,7 @@ export default function Login() {
     const [livenessMetrics, setLivenessMetrics] = useState<any>(null)
     const [authDistance, setAuthDistance] = useState<number | null>(null)
     const [idpToken, setIdpToken] = useState<string>("")
+    const [claimedUserId, setClaimedUserId] = useState<string>(loginHint)
     const [usernameInput, setUsernameInput] = useState("")
     const [passwordInput, setPasswordInput] = useState("")
     const [portalPolicy, setPortalPolicy] = useState<"none" | "passive_lbp" | "passive_fft" | "active">("active")
@@ -122,10 +125,11 @@ export default function Login() {
     }, [stopCameraAndSocket])
 
     useEffect(() => {
-        if (clientId) {
+        if (clientId && loginHint) {
+            setClaimedUserId(loginHint)
             startCamera()
         }
-    }, [clientId, startCamera])
+    }, [clientId, loginHint, startCamera])
 
     const handleCredentialsSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -281,6 +285,9 @@ export default function Login() {
             const wsParams = new URLSearchParams()
             if (clientId) wsParams.append("client_id", clientId)
             if (action) wsParams.append("action", action)
+            if (claimedUserId && claimedUserId.trim()) {
+                wsParams.append("user_id", claimedUserId.trim())
+            }
             const queryString = wsParams.toString()
             if (queryString) {
                 wsUrl += `?${queryString}`
@@ -402,7 +409,7 @@ export default function Login() {
                 }
             }
         }
-    }, [step, scanSession, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket, portalPolicy])
+    }, [step, scanSession, sendFrame, clientId, redirectUri, action, navigate, stopCameraAndSocket, portalPolicy, claimedUserId])
 
     // onBlink: called by useBlinkDetector when a local blink is detected.
     // Sends a special event to the backend so it can skip EAR and jump to LBP+FFT.
@@ -496,16 +503,49 @@ export default function Login() {
 
                         {step === "username" && clientId && (
                             <div className="rounded-lg border bg-card p-6 flex flex-col items-center justify-center text-center space-y-4">
-                                <Camera className="h-12 w-12 text-primary animate-pulse" />
-                                <div className="space-y-2">
+                                <div className="p-3 bg-primary/10 rounded-full text-primary">
+                                    <ShieldCheck className="h-8 w-8" />
+                                </div>
+                                <div className="space-y-1">
                                     <h3 className="font-bold text-lg">Autenticación Biométrica SSO</h3>
                                     <p className="text-sm text-muted-foreground">
-                                        FaceSentinel está iniciando el escáner facial seguro para {appName || "tu aplicación"}.
+                                        Acceso seguro para <span className="font-semibold text-foreground">{appName || clientId}</span>.
                                     </p>
                                 </div>
-                                <Button className="w-full mt-2" size="lg" onClick={startCamera}>
-                                    Iniciar Escáner Activo
-                                </Button>
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault()
+                                        if (usernameInput.trim()) {
+                                            setClaimedUserId(usernameInput.trim())
+                                        }
+                                        startCamera()
+                                    }}
+                                    className="w-full space-y-3 mt-2"
+                                >
+                                    <div className="space-y-1.5 text-left">
+                                        <Label htmlFor="sso-id" className="text-xs font-semibold text-muted-foreground">
+                                            Cédula o Usuario (Verificación 1:1)
+                                        </Label>
+                                        <Input
+                                            id="sso-id"
+                                            type="text"
+                                            placeholder="Ej: 30335783 o htovar"
+                                            value={usernameInput}
+                                            onChange={(e) => {
+                                                setUsernameInput(e.target.value)
+                                                setClaimedUserId(e.target.value.trim())
+                                            }}
+                                            className="h-11"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <Button className="w-full h-11 text-base font-medium flex items-center justify-center gap-2" size="lg" type="submit">
+                                        <Camera className="h-4 w-4" /> Iniciar Verificación Facial
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        {usernameInput.trim() ? "Modo 1:1 activado: el rostro se validará contra este perfil." : "Si no introduces usuario, se usará identificación automática (1:N)."}
+                                    </p>
+                                </form>
                             </div>
                         )}
 
@@ -552,9 +592,16 @@ export default function Login() {
                                     variant="outline"
                                     type="button"
                                     className="w-full h-11 text-sm flex items-center justify-center gap-2 border-primary/20 hover:bg-primary/5 transition-colors"
-                                    onClick={startCamera}
+                                    onClick={() => {
+                                        if (usernameInput.trim()) {
+                                            setClaimedUserId(usernameInput.trim())
+                                        } else {
+                                            setClaimedUserId("")
+                                        }
+                                        startCamera()
+                                    }}
                                 >
-                                    <Camera className="h-4 w-4 text-primary" /> Entrar con Biometría
+                                    <Camera className="h-4 w-4 text-primary" /> Entrar con Biometría {usernameInput.trim() ? "(1:1)" : "(1:N)"}
                                 </Button>
                             </form>
                         )}
@@ -585,6 +632,13 @@ export default function Login() {
                                 </div>
 
                                 <div className="w-full text-center p-3 rounded-lg bg-secondary/50 border border-border">
+                                    {claimedUserId && (
+                                        <div className="mb-1.5">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary rounded-full border border-primary/20">
+                                                <ShieldCheck className="h-3.5 w-3.5" /> Verificación 1:1 para: {claimedUserId}
+                                            </span>
+                                        </div>
+                                    )}
                                     <p className="text-sm font-medium animate-pulse text-foreground">
                                         {livenessMessage}
                                     </p>

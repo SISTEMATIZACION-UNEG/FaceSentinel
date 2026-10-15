@@ -52,7 +52,10 @@ from app.services.storage import (
     get_all_devices,
     get_system_setting,
     set_system_setting,
+    resolve_user_canonical,
+    get_user_reference_embeddings,
 )
+import numpy as np
 
 logger = logging.getLogger(__name__)
 from app.core.security import (
@@ -65,7 +68,14 @@ from app.core.security import (
 )
 
 # Importamos las funciones reales de IA que creamos en el paso anterior
-from app.services.face_recognition import register_face, verify_face, remove_face, base64_to_image, get_embedding
+from app.services.face_recognition import (
+    register_face,
+    verify_face,
+    verify_face_1to1_cached,
+    remove_face,
+    base64_to_image,
+    get_embedding
+)
 
 # Importamos el servicio de blockchain
 from app.services.blockchain import (
@@ -625,14 +635,56 @@ def update_system_security_policy(policy_data: dict, current_user: dict = Depend
     }
 
 @router.websocket("/ws/liveness")
-async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None), action: str = Query("authentication")):
+async def websocket_liveness(
+    websocket: WebSocket,
+    client_id: str = Query(None),
+    action: str = Query("authentication"),
+    user_id: str = Query(None)
+):
     """
     Endpoint interactivo que recibe frames de video en tiempo real,
     rastrea los ojos del usuario y detecta un parpadeo genuino.
     Además, verifica la textura y frecuencia espectral para bloquear
     ataques con videos grabados en pantallas o mascaras impresas.
+    Soporta verificación 1:1 con caching en RAM si se provee user_id.
     """
     await websocket.accept()
+
+    # --- INICIALIZACIÓN Y CACHING EN MEMORIA RAM (1:1 vs 1:N) ---
+    is_1to1 = False
+    cached_user_info = None
+    cached_ref_embeddings_np = None
+
+    if user_id and str(user_id).strip():
+        raw_id = str(user_id).strip()
+        user_info = resolve_user_canonical(raw_id)
+        if not user_info:
+            logger.warning(f"❌ [1:1 WebSocket] Usuario '{raw_id}' no encontrado en SQLite.")
+            await websocket.send_json({
+                "status": "failed",
+                "message": f"Usuario '{raw_id}' no registrado en el sistema."
+            })
+            await websocket.close()
+            return
+
+        ref_embs = get_user_reference_embeddings(user_info["user_id"])
+        if not ref_embs:
+            logger.warning(f"❌ [1:1 WebSocket] Usuario '{user_info['name']}' no posee biometría registrada en ChromaDB.")
+            await websocket.send_json({
+                "status": "failed",
+                "message": f"El usuario '{user_info['name']}' no tiene biometría registrada."
+            })
+            await websocket.close()
+            return
+
+        # Pre-cargar y normalizar tensor L2 en RAM (K, 512) una sola vez
+        ref_np = np.array(ref_embs, dtype=np.float32)
+        norms = np.linalg.norm(ref_np, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-10
+        cached_ref_embeddings_np = ref_np / norms
+        cached_user_info = user_info
+        is_1to1 = True
+        logger.info(f"⚡ [1:1 WebSocket] Precargados {len(ref_embs)} vector(es) en RAM para '{user_info['name']}' (ID Canónico: {user_info['user_id']})")
     
     # REGLA DE SEGURIDAD (Anti-Downgrade & IdP Delegation Routing):
     # Si no se envía client_id o corresponde a autenticación local/portal propio (LOCAL_AUTH, etc.):
@@ -745,7 +797,10 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                 # -------------------------------------------------------------
                 if liveness_policy == "none":
                     t0_none = time.perf_counter()
-                    auth_res = verify_face(img_bgr)
+                    if is_1to1:
+                        auth_res = verify_face_1to1_cached(img_bgr, cached_ref_embeddings_np, cached_user_info)
+                    else:
+                        auth_res = verify_face(img_bgr)
                     t_arcface_ms = auth_res.get("t_arcface_ms", 0.0)
                     t_chroma_ms = auth_res.get("t_chroma_ms", 0.0)
                     distance = auth_res.get("distance", 0.0)
@@ -1031,7 +1086,10 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                                     "weight": "Espectro FFT" if liveness_policy != "passive_lbp" else "Bypass (CCTV)"
                                 }
                             }
-                            auth_res = verify_face(img_bgr)
+                            if is_1to1:
+                                auth_res = verify_face_1to1_cached(img_bgr, cached_ref_embeddings_np, cached_user_info)
+                            else:
+                                auth_res = verify_face(img_bgr)
                             t_arcface_ms = auth_res.get("t_arcface_ms", 0.0)
                             t_chroma_ms = auth_res.get("t_chroma_ms", 0.0)
                             distance = auth_res.get("distance", 0.0)
@@ -1337,7 +1395,10 @@ async def websocket_liveness(websocket: WebSocket, client_id: str = Query(None),
                     # Ejecutar ArcFace usando el frontal_frame limpio guardado en Fase 1
                     print("🧠 Ejecutando ArcFace con el fotograma FRONTAL limpio guardado en Fase 1...")
                     t0_auth = time.perf_counter()
-                    auth_res = verify_face(frontal_frame)
+                    if is_1to1:
+                        auth_res = verify_face_1to1_cached(frontal_frame, cached_ref_embeddings_np, cached_user_info)
+                    else:
+                        auth_res = verify_face(frontal_frame)
                     t_arcface_ms = auth_res.get("t_arcface_ms", 0.0)
                     t_chroma_ms = auth_res.get("t_chroma_ms", 0.0)
                     distance = auth_res.get("distance", 0.0)

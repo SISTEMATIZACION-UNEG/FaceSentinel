@@ -216,6 +216,83 @@ class TestLiveness:
 
 
 # =========================================================================
+#                 TESTS DE VERIFICACIÓN 1:1 (CACHED & CANONICAL)
+# =========================================================================
+
+class TestOneToOneVerification:
+    """Tests para la resolución canónica y matching 1:1 en memoria RAM."""
+
+    def test_resolve_user_canonical(self):
+        """Verifica que resolve_user_canonical encuentra usuarios por ID y username."""
+        from app.services.storage import resolve_user_canonical
+
+        # Usuario 'admin' existe en el sistema
+        admin_info = resolve_user_canonical("admin")
+        assert admin_info is not None
+        assert admin_info["user_id"] == "admin"
+        assert admin_info["name"] is not None
+
+        # Usuario inexistente
+        none_info = resolve_user_canonical("usuario_fantasma_xyz_123")
+        assert none_info is None
+
+        # String vacío o whitespace
+        assert resolve_user_canonical("") is None
+        assert resolve_user_canonical("   ") is None
+
+    def test_get_user_reference_embeddings_indexed(self):
+        """Verifica que get_user_reference_embeddings devuelve los embeddings del usuario de forma indexada."""
+        from app.services.storage import get_user_reference_embeddings
+
+        embs = get_user_reference_embeddings("admin")
+        assert isinstance(embs, list)
+        assert len(embs) >= 1
+        assert len(embs[0]) == 512
+
+        # Usuario sin biometría o inexistente
+        no_embs = get_user_reference_embeddings("non_existent_user_id_456")
+        assert isinstance(no_embs, list)
+        assert len(no_embs) == 0
+
+    def test_verify_face_1to1_cached_math(self):
+        """Verifica el cálculo de similitud coseno mínima en RAM con vectores simulados."""
+        from unittest.mock import patch
+        from app.services.face_recognition import verify_face_1to1_cached
+
+        # Vector de referencia sintético (L2 normalizado)
+        ref_vec = np.random.randn(512).astype(np.float32)
+        ref_vec = ref_vec / np.linalg.norm(ref_vec)
+        cached_tensor = np.expand_dims(ref_vec, axis=0)  # Shape (1, 512)
+
+        user_info = {
+            "user_id": "test-uuid-canonical",
+            "name": "Test User",
+            "role": "Student"
+        }
+
+        # Caso A: Vector idéntico (distancia ~0.0 < umbral 0.45)
+        with patch("app.services.face_recognition.get_embedding", return_value=(ref_vec.tolist(), 12.5)):
+            dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
+            res = verify_face_1to1_cached(dummy_img, cached_tensor, user_info, custom_threshold=0.45)
+            assert res["success"] is True
+            assert res["user_id"] == "test-uuid-canonical"
+            assert res["distance"] < 0.05
+            assert res["t_chroma_ms"] == 0.0
+
+        # Caso B: Vector ortogonal/distinto (distancia ~1.0 >= umbral 0.45)
+        diff_vec = np.random.randn(512).astype(np.float32)
+        diff_vec = diff_vec / np.linalg.norm(diff_vec)
+        # Forzar distancia alta
+        diff_vec = -ref_vec
+        with patch("app.services.face_recognition.get_embedding", return_value=(diff_vec.tolist(), 12.5)):
+            dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
+            res = verify_face_1to1_cached(dummy_img, cached_tensor, user_info, custom_threshold=0.45)
+            assert res["success"] is False
+            assert res["user_id"] == "test-uuid-canonical"
+            assert res["distance"] > 0.45
+
+
+# =========================================================================
 #                    EJECUCIÓN
 # =========================================================================
 

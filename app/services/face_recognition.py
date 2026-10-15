@@ -284,6 +284,97 @@ def verify_face(image_data, custom_threshold: float = None):
         }
 
 
+def verify_face_1to1_cached(
+    image_data,
+    cached_ref_embeddings_np: np.ndarray,
+    user_info: dict,
+    custom_threshold: float = None
+) -> dict:
+    """
+    Verifica el rostro de la cámara contra el conjunto de embeddings de referencia
+    precargados en RAM del usuario, calculando la distancia mínima (mejor ángulo).
+    CERO operaciones de I/O en disco o base de datos.
+    """
+    if isinstance(image_data, str):
+        try:
+            img = base64_to_image(image_data)
+        except Exception as e:
+            logger.warning(f"Error decodificando imagen base64: {e}")
+            return {
+                "success": False,
+                "message": f"Error decodificando imagen: {e}",
+                "t_arcface_ms": 0.0,
+                "t_chroma_ms": 0.0,
+                "distance": 1.0,
+                "user_id": user_info.get("user_id")
+            }
+    elif isinstance(image_data, np.ndarray):
+        img = image_data
+    else:
+        logger.error(f"Formato de imagen inválido: {type(image_data)}")
+        return {
+            "success": False,
+            "message": "Formato de imagen inválido",
+            "t_arcface_ms": 0.0,
+            "t_chroma_ms": 0.0,
+            "distance": 1.0,
+            "user_id": user_info.get("user_id")
+        }
+
+    embedding, t_arcface_ms = get_embedding(img)
+    if not embedding:
+        logger.warning("Verificación 1:1 fallida: sin rostro detectado")
+        return {
+            "success": False,
+            "message": "No se detectó ningún rostro frente a la cámara.",
+            "t_arcface_ms": round(t_arcface_ms, 2),
+            "t_chroma_ms": 0.0,
+            "distance": 1.0,
+            "user_id": user_info.get("user_id")
+        }
+
+    # Vectorización del frame entrante (normalización L2)
+    cam_vec = np.array(embedding, dtype=np.float32)
+    norm = np.linalg.norm(cam_vec)
+    if norm > 0:
+        cam_vec = cam_vec / norm
+
+    # Producto punto vectorizado contra los K vectores de referencia en RAM
+    # cached_ref_embeddings_np tiene forma (K, 512) y ya está normalizado L2
+    cosine_sims = np.dot(cached_ref_embeddings_np, cam_vec)
+    distances = 1.0 - cosine_sims
+    min_distance = float(np.min(distances))
+
+    eff_threshold = custom_threshold if custom_threshold is not None else settings.FACE_MATCH_THRESHOLD
+    canonical_id = user_info["user_id"]
+    user_name = user_info["name"]
+
+    if min_distance < eff_threshold:
+        logger.info(f"✅ Identidad 1:1 confirmada: {user_name} (distancia mínima: {min_distance:.4f})")
+        return {
+            "success": True,
+            "message": "Identidad confirmada.",
+            "user_id": canonical_id,
+            "name": user_name,
+            "role": user_info.get("role", "User"),
+            "distance": round(min_distance, 4),
+            "t_arcface_ms": round(t_arcface_ms, 2),
+            "t_chroma_ms": 0.0,
+            "embedding": embedding
+        }
+    else:
+        logger.warning(f"🚫 Acceso 1:1 denegado para {user_name}: distancia {min_distance:.4f} >= umbral {eff_threshold}")
+        return {
+            "success": False,
+            "message": f"Acceso denegado. El rostro no coincide con '{user_name}'.",
+            "distance": round(min_distance, 4),
+            "t_arcface_ms": round(t_arcface_ms, 2),
+            "t_chroma_ms": 0.0,
+            "user_id": canonical_id,
+            "embedding": embedding
+        }
+
+
 def remove_face(user_id: str) -> dict:
     """Elimina toda huella biométrica y de registro de un usuario en el sistema"""
     # 1. Eliminar datos en memoria ChromaDB

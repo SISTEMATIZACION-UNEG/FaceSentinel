@@ -6,6 +6,7 @@ clientes OAuth/SSO, dispositivos IoT y listas de control de acceso (ACL).
 
 import json
 import logging
+import numpy as np
 import chromadb
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -400,6 +401,88 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
                 "username": user.username
             }
         return None
+
+
+def resolve_user_canonical(identifier: str) -> Optional[dict]:
+    """
+    Resuelve cualquier identificador provisto (cédula, username, UUID)
+    a la entidad canónica en SQLite para garantizar integridad con Blockchain.
+    """
+    if not identifier or not str(identifier).strip():
+        return None
+    clean_id = str(identifier).strip()
+    with SessionLocal() as session:
+        # 1. Búsqueda por Primary Key (user_id / cédula / UUID)
+        user = session.get(User, clean_id)
+        if user:
+            return {
+                "user_id": user.user_id,
+                "username": user.username,
+                "name": user.name,
+                "role": user.role
+            }
+        # 2. Búsqueda exacta por username
+        stmt = select(User).where(User.username == clean_id)
+        user = session.scalars(stmt).first()
+        if user:
+            return {
+                "user_id": user.user_id,
+                "username": user.username,
+                "name": user.name,
+                "role": user.role
+            }
+        # 3. Búsqueda case-insensitive por username
+        stmt = select(User).where(func.lower(User.username) == clean_id.lower())
+        user = session.scalars(stmt).first()
+        if user:
+            return {
+                "user_id": user.user_id,
+                "username": user.username,
+                "name": user.name,
+                "role": user.role
+            }
+    return None
+
+
+def get_user_reference_embeddings(canonical_user_id: str) -> list[list[float]]:
+    """
+    Recupera los embeddings de referencia de un usuario en ChromaDB usando
+    ÚNICAMENTE consultas indexadas (cero escaneos globales / cero Full-Scan).
+    Complejidad: O(1) por clave primaria y O(k) por índice de metadatos.
+    """
+    embeddings = []
+
+    # 1. Búsqueda directa por Primary Key indexada (ID canónico y candidatos multi-ángulo)
+    candidate_ids = [
+        canonical_user_id,
+        f"{canonical_user_id}_0",
+        f"{canonical_user_id}_1",
+        f"{canonical_user_id}_2",
+        f"{canonical_user_id}_frontal",
+        f"{canonical_user_id}_left",
+        f"{canonical_user_id}_right"
+    ]
+    try:
+        res_ids = face_collection.get(ids=candidate_ids, include=["embeddings"])
+        if res_ids and res_ids.get("embeddings") is not None:
+            for emb in res_ids["embeddings"]:
+                if emb is not None and len(emb) > 0:
+                    embeddings.append(emb)
+    except Exception as e:
+        logger.debug(f"Aviso en consulta indexada por IDs para {canonical_user_id}: {e}")
+
+    # 2. Búsqueda por índice de metadatos where={'user_id': canonical_user_id}
+    try:
+        res_meta = face_collection.get(where={"user_id": canonical_user_id}, include=["embeddings"])
+        if res_meta and res_meta.get("embeddings") is not None:
+            for emb in res_meta["embeddings"]:
+                if emb is not None and len(emb) > 0:
+                    if not any(np.array_equal(emb, existing) for existing in embeddings):
+                        embeddings.append(emb)
+    except Exception as e:
+        logger.debug(f"Aviso en consulta por metadata where user_id para {canonical_user_id}: {e}")
+
+    return embeddings
 
 
 def delete_user(user_id: str) -> bool:
