@@ -72,6 +72,7 @@ from app.services.face_recognition import (
     register_face,
     verify_face,
     verify_face_1to1_cached,
+    check_face_uniqueness,
     remove_face,
     base64_to_image,
     get_embedding
@@ -247,6 +248,13 @@ def admin_create_user(
                     status_code=400,
                     detail="No se detectó ningún rostro válido en la foto proporcionada. Intenta con mejor iluminación."
                 )
+            # Validación anti-duplicados previa a la creación
+            is_unique, conflicting_name = check_face_uniqueness(face_vector, user_data.user_id, threshold=0.38)
+            if not is_unique:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Conflicto biométrico: este rostro ya está registrado en el sistema bajo la identidad de '{conflicting_name}'."
+                )
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise e
@@ -266,6 +274,8 @@ def admin_create_user(
     )
 
     if not success:
+        if "Conflicto biométrico" in message:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
         raise HTTPException(status_code=400, detail=message)
 
     return {"success": True, "message": message, "user_id": user_data.user_id}
@@ -400,6 +410,8 @@ def enroll_my_biometrics(bio_data: BiometricsEnrollRequest, current_user: dict =
     )
     
     if not success:
+        if "Conflicto biométrico" in message:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
         raise HTTPException(status_code=400, detail=message)
         
     return {"success": True, "message": "Biometría facial enrolada con éxito."}
@@ -429,6 +441,8 @@ def admin_enroll_user_biometrics(
     )
 
     if not success:
+        if "Conflicto biométrico" in message:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
         raise HTTPException(status_code=400, detail=message)
 
     return {"success": True, "message": f"Biometría facial de {user_info['name']} actualizada con éxito."}
@@ -457,16 +471,18 @@ def get_my_client_app(current_user: dict = Depends(get_current_user)):
 @router.post("/register", tags=["Autenticación y Registro"])
 @limiter.limit("20/minute")
 def register_user(user_data: UserRegister, request: Request):
-    """Recibe los datos y la foto, y los envía a la IA para extraer el vector."""
+    """Recibe los datos y la foto, y los envía a la IA para extraer el vector con validación anti-duplicados."""
     success, message = register_face(
         user_id=user_data.user_id,
         name=user_data.name,
         role=user_data.role,
-        base64_image=user_data.image_base64
+        base64_image=user_data.image_base64,
+        username=user_data.username
     )
     
     if not success:
-        # Si la IA no detectó un rostro, devolvemos un error 400 (Bad Request)
+        if "Conflicto biométrico" in message:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
         raise HTTPException(status_code=400, detail=message)
         
     return {"success": True, "message": message}

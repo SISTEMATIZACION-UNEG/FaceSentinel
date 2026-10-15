@@ -11,6 +11,7 @@ class UserRegister(BaseModel):
     name: str
     role: str
     image_base64: str  # La foto capturada por la cámara
+    username: Optional[str] = Field(None, description="Correo electrónico o nombre de usuario para SSO 1:1")
 
 
 class UserCreateAdmin(BaseModel):

@@ -292,6 +292,62 @@ class TestOneToOneVerification:
             assert res["distance"] > 0.45
 
 
+class TestBiometricUniqueness:
+    """Tests para validación anti-duplicados y unicidad biométrica en enrolamiento."""
+
+    def test_check_face_uniqueness_no_collision(self, sample_embedding):
+        from unittest.mock import patch
+        from app.services.face_recognition import check_face_uniqueness
+
+        # ChromaDB retorna distancia alta (>= 0.38)
+        mock_result = {
+            "ids": [["existing_user_1"]],
+            "distances": [[0.55]],
+            "metadatas": [[{"name": "Existing Person"}]]
+        }
+        with patch("app.services.face_recognition.face_collection.query", return_value=mock_result):
+            is_unique, error_msg = check_face_uniqueness(sample_embedding, target_user_id="new_user")
+            assert is_unique is True
+            assert error_msg is None
+
+    def test_check_face_uniqueness_same_user_update(self, sample_embedding):
+        from unittest.mock import patch
+        from app.services.face_recognition import check_face_uniqueness
+
+        # Coincidencia con el mismo usuario (distancia baja 0.15, sufijo multi-ángulo)
+        mock_result = {
+            "ids": [["user123_frontal"]],
+            "distances": [[0.15]],
+            "metadatas": [[{"name": "Same User"}]]
+        }
+        with patch("app.services.face_recognition.face_collection.query", return_value=mock_result):
+            is_unique, error_msg = check_face_uniqueness(sample_embedding, target_user_id="user123")
+            assert is_unique is True
+            assert error_msg is None
+
+    def test_check_face_uniqueness_collision_different_user(self, sample_embedding):
+        from unittest.mock import patch
+        from app.services.face_recognition import check_face_uniqueness, register_face
+
+        # Coincidencia con otro usuario (distancia baja 0.20 < 0.38)
+        mock_result = {
+            "ids": [["other_user_id"]],
+            "distances": [[0.20]],
+            "metadatas": [[{"name": "Persona Original"}]]
+        }
+        with patch("app.services.face_recognition.face_collection.query", return_value=mock_result):
+            is_unique, conflicting_name = check_face_uniqueness(sample_embedding, target_user_id="new_person")
+            assert is_unique is False
+            assert conflicting_name == "Persona Original"
+
+            # Validar que register_face retorna el mensaje de conflicto biométrico esperado
+            with patch("app.services.face_recognition.base64_to_image"), \
+                 patch("app.services.face_recognition.get_embedding", return_value=(sample_embedding, 15.0)):
+                success, msg = register_face("new_person", "Nueva Persona", "Student", "fake_b64")
+                assert success is False
+                assert "Conflicto biométrico" in msg
+                assert "Persona Original" in msg
+
 # =========================================================================
 #                    EJECUCIÓN
 # =========================================================================

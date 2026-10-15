@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import base64
 import time
+from typing import Optional, Tuple
 from deepface import DeepFace
 from app.core.config import settings
 from app.services.storage import face_collection, save_user_data, get_user_by_id, delete_user
@@ -146,9 +147,63 @@ def get_embedding(img_array):
 #              FLUJO DE REGISTRO (ENROLLMENT)
 # =========================================================================
 
-def register_face(user_id: str, name: str, role: str, base64_image: str):
-    """Procesa una foto nueva y guarda el usuario en SQLite y ChromaDB."""
-    logger.info(f"📝 Iniciando registro para '{name}' (ID: {user_id})...")
+def check_face_uniqueness(embedding: list, target_user_id: str, threshold: float = 0.38) -> Tuple[bool, Optional[str]]:
+    """
+    Verifica que el embedding facial no pertenezca a otra persona registrada en ChromaDB.
+    Retorna (True, None) si el rostro es único o pertenece al mismo usuario.
+    Retorna (False, matched_name) si el rostro ya está enrolado a nombre de otra persona (HTTP 409 Conflict).
+    """
+    try:
+        results = face_collection.query(
+            query_embeddings=[embedding],
+            n_results=1
+        )
+        if results and results.get("ids") and len(results["ids"]) > 0 and len(results["ids"][0]) > 0:
+            distance = results["distances"][0][0]
+            matched_id = str(results["ids"][0][0])
+            metadata = results["metadatas"][0][0] if results.get("metadatas") and len(results["metadatas"][0]) > 0 else {}
+
+            # Comprobar si el ID coincide exactamente o con sufijos multi-ángulo (ej: user_0, user_frontal)
+            is_same_user = (
+                matched_id == target_user_id
+                or matched_id.startswith(f"{target_user_id}_")
+                or target_user_id.startswith(f"{matched_id}_")
+                or (metadata and metadata.get("user_id") == target_user_id)
+            )
+
+            # Si no coincide directamente, verificar si quitando el sufijo numérico/ángulo coincide
+            if not is_same_user and "_" in matched_id:
+                base_matched_id = matched_id.rsplit("_", 1)[0]
+                base_target_id = target_user_id.rsplit("_", 1)[0] if "_" in target_user_id else target_user_id
+                if base_matched_id == target_user_id or base_matched_id == base_target_id:
+                    is_same_user = True
+
+            if distance < threshold and not is_same_user:
+                # Obtener el nombre del usuario con el que colisiona (SQLite o metadata ChromaDB)
+                matched_user = get_user_by_id(matched_id)
+                if not matched_user and "_" in matched_id:
+                    matched_user = get_user_by_id(matched_id.rsplit("_", 1)[0])
+
+                matched_name = (
+                    matched_user.get("name")
+                    if matched_user and matched_user.get("name")
+                    else (metadata.get("name") if metadata and metadata.get("name") else matched_id)
+                )
+                logger.warning(
+                    f"⚠️ Conflicto biométrico: Rostro similar a '{matched_name}' (ID: {matched_id}, Distancia: {distance:.4f} < {threshold})"
+                )
+                return False, matched_name
+    except Exception as e:
+        logger.error(f"Error verificando unicidad biométrica en ChromaDB: {e}")
+        # En caso de error de BD o si la BD está vacía, no bloqueamos el enrolamiento
+        return True, None
+
+    return True, None
+
+
+def register_face(user_id: str, name: str, role: str, base64_image: str, username: Optional[str] = None):
+    """Procesa una foto nueva y guarda el usuario en SQLite y ChromaDB con validación anti-duplicados."""
+    logger.info(f"📝 Iniciando registro para '{name}' (ID: {user_id}, Username: {username})...")
 
     img = base64_to_image(base64_image)
     embedding, _ = get_embedding(img)
@@ -157,7 +212,15 @@ def register_face(user_id: str, name: str, role: str, base64_image: str):
         logger.warning(f"Registro fallido para '{name}': sin rostro detectado")
         return False, "❌ No se detectó ningún rostro válido en la imagen. Intenta con mejor iluminación."
 
-    save_user_data(user_id, name, role, embedding)
+    # Validación anti-duplicados: verificar que el rostro no pertenezca a otra identidad registrada
+    is_unique, conflicting_name = check_face_uniqueness(embedding, user_id, threshold=0.38)
+    if not is_unique:
+        return False, f"Conflicto biométrico: este rostro ya está registrado en el sistema bajo la identidad de '{conflicting_name}'."
+
+    saved = save_user_data(user_id, name, role, embedding, username=username)
+    if not saved:
+        return False, "❌ Error al guardar datos de usuario. Verifique si el correo o usuario ya está en uso."
+
     logger.info(f"✅ Usuario '{name}' registrado exitosamente con biometría")
     return True, f"✅ Usuario {name} registrado exitosamente con biometría."
 

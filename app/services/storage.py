@@ -352,21 +352,39 @@ def get_all_oauth_clients() -> list[dict]:
         return result
 
 
-def save_user_data(user_id: str, name: str, role: str, face_vector: list) -> bool:
-    """Guarda al usuario en AMBAS bases de datos al mismo tiempo (SQLite + ChromaDB)."""
+def save_user_data(
+    user_id: str,
+    name: str,
+    role: str,
+    face_vector: list,
+    username: Optional[str] = None
+) -> bool:
+    """Guarda al usuario en AMBAS bases de datos al mismo tiempo (SQLite + ChromaDB), persistiendo el username para SSO 1:1."""
+    clean_username = username.strip() if username and str(username).strip() else None
+
     # A. Guardar en SQLite
     with SessionLocal() as session:
         try:
+            if clean_username:
+                # Verificar si el username/correo ya pertenece a otro usuario
+                stmt = select(User).where(User.username == clean_username, User.user_id != user_id)
+                if session.scalars(stmt).first():
+                    logger.warning(f"❌ El nombre de usuario o correo '{clean_username}' ya está en uso por otro perfil.")
+                    return False
+
             user = session.get(User, user_id)
             if user:
                 user.name = name
                 user.role = role
+                if clean_username:
+                    user.username = clean_username
                 user.updated_at = datetime.utcnow()
             else:
                 user = User(
                     user_id=user_id,
                     name=name,
-                    role=role
+                    role=role,
+                    username=clean_username
                 )
                 session.add(user)
             session.commit()
@@ -386,7 +404,7 @@ def save_user_data(user_id: str, name: str, role: str, face_vector: list) -> boo
         logger.error(f"❌ Error al guardar embeddings en ChromaDB: {e}")
         return False
 
-    logger.info(f"💾 Usuario '{name}' (ID: {user_id}) guardado en SQLite + ChromaDB.")
+    logger.info(f"💾 Usuario '{name}' (ID: {user_id}, Username: {clean_username}) guardado en SQLite + ChromaDB.")
     return True
 
 

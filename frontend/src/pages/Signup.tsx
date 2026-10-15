@@ -19,6 +19,7 @@ export default function Signup() {
     const state = searchParams.get("state") || urlParams.get("state")
     const urlUserId = searchParams.get("user_id") || urlParams.get("user_id")
     const urlName = searchParams.get("name") || urlParams.get("name")
+    const urlUsername = searchParams.get("username") || urlParams.get("username") || searchParams.get("email") || urlParams.get("email") || searchParams.get("login_hint") || urlParams.get("login_hint")
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -27,28 +28,30 @@ export default function Signup() {
     // Data State
     const [formData, setFormData] = useState({
         id: urlUserId || "",
+        username: urlUsername || "",
         name: urlName || "",
         role: "Student"
     })
 
     // Sync state if url parameters change
     useEffect(() => {
-        if (urlUserId || urlName) {
+        if (urlUserId || urlName || urlUsername) {
             setFormData(prev => ({
                 ...prev,
                 id: urlUserId || prev.id,
+                username: urlUsername || prev.username,
                 name: urlName || prev.name
             }));
         }
-    }, [urlUserId, urlName])
+    }, [urlUserId, urlName, urlUsername])
 
     const videoRef = useRef<HTMLVideoElement>(null)
     const [stream, setStream] = useState<MediaStream | null>(null)
 
     const handleNext = (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.id || !formData.name || !formData.role) {
-            setError("Por favor completa todos los campos.")
+        if (!formData.id.trim() || !formData.username.trim() || !formData.name.trim() || !formData.role.trim()) {
+            setError("Por favor completa todos los campos obligatorios.")
             return
         }
         setError("")
@@ -103,9 +106,10 @@ export default function Signup() {
 
         try {
             const response = await axios.post(`${baseUrl}/api/v1/register`, {
-                user_id: formData.id,
-                name: formData.name,
-                role: formData.role,
+                user_id: formData.id.trim(),
+                username: formData.username.trim(),
+                name: formData.name.trim(),
+                role: formData.role.trim(),
                 image_base64: base64Image
             })
 
@@ -162,33 +166,53 @@ export default function Signup() {
                     {step === "form" && (
                         <form onSubmit={handleNext} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="id">ID de Usuario (ej. V-1234567)</Label>
+                                <Label htmlFor="id">ID de Usuario o Cédula (Inmutable) *</Label>
                                 <Input
                                     id="id"
-                                    placeholder="V-1234567"
+                                    placeholder="Ej: 30335783 o UUID"
                                     value={formData.id}
                                     onChange={e => setFormData({ ...formData, id: e.target.value })}
+                                    required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="name">Nombre Completo</Label>
+                                <Label htmlFor="username">Correo Electrónico o Nombre de Usuario (SSO) *</Label>
+                                <Input
+                                    id="username"
+                                    type="text"
+                                    placeholder="Ej: usuario@uneg.edu.ve o htovar"
+                                    value={formData.username}
+                                    onChange={e => setFormData({ ...formData, username: e.target.value })}
+                                    required
+                                />
+                                <p className="text-[11px] text-muted-foreground">
+                                    Utilizado para autenticación 1:1 cuando un sistema externo envíe login_hint.
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Nombre Completo *</Label>
                                 <Input
                                     id="name"
                                     placeholder="Juan Pérez"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="role">Rol</Label>
+                                <Label htmlFor="role">Rol *</Label>
                                 <select
                                     id="role"
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                                     value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    required
                                 >
                                     <option value="Student">Estudiante</option>
                                     <option value="Professor">Profesor</option>
+                                    <option value="Employee">Empleado</option>
+                                    <option value="Security">Seguridad</option>
+                                    <option value="Developer">Desarrollador</option>
                                     <option value="Admin">Administrador</option>
                                 </select>
                             </div>
