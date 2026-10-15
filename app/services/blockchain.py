@@ -284,12 +284,12 @@ def log_authentication(
         nonce = _w3.eth.get_transaction_count(_admin_account)
 
         tx = _contract.functions.logAuthentication(
-            user_id_hash,
-            bio_hash,
-            access_granted,
-            device_id,
-            score_int,
-            client_id
+            user_id,          # string plano / UUID requerido por contrato en Geth
+            bio_hash,         # bytes32
+            access_granted,   # bool
+            device_id,        # string
+            score_int,        # uint256
+            client_id         # string
         ).build_transaction({
             "chainId": actual_chain_id,
             "gasPrice": _w3.eth.gas_price,
@@ -378,8 +378,8 @@ def get_auth_history(user_id: str, count: int = 10) -> dict:
         # Calcular el hash anonimizado del usuario para buscar en el mapping del contrato
         user_id_hash = compute_user_id_hash(user_id)
 
-        # Obtener los registros más recientes del usuario anonimizado
-        records_raw = _contract.functions.getRecentRecordsByUser(user_id_hash, count).call()
+        # Obtener los registros más recientes del usuario
+        records_raw = _contract.functions.getRecentRecordsByUser(user_id, count).call()
 
         records = []
         for r in records_raw:

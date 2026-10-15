@@ -15,10 +15,10 @@
           "type": "uint256"
         },
         {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "userIdHash",
-          "type": "bytes32"
+          "indexed": false,
+          "internalType": "string",
+          "name": "userId",
+          "type": "string"
         },
         {
           "indexed": false,
@@ -236,9 +236,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "_userIdHash",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "_userId",
+          "type": "string"
         },
         {
           "internalType": "uint256",
@@ -353,9 +353,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "_userIdHash",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "_userId",
+          "type": "string"
         }
       ],
       "name": "getRecordIdsByUser",
@@ -372,9 +372,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "_userIdHash",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "_userId",
+          "type": "string"
         }
       ],
       "name": "getUserRecordCount",
@@ -410,9 +410,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "_userIdHash",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "_userId",
+          "type": "string"
         },
         {
           "internalType": "bytes32",
